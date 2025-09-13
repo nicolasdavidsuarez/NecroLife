@@ -5,11 +5,13 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "UHealthComponent.h"
 #include "NecroLifeCharacter.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
 class UInputAction;
+class UHealthComponent;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -22,6 +24,8 @@ UCLASS(abstract)
 class ANecroLifeCharacter : public ACharacter
 {
 	GENERATED_BODY()
+
+
 
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
@@ -68,6 +72,10 @@ protected:
 	void Look(const FInputActionValue& Value);
 
 public:
+	//componente de salud
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
+	UUHealthComponent* HealthComponent;
+
 
 	/** Handles move inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
@@ -99,5 +107,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	class UInputMappingContext* InputMapping;
 
+	
 };
 

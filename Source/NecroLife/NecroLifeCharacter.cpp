@@ -14,6 +14,8 @@
 
 ANecroLifeCharacter::ANecroLifeCharacter()
 {
+	// crear y atachar el UHealthComponent
+	HealthComponent = CreateDefaultSubobject<UUHealthComponent>(TEXT("HealthComponent"));
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 		
