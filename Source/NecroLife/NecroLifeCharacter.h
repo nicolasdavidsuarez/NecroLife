@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
-#include "UHealthComponent.h"
+#include "Components/Public/UHealthComponent.h"
 #include "NecroLifeCharacter.generated.h"
 
 class USpringArmComponent;
@@ -47,7 +47,7 @@ protected:
 
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
-	UInputAction* LookAction;
+	UInputAction* CameraBoomAction;
 
 	/** Mouse Look Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
@@ -59,7 +59,7 @@ public:
 	ANecroLifeCharacter();	
 
 protected:
-
+	void SetBoomLength(const FInputActionValue& Value);
 	/** Initialize input action bindings */
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 

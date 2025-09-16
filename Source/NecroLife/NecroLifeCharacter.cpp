@@ -52,6 +52,23 @@ ANecroLifeCharacter::ANecroLifeCharacter()
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
 
+void ANecroLifeCharacter::SetBoomLength(const FInputActionValue& Value)
+{
+	FVector2D InputVector = Value.Get<FVector2D>();
+	float armLength = CameraBoom->TargetArmLength;
+	
+	if (InputVector.X>0&&armLength<1200)
+	{
+		armLength += CameraBoom->TargetArmLength*0.05f;
+		CameraBoom->TargetArmLength = armLength;
+	}
+	else
+	{
+		armLength -= CameraBoom->TargetArmLength*0.05f;
+		CameraBoom->TargetArmLength = armLength;
+	}
+}
+
 void ANecroLifeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	// Set up action bindings
@@ -60,13 +77,14 @@ void ANecroLifeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 		// Jumping
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
-
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Move);
 		//EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Look);
-
 		// Looking
 		// EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Look);
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		EnhancedInputComponent->BindAction(CameraBoomAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::SetBoomLength);
 	}
 	else
 	{
@@ -98,7 +116,7 @@ void ANecroLifeCharacter::DoMove(float Right, float Forward)
 	{
 		// find out which way is forward
 		const FRotator Rotation = GetController()->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
+		const FRotator YawRotation(0, Rotation.Yaw, 45);
 
 		// get forward vector
 		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
