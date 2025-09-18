@@ -26,6 +26,14 @@ class NECROLIFE_API UAttributeComponent : public UActorComponent
 public:
 	// Sets default values for this component's properties
 	UAttributeComponent();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dash")
+	float DashStrength = 1500.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dash")
+	float DashDuration = 0.2f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dash")
+	float DashCooldown = 1.0f;
 
 protected:
 	// Called when the game starts

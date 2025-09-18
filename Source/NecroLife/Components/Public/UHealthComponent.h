@@ -38,6 +38,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Health")
 	void TakeDamage(float Amount);
 
+
 	//lleva const delante para garantizar que el metodo no cambia los valores. 
 	UFUNCTION(BlueprintCallable, Category="Health")
 	bool IsDead() const { return CurrentHealth <= 0.f; }

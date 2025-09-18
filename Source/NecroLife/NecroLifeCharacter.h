@@ -6,12 +6,14 @@
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "Components/Public/UHealthComponent.h"
+#include "Components/Public/AttributeComponent.h"
 #include "NecroLifeCharacter.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
 class UInputAction;
 class UHealthComponent;
+class UAttributeComponent;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -49,9 +51,34 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* CameraBoomAction;
 
+	/** dash Input Action */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* DashAction;
+
 	/** Mouse Look Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* MouseLookAction;
+
+	/** Ability Action */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* AbilityAction;
+	/** Ability Action */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* AbilityCancelAction;
+    // Action
+    UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* Action;
+	
+	//distancia del puntero
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability")
+	float AbilityPointerMaxDistance = 300.f;
+///////el puntero para usarlo en niagara 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Ability")
+	FVector CachedAbilityPointer; // posición calculada cada frame
+	
+	/** Look Input Action */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* LookAction;
 
 public:
 
@@ -60,6 +87,9 @@ public:
 
 protected:
 	void SetBoomLength(const FInputActionValue& Value);
+	void AbilityEnabled(const FInputActionValue& InputActionValue);
+	void AbilityDisambled(const FInputActionValue& InputActionValue);
+	void AplyAction();
 	/** Initialize input action bindings */
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
@@ -75,7 +105,9 @@ public:
 	//componente de salud
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
 	UUHealthComponent* HealthComponent;
-
+    //componente atributos
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
+	UAttributeComponent* Attribute;
 
 	/** Handles move inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
@@ -94,7 +126,19 @@ public:
 	virtual void DoJumpEnd();
 
 public:
+ FVector Direction;
+ FRotator CurrentRotation,TargetRotation;
 
+	//variables necesarias para dash
+	bool bIsDashing = false;
+	bool bCanDash = true;
+	FTimerHandle DashTimerHandle;
+	FTimerHandle CooldownTimerHandle;
+	//
+	
+	FVector GetAbilityPointerPosition() const { return CachedAbilityPointer; }
+	bool bEnabledAbility = false;
+	
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 
@@ -104,6 +148,21 @@ public:
 	/** Gameplay initialization */
 	virtual void BeginPlay() override;
 
+	virtual void Tick(float DeltaTime) override;
+
+	
+	void ShowMsg(FString Msg);
+	///////////////////////
+	///Puntero que esta frente a la direccion del character
+	void UpdateAbilityPointer();
+	////////////////////////////////////////////
+	///Mirar al puntero cuando se castea habilidad
+    void LookToCastAbility();
+
+	//dash
+	void Dash();
+	void StopDash();
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	class UInputMappingContext* InputMapping;
 
