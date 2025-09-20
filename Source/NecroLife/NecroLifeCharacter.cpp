@@ -65,11 +65,16 @@ void ANecroLifeCharacter::SetBoomLength(const FInputActionValue& Value)
 	{
 		armLength += CameraBoom->TargetArmLength*0.05f;
 		CameraBoom->TargetArmLength = armLength;
+		//FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-45,-10),armLength)
+		//CameraBoom->add
+		CameraBoom->SetRelativeRotation(FRotator(FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-10,-45),armLength), 0.0f, 0.0f));
 	}
 	else
 	{
+		
 		armLength -= CameraBoom->TargetArmLength*0.05f;
 		CameraBoom->TargetArmLength = armLength;
+		CameraBoom->SetRelativeRotation(FRotator(FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-10,-45),armLength), 0.0f, 0.0f));
 	}
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
