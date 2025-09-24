@@ -1,5 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
+
 #include "NecroLifeCharacter.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
@@ -13,313 +14,421 @@
 #include "NecroLife.h"
 #include "Components/Public/AttributeComponent.h"
 
+
 ANecroLifeCharacter::ANecroLifeCharacter()
 {
-	// crear y atachar el UHealthComponent
-	HealthComponent = CreateDefaultSubobject<UUHealthComponent>(TEXT("HealthComponent"));
-	// Set size for collision capsule
-	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
-		
-	// Don't rotate when the controller rotates. Let that just affect the camera.
-	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = false;
-	bUseControllerRotationRoll = false;
+   // crear y atachar el UHealthComponent
+   HealthComponent = CreateDefaultSubobject<UUHealthComponent>(TEXT("HealthComponent"));
+   // Set size for collision capsule
+   GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
+     
+   // Don't rotate when the controller rotates. Let that just affect the camera.
+   bUseControllerRotationPitch = false;
+   bUseControllerRotationYaw = false;
+   bUseControllerRotationRoll = false;
 
-	// Configure character movement
-	GetCharacterMovement()->bOrientRotationToMovement = true;
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 400.0f, 0.0f);
 
-	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
-	// instead of recompiling to adjust them
-	GetCharacterMovement()->JumpZVelocity = 500.f;
-	GetCharacterMovement()->AirControl = 0.35f;
-	GetCharacterMovement()->MaxWalkSpeed = 500.f;
-	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
-	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
-	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
+   // Configure character movement
+   GetCharacterMovement()->bOrientRotationToMovement = false;
+   GetCharacterMovement()->RotationRate = FRotator(0.0f, 7000.0f, 0.0f);
 
-	// Create a camera boom (pulls in towards the player if there is a collision)
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 800.0f;
-	CameraBoom->bUsePawnControlRotation = true;
-	CameraBoom->bInheritYaw=true;
 
-	// Create a follow camera
-	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-	FollowCamera->bUsePawnControlRotation = false;
+   // Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
+   // instead of recompiling to adjust them
+   GetCharacterMovement()->JumpZVelocity = 500.f;
+   GetCharacterMovement()->AirControl = 0.35f;
+   GetCharacterMovement()->MaxWalkSpeed = 500.f;
+   GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
+   GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
+   GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 
-	Attribute = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributesComponent"));
-	
-	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
-	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+
+   // Create a camera boom (pulls in towards the player if there is a collision)
+   CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+   CameraBoom->SetupAttachment(RootComponent);
+   CameraBoom->TargetArmLength = 800.0f;
+   CameraBoom->bUsePawnControlRotation =false;
+   CameraBoom->bInheritYaw=false;
+
+
+   // Create a follow camera
+   FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
+   FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+   FollowCamera->bUsePawnControlRotation = false;
+
+
+   Attribute = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributesComponent"));
+  
+   // Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character)
+   // are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
 ///////////////////////////////////////////////////////////////////////////////////////////
 void ANecroLifeCharacter::SetBoomLength(const FInputActionValue& Value)
 {
-	FVector2D InputVector = Value.Get<FVector2D>();
-	float armLength = CameraBoom->TargetArmLength;
-	
-	if (InputVector.X>0&&armLength<1200)
-	{
-		armLength += CameraBoom->TargetArmLength*0.05f;
-		CameraBoom->TargetArmLength = armLength;
-		//FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-45,-10),armLength)
-		//CameraBoom->add
-		CameraBoom->SetRelativeRotation(FRotator(FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-10,-45),armLength), 0.0f, 0.0f));
-	}
-	else
-	{
-		
-		armLength -= CameraBoom->TargetArmLength*0.05f;
-		CameraBoom->TargetArmLength = armLength;
-		CameraBoom->SetRelativeRotation(FRotator(FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-10,-45),armLength), 0.0f, 0.0f));
-	}
+   FVector2D InputVector = Value.Get<FVector2D>();
+   float armLength = CameraBoom->TargetArmLength;
+  
+   if (InputVector.X>0&&armLength<1200)
+   {
+      armLength += CameraBoom->TargetArmLength*0.05f;
+      CameraBoom->TargetArmLength = armLength;
+      //FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-45,-10),armLength)
+      //CameraBoom->add
+      CameraBoom->SetRelativeRotation(FRotator(FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-10,-45),armLength), 0.0f, 0.0f));
+   }
+   else
+   {     
+      armLength -= CameraBoom->TargetArmLength*0.05f;
+      CameraBoom->TargetArmLength = armLength;
+      CameraBoom->SetRelativeRotation(FRotator(FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-10,-45),armLength), 0.0f, 0.0f));
+   }
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ANecroLifeCharacter::AbilityEnabled(const FInputActionValue& InputActionValue)
 {
-	int32 pressedKeys = static_cast<int32>(InputActionValue.Get<float>());
-	FString AbilityName =FString("se entra en modo combate " + FString::FromInt(pressedKeys));
-	ShowMsg(AbilityName);
-	if (!bEnabledAbility)
-	{
-		GetCharacterMovement()->bOrientRotationToMovement = false;
-		bUseControllerRotationYaw = true;
+   int32 pressedKeys = static_cast<int32>(InputActionValue.Get<float>());
+   FString AbilityName =FString("se entra en modo combate " + FString::FromInt(pressedKeys));
+   ShowMsg(AbilityName);
+   if (!bEnabledAbility)
+   {
+      GetCharacterMovement()->bOrientRotationToMovement = false;
+      bUseControllerRotationYaw = true;
 
-		FHitResult HitResult;
-	
-		APlayerController* PC = Cast<APlayerController>(GetController());
-		if (PC && PC->GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
-		{
-		
-			FVector TargetLocation = HitResult.Location;
-			Direction = TargetLocation - GetActorLocation();
-			Direction.Z = 0;
-			CurrentRotation = GetActorRotation();
-			TargetRotation = Direction.Rotation();
-			//Controller->SetControlRotation(NewRotation);
-			DrawDebugLine(GetWorld(),GetActorLocation(),TargetLocation,FColor::Emerald,
-				false,3.0f,1,10);
-		}
-	
-		bEnabledAbility = true;		
-	}
-	
+
+      FHitResult HitResult;
+  
+      APlayerController* PC = Cast<APlayerController>(GetController());
+      if (PC && PC->GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
+      {
+     
+         FVector TargetLocation = HitResult.Location;
+         Direction = TargetLocation - GetActorLocation();
+         Direction.Z = 0;
+         CurrentRotation = GetActorRotation();
+         TargetRotation = Direction.Rotation();
+         //Controller->SetControlRotation(NewRotation);
+         DrawDebugLine(GetWorld(),GetActorLocation(),TargetLocation,FColor::Emerald,
+            false,3.0f,1,10);
+      }
+  
+      bEnabledAbility = true;      
+   }
+  
 }
+
 
 void ANecroLifeCharacter::AbilityDisambled(const FInputActionValue& InputActionValue)
 {
-	ShowMsg(FString::Printf(TEXT("Se Cancela Habilidad")));
-	GetCharacterMovement()->bOrientRotationToMovement = true;
-	bUseControllerRotationYaw = false;
-	bEnabledAbility = false;
+   if (bEnabledAbility)
+   {
+      ShowMsg(FString::Printf(TEXT("Se Cancela Habilidad")));
+      GetCharacterMovement()->bOrientRotationToMovement = true;
+      bUseControllerRotationYaw = false;
+      bEnabledAbility = false;
+   }
+  
+      bLookAt=true;
+  
 }
+
 
 void ANecroLifeCharacter::AplyAction()
 {
-	if (bEnabledAbility)
-	{
-		ShowMsg(FString::Printf(TEXT("Ability Ejecuted")));
-		GetCharacterMovement()->bOrientRotationToMovement = true;
-		bUseControllerRotationYaw = false;
-		bEnabledAbility = false;
-	}else
-	{
-		ShowMsg(FString::Printf(TEXT("Se ejecuta Ataque Melee")));
-	}
-		
+   if (bEnabledAbility)
+   {
+      ShowMsg(FString::Printf(TEXT("Ability Ejecuted")));
+      GetCharacterMovement()->bOrientRotationToMovement = true;
+      bUseControllerRotationYaw = false;
+      bEnabledAbility = false;
+   }else
+   {
+      ShowMsg(FString::Printf(TEXT("Se ejecuta Ataque Melee")));
+   }
+     
 }
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ANecroLifeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	// Set up action bindings
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
-		
-		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
-		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Move);
-		EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Look);
-		// Looking
-		// EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Look);
-		EnhancedInputComponent->BindAction(CameraBoomAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::SetBoomLength);
-		EnhancedInputComponent->BindAction(AbilityAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::AbilityEnabled);
-		EnhancedInputComponent->BindAction(AbilityCancelAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::AbilityDisambled);
-		///Dash//////////////////
-		EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Dash);
-		//ACTION!!!
-		EnhancedInputComponent->BindAction(Action, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::AplyAction);
-	}
-	else
-	{
-		UE_LOG(LogNecroLife, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
-	}
+   // Set up action bindings
+   if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
+     
+      // Jumping
+      EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
+      EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+      // Moving
+      EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Move);
+      EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Look);
+      // Looking
+      // EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Look);
+      EnhancedInputComponent->BindAction(MouseRightDown,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnRightMouseDown);
+      EnhancedInputComponent->BindAction(MouseRightUp,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnRightMouseUp);
+
+      EnhancedInputComponent->BindAction(MouseLeftDown,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnLeftMouseDown);
+      EnhancedInputComponent->BindAction(MouseLeftUp,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnLeftMouseUp);
+     // EnhancedInputComponent->BindAction(MouseRightDown,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnRightMouseUp);
+      
+      EnhancedInputComponent->BindAction(CameraBoomAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::SetBoomLength);
+      EnhancedInputComponent->BindAction(AbilityAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::AbilityEnabled);
+      EnhancedInputComponent->BindAction(AbilityCancelAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::AbilityDisambled);
+      ///Dash//////////////////
+      EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Dash);
+      //ACTION!!!
+      EnhancedInputComponent->BindAction(Action, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::AplyAction);
+   }
+   else
+   {
+      UE_LOG(LogNecroLife, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+   }
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ANecroLifeCharacter::Move(const FInputActionValue& Value)
 {
-	// input is a Vector2D
-	FVector2D MovementVector = Value.Get<FVector2D>();
+   // input is a Vector2D
+   FVector2D MovementVector = Value.Get<FVector2D>();
+   
+   // route the input
+   DoMove(MovementVector.X, MovementVector.Y);
+}
+void ANecroLifeCharacter::DoMove(float Right, float Forward)
+{
+   if (GetController() != nullptr)
+   {
+      // find out which way is forward
+      const FRotator Rotation = GetController()->GetControlRotation();
+      const FRotator YawRotation(0, Rotation.Yaw, 0);
 
-	// route the input
-	DoMove(MovementVector.X, MovementVector.Y);
+
+      // get forward vector
+      const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+
+
+      // get right vector
+      const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+
+      // add movement
+    //  AddMovementInput(ForwardDirection, Forward);
+    //  AddMovementInput(RightDirection, Right);
+      
+       FRotator DeltaRotation = FRotator(0, Right*SpinSpeed, 0);
+            AddActorLocalRotation(DeltaRotation);
+       AddMovementInput(GetActorForwardVector(), Forward);
+    
+      // AddMovementInput(GetActorRightVector(), Right);
+      //AddControllerYawInput(Right);
+     // AddActorLocalRotation(GetActorRightVector(),Right);
+   }
+}
+
+void ANecroLifeCharacter::OnRightMouseDown(const FInputActionValue& Value)
+{
+   if (Value.Get<bool>())
+   {
+       bRightMouseDown=true;
+         bAlignCamera = true;
+      ShowMsg(TEXT("Manda a alinear"));
+      FRotator CurrentRot = CameraBoom->GetComponentRotation();
+      // Mantiene pitch actual, ajusta yaw al del jugador
+      TargetRotationCamera = FRotator(CurrentRot.Pitch, GetActorRotation().Yaw, CurrentRot.Roll);
+     // CameraBoom->SetRelativeRotation(FRotator(CurrentRot.Pitch, GetActorRotation().Yaw, CurrentRot.Roll));
+      //CameraBoom->SetWorldRotation(FRotator(CurrentRot.Pitch, GetActorRotation().Yaw, CurrentRot.Roll));
+      
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//void ANecroLifeCharacter::OnRightMouseDown(FInputActionValue& Value) { bRightMouseDown = true; }
+void ANecroLifeCharacter::OnRightMouseUp()
+{
+   bRightMouseDown = false;
+}
+
+void ANecroLifeCharacter::OnLeftMouseDown()  { bLeftMouseDown = true; }
+void ANecroLifeCharacter::OnLeftMouseUp()    { bLeftMouseDown = false; }
+
+void ANecroLifeCharacter::AlignCamera(float DeltaTime) 
+{
+   if (bAlignCamera)
+   {
+      ShowMsg(TEXT("Entra a alinear"));
+      if (!bRightMouseDown) return;
+      ShowMsg(TEXT("no pasa a alinear"));
+      FRotator CurrentRot = CameraBoom->GetComponentRotation();
+      // Interpolamos suavemente hacia el objetivo
+      FRotator NewRot = FMath::RInterpTo(CurrentRot, TargetRotationCamera, DeltaTime, 5.0f);
+      CameraBoom->SetRelativeRotation(TargetRotationCamera);
+   }
 }
 
 void ANecroLifeCharacter::Look(const FInputActionValue& Value)
 {
-	// input is a Vector2D
-	FVector2D LookAxisVector = Value.Get<FVector2D>();
-
-	// route the input
-	DoLook(LookAxisVector.X, LookAxisVector.Y);
-
+  // if (!bRightMouseDown)
+//   {
+   // input is a Vector2D
+   FVector2D LookAxisVector = Value.Get<FVector2D>();
+   // route the input
+   DoLook(LookAxisVector.X, LookAxisVector.Y);
+ //  }
 }
+
 
 void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
 {
-	if (GetController() != nullptr)
-	{
-		// add yaw and pitch input to controller
-		AddControllerYawInput(Yaw);
-		AddControllerPitchInput(Pitch);
-	}
+ /*  if (GetController() != nullptr)
+   {
+      // add yaw and pitch input to controller
+      AddControllerYawInput(Yaw);      
+      AddControllerPitchInput(Pitch);
+            //bLookAt=false;
+   }
+   //CameraBoom->SetRelativeRotation(FRotator(-45.0f, Yaw, 0.0f));*/
+   if (bLeftMouseDown)
+   {
+      CameraBoom->AddRelativeRotation(FRotator(Pitch, Yaw, 0.0f));
+   }
 }
 
-void ANecroLifeCharacter::DoMove(float Right, float Forward)
-{
-	if (GetController() != nullptr)
-	{
-		// find out which way is forward
-		const FRotator Rotation = GetController()->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 45);
 
-		// get forward vector
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 
-		// get right vector 
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
-		// add movement 
-		AddMovementInput(ForwardDirection, Forward);
-		AddMovementInput(RightDirection, Right);
-	}
-}
 
 
 void ANecroLifeCharacter::DoJumpStart()
 {
-	// signal the character to jump
-	Jump();
+   // signal the character to jump
+   Jump();
 }
+
 
 void ANecroLifeCharacter::DoJumpEnd()
 {
-	// signal the character to stop jumping
-	StopJumping();
+   // signal the character to stop jumping
+   StopJumping();
 }
+
 
 void ANecroLifeCharacter::BeginPlay()
 {
-	Super::BeginPlay();
+   Super::BeginPlay();
 
-	APlayerController* PC = Cast<APlayerController>(GetController());
-	if (PC)
-	{
-		if (ULocalPlayer* LocalPlayer = PC->GetLocalPlayer())
-		{
-			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = 
-				ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(LocalPlayer))
-			{
-				if (InputMapping) // asegurate de asignarlo en el editor
-				{
-					Subsystem->AddMappingContext(InputMapping, 0);
-				}
-			}
-		}
-	}
+
+   APlayerController* PC = Cast<APlayerController>(GetController());
+   if (PC)
+   {
+      if (ULocalPlayer* LocalPlayer = PC->GetLocalPlayer())
+      {
+         if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+            ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(LocalPlayer))
+         {
+            if (InputMapping) // asegurate de asignarlo en el editor
+            {
+               Subsystem->AddMappingContext(InputMapping, 0);
+            }
+         }
+      }
+   }
 }
+
 
 void ANecroLifeCharacter::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
-	
-	UpdateAbilityPointer();
-	LookToCastAbility();
+   Super::Tick(DeltaTime);
+  
+   UpdateAbilityPointer();
+   LookToCastAbility();
+
+   if (bAlignCamera)
+   {
+      AlignCamera(DeltaTime);
+      // Si ya llegó al target, dejamos de alinear
+     
+      if (FMath::IsNearlyEqual(GetActorRotation().Yaw, TargetRotationCamera.Yaw, 0.1f))
+      {
+         ShowMsg(TEXT("se alinea"));
+         bAlignCamera = false;
+      }      
+   }
 }
+
 
 void ANecroLifeCharacter::ShowMsg(FString Msg)
 {
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green,
-				Msg);
-	}
+   if (GEngine)
+   {
+      GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green,
+            Msg);
+   }
 }
+
 
 void ANecroLifeCharacter::UpdateAbilityPointer()
 {
-	APlayerController* PC = Cast<APlayerController>(GetController());
-	if (!PC) return;
+   APlayerController* PC = Cast<APlayerController>(GetController());
+   if (!PC) return;
 
-	FHitResult HitResult;
-	if (PC->GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
-	{
-		FVector PlayerPos = GetActorLocation();
-		FVector ToMouse = HitResult.Location - PlayerPos;
-		ToMouse.Z = 0;
 
-		if (ToMouse.Size() > AbilityPointerMaxDistance)
-		{
-			ToMouse = ToMouse.GetSafeNormal() * AbilityPointerMaxDistance;
-		}
+   FHitResult HitResult;
+   if (PC->GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
+   {
+      FVector PlayerPos = GetActorLocation();
+      FVector ToMouse = HitResult.Location - PlayerPos;
+      ToMouse.Z = 0;
 
-		CachedAbilityPointer = PlayerPos + ToMouse;
 
-		// Debug para verlo
-		// Aca habria que dibujar lo que quede en el juego mas adelante
-		//DrawDebugLine(GetWorld(), PlayerPos, CachedAbilityPointer, FColor::Green, false, -1.f, 0, 2.f);
-		DrawDebugSphere(GetWorld(), CachedAbilityPointer, 20.f, 12, FColor::Red, false, -1.f);
-	}
+      if (ToMouse.Size() > AbilityPointerMaxDistance)
+      {
+         ToMouse = ToMouse.GetSafeNormal() * AbilityPointerMaxDistance;
+      }
+
+
+      CachedAbilityPointer = PlayerPos + ToMouse;
+
+
+      // Debug para verlo
+      // Aca habria que dibujar lo que quede en el juego mas adelante
+      //DrawDebugLine(GetWorld(), PlayerPos, CachedAbilityPointer, FColor::Green, false, -1.f, 0, 2.f);
+      DrawDebugSphere(GetWorld(), CachedAbilityPointer, 20.f, 12, FColor::Red, false, -1.f);
+   }
 }
+
 
 void ANecroLifeCharacter::LookToCastAbility()
 {
-	// Interpola suavemente hacia la rotación deseada
-	if (bEnabledAbility)
-	{
-		//FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, 100.0f); 
-		// el último número es la velocidad de rotación (5.0f es moderado)
-		
-		//SetActorRotation(NewRotation);
-		FVector PlayerPos = GetActorLocation();
-		FVector ToMouse = CachedAbilityPointer - PlayerPos;
-		ToMouse.Z = 0;
-		SetActorRotation(ToMouse.Rotation());
-		DrawDebugCone(GetWorld(),PlayerPos,ToMouse,450.0f,0.5,0.5,12,FColor::Blue,false,0.1f);
-	}
+   // Interpola suavemente hacia la rotación deseada
+   if (bEnabledAbility)
+   {
+      //FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, 100.0f);
+      // el último número es la velocidad de rotación (5.0f es moderado)
+     
+      //SetActorRotation(NewRotation);
+      FVector PlayerPos = GetActorLocation();
+      FVector ToMouse = CachedAbilityPointer - PlayerPos;
+      ToMouse.Z = 0;
+      SetActorRotation(ToMouse.Rotation());
+      DrawDebugCone(GetWorld(),PlayerPos,ToMouse,450.0f,0.5,0.5,12,FColor::Blue,false,0.1f);
+   }
 }
+
 
 void ANecroLifeCharacter::Dash()
 {
-	if (!bCanDash || bIsDashing || !Attribute) return;
-	bIsDashing = true;
-	bCanDash = false;
-	FVector DashDirection = GetActorForwardVector();
-	LaunchCharacter(DashDirection * Attribute->DashStrength, true, true);
-
-	GetWorldTimerManager().SetTimer(DashTimerHandle, this, &ANecroLifeCharacter::StopDash, Attribute->DashDuration, false,0.5f);
+   if (!bCanDash || bIsDashing || !Attribute) return;
+   bIsDashing = true;
+   bCanDash = false;
+   FVector DashDirection = GetActorForwardVector();
+   LaunchCharacter(DashDirection * Attribute->DashStrength, true, true);
+   GetWorldTimerManager().SetTimer(DashTimerHandle, this, &ANecroLifeCharacter::StopDash, Attribute->DashDuration, false,0.5f);
 }
+
 
 void ANecroLifeCharacter::StopDash()
 {
-	bIsDashing = false;
-	GetWorldTimerManager().SetTimer(CooldownTimerHandle, [this]()
-	{
-		bCanDash = true;
-	}, Attribute->DashCooldown, false);
+   bIsDashing = false;
+   GetWorldTimerManager().SetTimer(CooldownTimerHandle, [this]()
+   {
+      bCanDash = true;
+   }, Attribute->DashCooldown, false);
 }
-
