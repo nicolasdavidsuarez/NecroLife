@@ -29,8 +29,8 @@ ANecroLifeCharacter::ANecroLifeCharacter()
 
 
    // Configure character movement
-   GetCharacterMovement()->bOrientRotationToMovement = false;
-   GetCharacterMovement()->RotationRate = FRotator(0.0f, 7000.0f, 0.0f);
+   GetCharacterMovement()->bOrientRotationToMovement = true;
+   GetCharacterMovement()->RotationRate = FRotator(0.0f, 400.0f, 0.0f);
 
 
    // Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
@@ -47,8 +47,8 @@ ANecroLifeCharacter::ANecroLifeCharacter()
    CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
    CameraBoom->SetupAttachment(RootComponent);
    CameraBoom->TargetArmLength = 800.0f;
-   CameraBoom->bUsePawnControlRotation =false;
-   CameraBoom->bInheritYaw=false;
+   CameraBoom->bUsePawnControlRotation = true;
+   CameraBoom->bInheritYaw=true;
 
 
    // Create a follow camera
@@ -77,7 +77,8 @@ void ANecroLifeCharacter::SetBoomLength(const FInputActionValue& Value)
       CameraBoom->SetRelativeRotation(FRotator(FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-10,-45),armLength), 0.0f, 0.0f));
    }
    else
-   {     
+   {
+     
       armLength -= CameraBoom->TargetArmLength*0.05f;
       CameraBoom->TargetArmLength = armLength;
       CameraBoom->SetRelativeRotation(FRotator(FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-10,-45),armLength), 0.0f, 0.0f));
@@ -147,6 +148,16 @@ void ANecroLifeCharacter::AplyAction()
      
 }
 
+void ANecroLifeCharacter::OnRightMouseDown()
+{
+   bMouseRightDown = true;
+}
+
+void ANecroLifeCharacter::OnRightMouseUp()
+{
+   bMouseRightDown = false;
+}
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ANecroLifeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -162,13 +173,10 @@ void ANecroLifeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
       EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Look);
       // Looking
       // EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Look);
+
       EnhancedInputComponent->BindAction(MouseRightDown,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnRightMouseDown);
       EnhancedInputComponent->BindAction(MouseRightUp,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnRightMouseUp);
 
-      EnhancedInputComponent->BindAction(MouseLeftDown,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnLeftMouseDown);
-      EnhancedInputComponent->BindAction(MouseLeftUp,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnLeftMouseUp);
-     // EnhancedInputComponent->BindAction(MouseRightDown,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnRightMouseUp);
-      
       EnhancedInputComponent->BindAction(CameraBoomAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::SetBoomLength);
       EnhancedInputComponent->BindAction(AbilityAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::AbilityEnabled);
       EnhancedInputComponent->BindAction(AbilityCancelAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::AbilityDisambled);
@@ -187,10 +195,36 @@ void ANecroLifeCharacter::Move(const FInputActionValue& Value)
 {
    // input is a Vector2D
    FVector2D MovementVector = Value.Get<FVector2D>();
-   
    // route the input
    DoMove(MovementVector.X, MovementVector.Y);
 }
+
+
+void ANecroLifeCharacter::Look(const FInputActionValue& Value)
+{
+   // input is a Vector2D
+   FVector2D LookAxisVector = Value.Get<FVector2D>();
+
+
+   // route the input
+   DoLook(LookAxisVector.X, LookAxisVector.Y);
+
+
+}
+
+
+void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
+{
+   if (GetController() != nullptr&&bMouseRightDown)
+   {
+      // add yaw and pitch input to controller
+      AddControllerYawInput(Yaw);
+      AddControllerPitchInput(Pitch);
+      //bLookAt=false;
+   }
+}
+
+
 void ANecroLifeCharacter::DoMove(float Right, float Forward)
 {
    if (GetController() != nullptr)
@@ -209,89 +243,13 @@ void ANecroLifeCharacter::DoMove(float Right, float Forward)
 
 
       // add movement
-    //  AddMovementInput(ForwardDirection, Forward);
-    //  AddMovementInput(RightDirection, Right);
-      
-       FRotator DeltaRotation = FRotator(0, Right*SpinSpeed, 0);
-            AddActorLocalRotation(DeltaRotation);
-       AddMovementInput(GetActorForwardVector(), Forward);
-    
-      // AddMovementInput(GetActorRightVector(), Right);
-      //AddControllerYawInput(Right);
-     // AddActorLocalRotation(GetActorRightVector(),Right);
+      AddMovementInput(ForwardDirection, Forward);
+      AddMovementInput(RightDirection, Right);
+     
+   // AddMovementInput(GetActorForwardVector(), Forward);
+   // AddMovementInput(GetActorForwardVector(), Right);
    }
 }
-
-void ANecroLifeCharacter::OnRightMouseDown(const FInputActionValue& Value)
-{
-   if (Value.Get<bool>())
-   {
-       bRightMouseDown=true;
-         bAlignCamera = true;
-      ShowMsg(TEXT("Manda a alinear"));
-      FRotator CurrentRot = CameraBoom->GetComponentRotation();
-      // Mantiene pitch actual, ajusta yaw al del jugador
-      TargetRotationCamera = FRotator(CurrentRot.Pitch, GetActorRotation().Yaw, CurrentRot.Roll);
-     // CameraBoom->SetRelativeRotation(FRotator(CurrentRot.Pitch, GetActorRotation().Yaw, CurrentRot.Roll));
-      //CameraBoom->SetWorldRotation(FRotator(CurrentRot.Pitch, GetActorRotation().Yaw, CurrentRot.Roll));
-      
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//void ANecroLifeCharacter::OnRightMouseDown(FInputActionValue& Value) { bRightMouseDown = true; }
-void ANecroLifeCharacter::OnRightMouseUp()
-{
-   bRightMouseDown = false;
-}
-
-void ANecroLifeCharacter::OnLeftMouseDown()  { bLeftMouseDown = true; }
-void ANecroLifeCharacter::OnLeftMouseUp()    { bLeftMouseDown = false; }
-
-void ANecroLifeCharacter::AlignCamera(float DeltaTime) 
-{
-   if (bAlignCamera)
-   {
-      ShowMsg(TEXT("Entra a alinear"));
-      if (!bRightMouseDown) return;
-      ShowMsg(TEXT("no pasa a alinear"));
-      FRotator CurrentRot = CameraBoom->GetComponentRotation();
-      // Interpolamos suavemente hacia el objetivo
-      FRotator NewRot = FMath::RInterpTo(CurrentRot, TargetRotationCamera, DeltaTime, 5.0f);
-      CameraBoom->SetRelativeRotation(TargetRotationCamera);
-   }
-}
-
-void ANecroLifeCharacter::Look(const FInputActionValue& Value)
-{
-  // if (!bRightMouseDown)
-//   {
-   // input is a Vector2D
-   FVector2D LookAxisVector = Value.Get<FVector2D>();
-   // route the input
-   DoLook(LookAxisVector.X, LookAxisVector.Y);
- //  }
-}
-
-
-void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
-{
- /*  if (GetController() != nullptr)
-   {
-      // add yaw and pitch input to controller
-      AddControllerYawInput(Yaw);      
-      AddControllerPitchInput(Pitch);
-            //bLookAt=false;
-   }
-   //CameraBoom->SetRelativeRotation(FRotator(-45.0f, Yaw, 0.0f));*/
-   if (bLeftMouseDown)
-   {
-      CameraBoom->AddRelativeRotation(FRotator(Pitch, Yaw, 0.0f));
-   }
-}
-
-
 
 
 
@@ -339,18 +297,6 @@ void ANecroLifeCharacter::Tick(float DeltaTime)
   
    UpdateAbilityPointer();
    LookToCastAbility();
-
-   if (bAlignCamera)
-   {
-      AlignCamera(DeltaTime);
-      // Si ya llegó al target, dejamos de alinear
-     
-      if (FMath::IsNearlyEqual(GetActorRotation().Yaw, TargetRotationCamera.Yaw, 0.1f))
-      {
-         ShowMsg(TEXT("se alinea"));
-         bAlignCamera = false;
-      }      
-   }
 }
 
 
@@ -420,6 +366,8 @@ void ANecroLifeCharacter::Dash()
    bCanDash = false;
    FVector DashDirection = GetActorForwardVector();
    LaunchCharacter(DashDirection * Attribute->DashStrength, true, true);
+
+
    GetWorldTimerManager().SetTimer(DashTimerHandle, this, &ANecroLifeCharacter::StopDash, Attribute->DashDuration, false,0.5f);
 }
 

@@ -73,21 +73,6 @@ protected:
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* MouseLookAction;
 
-   //MOuse rigth
-   UPROPERTY(EditAnywhere, Category="Input")
-   UInputAction* MouseRightDown;
-   //MOuse rigth up
-   UPROPERTY(EditAnywhere, Category="Input")
-   UInputAction* MouseRightUp;
-
-   //MOuse Left
-   UPROPERTY(EditAnywhere, Category="Input")
-   UInputAction* MouseLeftDown;
-   //MOuse Left up
-   UPROPERTY(EditAnywhere, Category="Input")
-   UInputAction* MouseLeftUp;
-
-
 
    /** Ability Action */
    UPROPERTY(EditAnywhere, Category="Input")
@@ -110,9 +95,12 @@ protected:
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* LookAction;
 
-   /** Look Input Action */
-   UPROPERTY(EditAnywhere, Category="Attributes")
-   float SpinSpeed=1;
+   //MOUSE DERECHO
+   UPROPERTY(EditAnywhere, Category="Input")
+   UInputAction* MouseRightDown;
+   //MOuse rigth up
+   UPROPERTY(EditAnywhere, Category="Input")
+   UInputAction* MouseRightUp;
 
 
 
@@ -128,6 +116,8 @@ protected:
    void AbilityEnabled(const FInputActionValue& InputActionValue);
    void AbilityDisambled(const FInputActionValue& InputActionValue);
    void AplyAction();
+   void OnRightMouseDown();
+   void OnRightMouseUp();
    /** Initialize input action bindings */
    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
@@ -156,13 +146,6 @@ public:
    UFUNCTION(BlueprintCallable, Category="Input")
    virtual void DoMove(float Right, float Forward);
 
-protected:
-   void OnRightMouseDown(const FInputActionValue& Value);
-   void OnRightMouseUp();
-   void OnLeftMouseDown();
-   void OnLeftMouseUp();
-   void AlignCamera(float DeltaTime);
-
 
    /** Handles look inputs from either controls or UI interfaces */
    UFUNCTION(BlueprintCallable, Category="Input")
@@ -187,6 +170,7 @@ FRotator CurrentRotation,TargetRotation;
    //variables necesarias para dash
    bool bIsDashing = false;
    bool bCanDash = true;
+   bool bMouseRightDown = false;
    FTimerHandle DashTimerHandle;
    FTimerHandle CooldownTimerHandle;
    //
@@ -194,12 +178,7 @@ FRotator CurrentRotation,TargetRotation;
    FVector GetAbilityPointerPosition() const { return CachedAbilityPointer; }
    bool bEnabledAbility = false;
    bool bLookAt = false;
-   bool bRightMouseDown = false;
-   bool bLeftMouseDown=false;
-   /////variables para alinear camara
-   bool bAlignCamera = false;
-   FRotator TargetRotationCamera;
-   ///////////////////////////////////
+  
    /** Returns CameraBoom subobject **/
    FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 
