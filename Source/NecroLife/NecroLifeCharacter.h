@@ -48,6 +48,9 @@ class ANecroLifeCharacter : public ACharacter
   
 protected:
 
+   //habilitar correr con el bloqueo de mayusculas
+   UPROPERTY(EditAnywhere, Category="Input")
+   UInputAction* RunAction;
 
    /** Jump Input Action */
    UPROPERTY(EditAnywhere, Category="Input")
@@ -102,6 +105,26 @@ protected:
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* MouseRightUp;
 
+   //MOUSE medio
+   UPROPERTY(EditAnywhere, Category="Input")
+   UInputAction* MouseMiddleDown;
+   //MOuse rigth up
+   UPROPERTY(EditAnywhere, Category="Input")
+   UInputAction* MouseMiddleUp;
+
+   //Valores para la camara
+   /*UPROPERTY(EditAnywhere, Category="Camera in game")
+   float MaxDistanceToCursor=1200;
+   UPROPERTY(EditAnywhere, Category="Camera in game")
+   float MinDistanceToCursor=200;*/
+   UPROPERTY(EditAnywhere, Category="Camera in game")
+   float MaxPitch=-45;
+   UPROPERTY(EditAnywhere, Category="Camera in game")
+   float MinPitch=-25;
+   UPROPERTY(EditAnywhere, Category="Camera in game")
+   float MaxArmLenght=1200;
+   UPROPERTY(EditAnywhere, Category="Camera in game")
+   float MinArmLenght=200;
 
 
 public:
@@ -118,6 +141,9 @@ protected:
    void AplyAction();
    void OnRightMouseDown();
    void OnRightMouseUp();
+   void OnMiddleMouseUp();
+   void OnMiddleMouseDown();
+   void RunActivated(const FInputActionValue& Value);
    /** Initialize input action bindings */
    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
@@ -127,7 +153,7 @@ protected:
 
    /** Called for movement input */
    void Move(const FInputActionValue& Value);
-
+ 
 
    /** Called for looking input */
    void Look(const FInputActionValue& Value);
@@ -171,6 +197,8 @@ FRotator CurrentRotation,TargetRotation;
    bool bIsDashing = false;
    bool bCanDash = true;
    bool bMouseRightDown = false;
+   bool bMouseMiddleDown = false;
+   bool bIsRunning = false;
    FTimerHandle DashTimerHandle;
    FTimerHandle CooldownTimerHandle;
    //

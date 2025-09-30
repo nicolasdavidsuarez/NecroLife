@@ -48,6 +48,7 @@ ANecroLifeCharacter::ANecroLifeCharacter()
    CameraBoom->SetupAttachment(RootComponent);
    CameraBoom->TargetArmLength = 800.0f;
    CameraBoom->bUsePawnControlRotation = true;
+   CameraBoom->bInheritPitch = true;
    CameraBoom->bInheritYaw=true;
 
 
@@ -68,20 +69,22 @@ void ANecroLifeCharacter::SetBoomLength(const FInputActionValue& Value)
    FVector2D InputVector = Value.Get<FVector2D>();
    float armLength = CameraBoom->TargetArmLength;
   
-   if (InputVector.X>0&&armLength<1200)
+   if (InputVector.X>0&&armLength<MaxArmLenght)
    {
       armLength += CameraBoom->TargetArmLength*0.05f;
       CameraBoom->TargetArmLength = armLength;
       //FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-45,-10),armLength)
       //CameraBoom->add
-      CameraBoom->SetRelativeRotation(FRotator(FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-10,-45),armLength), 0.0f, 0.0f));
+      //CameraBoom->SetRelativeRotation(FRotator(FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-10,-45),armLength), 0.0f, 0.0f));
    }
    else
-   {
-     
+   {     
       armLength -= CameraBoom->TargetArmLength*0.05f;
-      CameraBoom->TargetArmLength = armLength;
-      CameraBoom->SetRelativeRotation(FRotator(FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-10,-45),armLength), 0.0f, 0.0f));
+      if (armLength>MinArmLenght)
+      {
+         CameraBoom->TargetArmLength = armLength;
+         //  CameraBoom->SetRelativeRotation(FRotator(FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-10,-45),armLength), 0.0f, 0.0f));
+      }
    }
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -94,8 +97,6 @@ void ANecroLifeCharacter::AbilityEnabled(const FInputActionValue& InputActionVal
    {
       GetCharacterMovement()->bOrientRotationToMovement = false;
       bUseControllerRotationYaw = true;
-
-
       FHitResult HitResult;
   
       APlayerController* PC = Cast<APlayerController>(GetController());
@@ -158,6 +159,35 @@ void ANecroLifeCharacter::OnRightMouseUp()
    bMouseRightDown = false;
 }
 
+void ANecroLifeCharacter::OnMiddleMouseUp()
+{
+   bMouseMiddleDown = false;
+}
+
+void ANecroLifeCharacter::OnMiddleMouseDown()
+{
+   bMouseMiddleDown = true;
+}
+
+void ANecroLifeCharacter::RunActivated(const FInputActionValue& Value)
+{
+   if (Value.Get<bool>())
+   {
+      ShowMsg(TEXT("se cambia de estado de correr a trotar"));
+      bIsRunning =!bIsRunning;
+      GetCharacterMovement()->MaxWalkSpeed = bIsRunning? 2000.0f:500.0f;
+   }
+   /*  if (bIsRunning)
+     {
+        GetCharacterMovement()->MaxWalkSpeed = 500.f;
+        bIsRunning = false;
+     }else{
+        GetCharacterMovement()->MaxWalkSpeed = 1500.f;
+        bIsRunning = true;
+     }*/      
+}
+
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ANecroLifeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -177,11 +207,17 @@ void ANecroLifeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
       EnhancedInputComponent->BindAction(MouseRightDown,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnRightMouseDown);
       EnhancedInputComponent->BindAction(MouseRightUp,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnRightMouseUp);
 
+      EnhancedInputComponent->BindAction(MouseMiddleDown,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnMiddleMouseDown);
+      EnhancedInputComponent->BindAction(MouseMiddleUp,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnMiddleMouseUp);
+
       EnhancedInputComponent->BindAction(CameraBoomAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::SetBoomLength);
       EnhancedInputComponent->BindAction(AbilityAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::AbilityEnabled);
       EnhancedInputComponent->BindAction(AbilityCancelAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::AbilityDisambled);
       ///Dash//////////////////
       EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Dash);
+      //correr////////////
+      EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::RunActivated);
+      
       //ACTION!!!
       EnhancedInputComponent->BindAction(Action, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::AplyAction);
    }
@@ -204,12 +240,8 @@ void ANecroLifeCharacter::Look(const FInputActionValue& Value)
 {
    // input is a Vector2D
    FVector2D LookAxisVector = Value.Get<FVector2D>();
-
-
    // route the input
    DoLook(LookAxisVector.X, LookAxisVector.Y);
-
-
 }
 
 
@@ -219,9 +251,31 @@ void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
    {
       // add yaw and pitch input to controller
       AddControllerYawInput(Yaw);
-      AddControllerPitchInput(Pitch);
+     //AddControllerPitchInput(Pitch);
       //bLookAt=false;
    }
+   if (GetController() != nullptr&&bMouseMiddleDown)
+   {
+      ShowMsg(FString::Printf(TEXT("middle button activa el pitch")));
+      // AddControllerPitchInput(Pitch);
+      //CameraBoom->SetRelativeRotation(FRotator(FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-10,-45),armLength), 0.0f, 0.0f));
+      //  CameraBoom->GetRelativeRotation().Pitch;
+      
+      if(CameraBoom->GetRelativeRotation().Pitch+Pitch>=MaxPitch&&CameraBoom->GetRelativeRotation().Pitch+Pitch<=MinPitch)
+      {
+         CameraBoom->AddRelativeRotation(FRotator(Pitch,0.0f,0.0f));
+         ShowMsg(FString::Printf(TEXT("Pitch: %f"),CameraBoom->GetRelativeRotation().Pitch));
+      
+      }else{
+         if (Pitch!=0)
+         {
+            Pitch*=-1.0f;
+            CameraBoom->AddRelativeRotation(FRotator(Pitch,0.0f,0.0f));
+         }
+         ShowMsg(FString::Printf(TEXT("Pitch: %f"),Pitch));
+      }
+   }
+  // AddControllerPitchInput(Pitch);
 }
 
 
