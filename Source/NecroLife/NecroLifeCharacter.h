@@ -9,14 +9,18 @@
 #include "Logging/LogMacros.h"
 #include "Components/Public/UHealthComponent.h"
 #include "Components/Public/AttributeComponent.h"
+#include "Components/Public/InventoryComponent.h"
+#include "Engine/EngineTypes.h"
 #include "NecroLifeCharacter.generated.h"
+
 
 
 class USpringArmComponent;
 class UCameraComponent;
 class UInputAction;
-class UHealthComponent;
+class UUHealthComponent;
 class UAttributeComponent;
+class UInventoryComponent;
 struct FInputActionValue;
 
 
@@ -86,6 +90,9 @@ protected:
    // Action
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* Action;
+   //curar si tiene pocion de cura
+   UPROPERTY(EditAnywhere, Category="Input")
+   UInputAction* ApplyPosion;
   
    //distancia del puntero
    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability")
@@ -144,6 +151,7 @@ protected:
    void OnMiddleMouseUp();
    void OnMiddleMouseDown();
    void RunActivated(const FInputActionValue& Value);
+   void TakePosion();
    /** Initialize input action bindings */
    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
@@ -166,6 +174,9 @@ public:
    //componente atributos
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UAttributeComponent* Attribute;
+    //componente inventario
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
+   UInventoryComponent* Inventory;
 
 
    /** Handles move inputs from either controls or UI interfaces */

@@ -4,6 +4,7 @@
 #include "Components/Public/UHealthComponent.h"
 
 
+
 // Sets default values for this component's properties
 UUHealthComponent::UUHealthComponent()
 {
@@ -41,7 +42,21 @@ void UUHealthComponent::TakeDamage(float Amount)
 	{
 		CurrentHealth = 0.f;
 		//disparar evento para cuando muere
+		
 	}
+	OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
+}
+
+void UUHealthComponent::ApplyHealing(float Amount)
+{
+	if (Amount+CurrentHealth > MaxHealth)
+	{
+		CurrentHealth = MaxHealth;
+	}else
+	{
+		CurrentHealth += Amount;
+	}
+	OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
 }
 
 void UUHealthComponent::ApplyDamageOverTime(float DamagePerTick, float Interval, float TotalDuration)
@@ -49,10 +64,12 @@ void UUHealthComponent::ApplyDamageOverTime(float DamagePerTick, float Interval,
 	if(DamagePerTick <= 0.f||Interval <= 0.f||TotalDuration <= 0.f) return;
 	DamageOverTime=DamagePerTick;
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle_DOT,this,&UUHealthComponent::ApplyDamageOverTimer,Interval,true);
+	OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
 }
 
 void UUHealthComponent::ApplyDamageOverTimer()
 {
 	TakeDamage(DamageOverTime);
+	OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
 }
 

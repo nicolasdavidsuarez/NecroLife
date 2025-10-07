@@ -9,6 +9,8 @@
 #include "TimerManager.h"
 #include "UHealthComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHealthChanged, float, NewHealth, float, MaxHealth);
+
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class NECROLIFE_API UUHealthComponent : public UActorComponent
@@ -29,6 +31,10 @@ public:
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
 	//////////Todas las variables se tratan de escribir en ingles/////////////////////////////////
+	///
+	UPROPERTY(BlueprintAssignable, Category="Health")
+	FOnHealthChanged OnHealthChanged;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Health")
 	float MaxHealth = 100.f;
 
@@ -37,6 +43,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Health")
 	void TakeDamage(float Amount);
+
+	UFUNCTION(BlueprintCallable, Category="Health")
+	void ApplyHealing(float Amount);
 
 
 	//lleva const delante para garantizar que el metodo no cambia los valores. 

@@ -13,12 +13,18 @@
 #include "InputActionValue.h"
 #include "NecroLife.h"
 #include "Components/Public/AttributeComponent.h"
+#include "Components/Public/RPGHelper.h"
+#include "CollisionQueryParams.h"
+#include "Engine/EngineTypes.h"
+#include "Engine/OverlapResult.h"
 
 
 ANecroLifeCharacter::ANecroLifeCharacter()
 {
    // crear y atachar el UHealthComponent
    HealthComponent = CreateDefaultSubobject<UUHealthComponent>(TEXT("HealthComponent"));
+   //crear y atachar Inventario
+   Inventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
    // Set size for collision capsule
    GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
      
@@ -138,6 +144,55 @@ void ANecroLifeCharacter::AplyAction()
 {
    if (bEnabledAbility)
    {
+       //FOverlapResult result;
+      // 🔹 Parámetros del cono
+      float AttackRadius = 300.f;        // Distancia del ataque
+      float AttackAngle = 45.f;          // Mitad del ángulo del cono (en grados)
+    
+     // DrawDebugCone(GetWorld(),GetActorLocation(),,450.0f,0.5,0.5,12,FColor::Blue,false,0.1f);
+      FVector Origin = GetActorLocation();
+      FVector Forward = GetActorForwardVector();
+
+      // 🔹 Buscamos actores cercanos con una esfera
+      TArray<FOverlapResult> Overlaps;
+      FCollisionShape CollisionShape = FCollisionShape::MakeSphere(AttackRadius);
+
+      bool bHit = GetWorld()->OverlapMultiByChannel(
+             Overlaps,
+             Origin,
+             FQuat::Identity,
+             ECC_Pawn,          // Canal de colisión 
+             CollisionShape
+         );
+
+      if (!bHit) return;
+
+      for (auto& Result : Overlaps)
+      {
+         AActor* Other = Result.GetActor();
+         if (!Other || Other == this) continue;
+
+         // 🔹 Vector hacia el otro actor
+         FVector ToTarget = (Other->GetActorLocation() - Origin).GetSafeNormal();
+
+         // 🔹 Calculamos el ángulo con el forward vector
+         float Dot = FVector::DotProduct(Forward, ToTarget);
+         float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
+
+         // 🔹 Si está dentro del cono, aplicamos daño
+         if (AngleToTarget <= AttackAngle)
+         {
+            //UGameplayStatics::ApplyDamage(Other, 20.f, GetController(), this, UDamageType::StaticClass());
+            
+            URPGHelper::ApplyDamage(Other,100);
+
+            // 🔹 (Opcional) debug line
+            DrawDebugLine(GetWorld(), Origin, Other->GetActorLocation(), FColor::Red, false, 1.f, 0, 1.f);
+         }
+      }
+
+      // 🔹 Debug del área del ataque
+      
       ShowMsg(FString::Printf(TEXT("Ability Ejecuted")));
       GetCharacterMovement()->bOrientRotationToMovement = true;
       bUseControllerRotationYaw = false;
@@ -187,6 +242,16 @@ void ANecroLifeCharacter::RunActivated(const FInputActionValue& Value)
      }*/      
 }
 
+void ANecroLifeCharacter::TakePosion()
+{
+   if (Inventory->UseHealtPosion())
+   {
+      HealthComponent->ApplyHealing(30.0f);
+   }else
+   {
+      ShowMsg(FString::Printf(TEXT("don´t have posion")));
+   }
+}
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -217,7 +282,8 @@ void ANecroLifeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
       EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Dash);
       //correr////////////
       EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::RunActivated);
-      
+      ///CUrar si tiene pociones//////////////////
+      EnhancedInputComponent->BindAction(ApplyPosion, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::TakePosion);
       //ACTION!!!
       EnhancedInputComponent->BindAction(Action, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::AplyAction);
    }
@@ -409,6 +475,7 @@ void ANecroLifeCharacter::LookToCastAbility()
       ToMouse.Z = 0;
       SetActorRotation(ToMouse.Rotation());
       DrawDebugCone(GetWorld(),PlayerPos,ToMouse,450.0f,0.5,0.5,12,FColor::Blue,false,0.1f);
+    
    }
 }
 

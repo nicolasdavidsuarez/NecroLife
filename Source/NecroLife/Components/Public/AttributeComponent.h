@@ -17,6 +17,7 @@
 #include "Components/ActorComponent.h"
 #include "AttributeComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnXPChanged, float, XP, float, XPtoNextLevel);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class NECROLIFE_API UAttributeComponent : public UActorComponent
@@ -29,11 +30,31 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dash")
 	float DashStrength = 1500.f;
 
+	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dash")
 	float DashDuration = 0.2f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dash")
 	float DashCooldown = 1.0f;
+
+	//////Level
+	///
+	UFUNCTION(BlueprintCallable, Category="Level")
+	void TakeXP(float Amount);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Level")
+	float XP=0.f;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Level")
+	float XPtoNextLevel=100.f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Level")
+	int Level=0;
+
+	UPROPERTY(BlueprintAssignable, Category="XP_Level")
+	FOnXPChanged OnXPChanged;
+	
 
 protected:
 	// Called when the game starts
@@ -43,4 +64,6 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
+	
+	
 };
