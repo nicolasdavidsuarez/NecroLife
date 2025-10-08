@@ -25,11 +25,12 @@ public:
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 
 public:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Componentes")
-	UStaticMeshComponent* Mesh;
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Datos")
 	UItemData* DatosDelItem;
 
+	UFUNCTION(BlueprintCallable, Category = "Datos")
+	UItemData* GetDatosDelItem() const;
+	
 	
 };

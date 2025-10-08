@@ -3,23 +3,29 @@
 
 #include "Items/Public/ItemRecolectable.h"
 
+#include "Components/Public/RPGHelper.h"
 
 
 AItemRecolectable::AItemRecolectable()
 {
 	mensaje = "Recolectaste";
 	cantidad = 1;
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	RootComponent = Mesh;
+
+}
+
+UItemData* AItemRecolectable::GetDatosDelItem() const
+{
+	return DatosDelItem;
 }
 
 void AItemRecolectable::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	
+// hacer que el otro actor tome los datos del item data
+	if (URPGHelper::PickUpItem(OtherActor, DatosDelItem))
+	{
 		Super::mostrarMensaje(mensaje);
-		
-
 		Destroy();
-
+	}
 
 }

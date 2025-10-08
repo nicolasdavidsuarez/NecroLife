@@ -14,12 +14,12 @@ class NECROLIFE_API UItemData : public UDataAsset
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Datos del Ítem")
-	FText Nombre;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item data")
+	FText Name;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Datos del Ítem")
-	FText Descripcion;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item data")
+	FText Description;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Datos del Ítem")
-	UTexture2D* Icono;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item data")
+	UTexture2D* Icon;
 };

@@ -10,7 +10,7 @@
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPosionChange, int, CantPosiones);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnShowItem, UItemData*, ItemDataToShow);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnShowItem, const TArray<UItemData*>&, ItemsToShow);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class NECROLIFE_API UInventoryComponent : public UActorComponent
@@ -37,9 +37,11 @@ public:
 	FOnShowItem OnShowItem;
 
 	UFUNCTION(BlueprintCallable, Category="Inventory")
-	void PickUpItem(AActor* Aitem);
+	void PickUp(UItemData* Aitem);
 	
-
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
+	TArray<UItemData*> InventoryItems;
+	
 
 protected:
 	// Called when the game starts

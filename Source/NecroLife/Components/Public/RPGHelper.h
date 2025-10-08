@@ -36,7 +36,9 @@ class NECROLIFE_API URPGHelper : public UBlueprintFunctionLibrary
 
 	UFUNCTION(BlueprintCallable, Category="RPG|Attributes")
 	static bool TakePosion(AActor* Target);
-	bool PickUpItem(AActor* Target, AActor* Item);
+
+	UFUNCTION(BlueprintCallable, Category="RPG|Inventory")
+	static bool PickUpItem(AActor* Target, UItemData* Item);
 
 
 	/*UFUNCTION(BlueprintCallable, Category="RPG|Attributes")

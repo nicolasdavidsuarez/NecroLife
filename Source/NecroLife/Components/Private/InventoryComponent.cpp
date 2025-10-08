@@ -36,9 +36,15 @@ bool UInventoryComponent::UseHealtPosion()
 }
 
 
-void UInventoryComponent::PickUpItem(AActor* Aitem)
+void UInventoryComponent::PickUp(UItemData* Aitem)
 {
-	
+	if (UItemData* Item=Cast<UItemData>(Aitem))
+	{
+		/*FString ItemName = Item->GetName();
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, ItemName);*/
+		InventoryItems.Add(Item);
+	}
+	OnShowItem.Broadcast(InventoryItems);
 }
 
 // Called when the game starts

@@ -62,13 +62,13 @@ bool URPGHelper::TakePosion(AActor* Target)
 ///////////////////////////////////////////////////
 ///Inventory Component
 ////////////////////////////////////////////////////
-bool URPGHelper::PickUpItem(AActor* Target, AActor* Item)  //DatosItem  ItemData
+ bool URPGHelper::PickUpItem(AActor* Target, UItemData* Item)  //DatosItem  ItemData
 {
 	if (!Target) return false;
 	if (UInventoryComponent* InventoryComponent = Target->FindComponentByClass<UInventoryComponent>())
 	{
 		//todo to do todo 
-	//	InventoryComponent->PickUp();
+		InventoryComponent->PickUp(Item);
 		return true;
 	}
 	return false;
