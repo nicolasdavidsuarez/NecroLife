@@ -12,8 +12,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "NecroLife.h"
-#include "Components/Public/AttributeComponent.h"
-#include "Components/Public/RPGHelper.h"
+#include "Public/Components/AttributeComponent.h"
+#include "Public/Components/RPGHelper.h"
 #include "CollisionQueryParams.h"
 #include "Engine/EngineTypes.h"
 #include "Engine/OverlapResult.h"
@@ -25,6 +25,9 @@ ANecroLifeCharacter::ANecroLifeCharacter()
    HealthComponent = CreateDefaultSubobject<UUHealthComponent>(TEXT("HealthComponent"));
    //crear y atachar Inventario
    Inventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
+//crear el UAbilityComponent
+   Ability = CreateDefaultSubobject<UAbilityComponent>(TEXT("AbilityComponent"));
+   
    // Set size for collision capsule
    GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
      
@@ -96,7 +99,7 @@ void ANecroLifeCharacter::SetBoomLength(const FInputActionValue& Value)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ANecroLifeCharacter::AbilityEnabled(const FInputActionValue& InputActionValue)
 {
-   int32 pressedKeys = static_cast<int32>(InputActionValue.Get<float>());
+   int32 pressedKeys = static_cast<int32>(InputActionValue.Get<float>())-1;
    FString AbilityName =FString("se entra en modo combate " + FString::FromInt(pressedKeys));
    ShowMsg(AbilityName);
    if (!bEnabledAbility)
@@ -115,13 +118,18 @@ void ANecroLifeCharacter::AbilityEnabled(const FInputActionValue& InputActionVal
          CurrentRotation = GetActorRotation();
          TargetRotation = Direction.Rotation();
          //Controller->SetControlRotation(NewRotation);
-         DrawDebugLine(GetWorld(),GetActorLocation(),TargetLocation,FColor::Emerald,
-            false,3.0f,1,10);
+       //  DrawDebugLine(GetWorld(),GetActorLocation(),TargetLocation,FColor::Emerald,
+         //   false,3.0f,1,10);
+Ability->SelectAbility(pressedKeys);
+         if (Ability && Ability->CurrentAbility)
+         {
+            Ability->UpdateIndicator(HitResult.Location);
+         }
       }
   
       bEnabledAbility = true;      
    }
-  
+   Ability->InitPreview();
 }
 
 
@@ -133,6 +141,7 @@ void ANecroLifeCharacter::AbilityDisambled(const FInputActionValue& InputActionV
       GetCharacterMovement()->bOrientRotationToMovement = true;
       bUseControllerRotationYaw = false;
       bEnabledAbility = false;
+      Ability->ClearIndicator();
    }
   
       bLookAt=true;
@@ -197,6 +206,7 @@ void ANecroLifeCharacter::AplyAction()
       GetCharacterMovement()->bOrientRotationToMovement = true;
       bUseControllerRotationYaw = false;
       bEnabledAbility = false;
+      Ability->ClearIndicator();
    }else
    {
       ShowMsg(FString::Printf(TEXT("Se ejecuta Ataque Melee")));
@@ -249,7 +259,7 @@ void ANecroLifeCharacter::TakePosion()
       HealthComponent->ApplyHealing(30.0f);
    }else
    {
-      ShowMsg(FString::Printf(TEXT("don´t have posion")));
+      ShowMsg(FString::Printf(TEXT("don´t have poison")));
    }
 }
 
@@ -457,6 +467,10 @@ void ANecroLifeCharacter::UpdateAbilityPointer()
       // Aca habria que dibujar lo que quede en el juego mas adelante
       //DrawDebugLine(GetWorld(), PlayerPos, CachedAbilityPointer, FColor::Green, false, -1.f, 0, 2.f);
       DrawDebugSphere(GetWorld(), CachedAbilityPointer, 20.f, 12, FColor::Red, false, -1.f);
+       if (bEnabledAbility)
+       {
+          Ability->UpdatePreview(HitResult.Location);
+       }
    }
 }
 
@@ -474,7 +488,7 @@ void ANecroLifeCharacter::LookToCastAbility()
       FVector ToMouse = CachedAbilityPointer - PlayerPos;
       ToMouse.Z = 0;
       SetActorRotation(ToMouse.Rotation());
-      DrawDebugCone(GetWorld(),PlayerPos,ToMouse,450.0f,0.5,0.5,12,FColor::Blue,false,0.1f);
+      //DrawDebugCone(GetWorld(),PlayerPos,ToMouse,450.0f,0.5,0.5,12,FColor::Blue,false,0.1f);
     
    }
 }

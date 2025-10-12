@@ -7,9 +7,10 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
-#include "Components/Public/UHealthComponent.h"
-#include "Components/Public/AttributeComponent.h"
-#include "Components/Public/InventoryComponent.h"
+#include "Public/Components/UHealthComponent.h"
+#include "Public/Components/AttributeComponent.h"
+#include "Public/Components/InventoryComponent.h"
+#include "Public/Components/AbilityComponent.h"
 #include "Engine/EngineTypes.h"
 #include "NecroLifeCharacter.generated.h"
 
@@ -21,6 +22,7 @@ class UInputAction;
 class UUHealthComponent;
 class UAttributeComponent;
 class UInventoryComponent;
+class UAbilityComponent;
 struct FInputActionValue;
 
 
@@ -98,7 +100,7 @@ protected:
    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability")
    float AbilityPointerMaxDistance = 300.f;
 ///////el puntero para usarlo en niagara
-   UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Ability")
+   UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Ability")
    FVector CachedAbilityPointer; // posición calculada cada frame
   
    /** Look Input Action */
@@ -177,8 +179,13 @@ public:
     //componente inventario
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UInventoryComponent* Inventory;
-
-
+    //COmponente Habilidades
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
+   UAbilityComponent* Ability;
+   //retorna el puntero para usarlo en ability niagara y ??
+   UFUNCTION(BlueprintCallable)
+   FVector GetAbilityPointer() const {return CachedAbilityPointer;}
+   
    /** Handles move inputs from either controls or UI interfaces */
    UFUNCTION(BlueprintCallable, Category="Input")
    virtual void DoMove(float Right, float Forward);
