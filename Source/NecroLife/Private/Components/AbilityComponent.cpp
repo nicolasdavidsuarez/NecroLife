@@ -44,10 +44,10 @@ void UAbilityComponent::SelectAbility(int32 Index)
 	// Si ya hay un indicador activo, eliminarlo
 	ClearIndicator();
 
-	if (CurrentAbility && CurrentAbility->IndicatorNiagaraSystem)
+/*	if (CurrentAbility && CurrentAbility->IndicatorNiagaraSystem)
 	{
 		// Spawn temporal (sin posición todavía)
-		ActiveIndicator = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+   	ActiveIndicator = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
 			GetWorld(),
 			CurrentAbility->IndicatorNiagaraSystem,
 			FVector::ZeroVector,
@@ -58,7 +58,7 @@ void UAbilityComponent::SelectAbility(int32 Index)
 		// Pasar el radio como variable
 		ActiveIndicator->SetVariableFloat(TEXT("Radius"), CurrentAbility->Radius);
 	}
-
+*/
 	
 }
 

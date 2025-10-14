@@ -467,9 +467,10 @@ void ANecroLifeCharacter::UpdateAbilityPointer()
       // Aca habria que dibujar lo que quede en el juego mas adelante
       //DrawDebugLine(GetWorld(), PlayerPos, CachedAbilityPointer, FColor::Green, false, -1.f, 0, 2.f);
       DrawDebugSphere(GetWorld(), CachedAbilityPointer, 20.f, 12, FColor::Red, false, -1.f);
-       if (bEnabledAbility)
+      CachedAbilityPointer.Z = PlayerPos.Z;
+      if (bEnabledAbility)
        {
-          Ability->UpdatePreview(HitResult.Location);
+          Ability->UpdatePreview(CachedAbilityPointer);
        }
    }
 }

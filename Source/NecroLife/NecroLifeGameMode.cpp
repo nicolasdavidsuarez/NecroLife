@@ -5,4 +5,5 @@
 ANecroLifeGameMode::ANecroLifeGameMode()
 {
 	// stub
+	
 }
