@@ -44,7 +44,7 @@ void AItemBase::NotifyActorBeginOverlap(AActor* OtherActor)
 
 	//if (OtherActor->Implements<UPlayerInterface>())
 	//{
-		mostrarMensaje(mensaje);
+	//	mostrarMensaje(mensaje);
 		// IPlayerInterface::Execute_RecibirDanio(OtherActor);
 	//}
 

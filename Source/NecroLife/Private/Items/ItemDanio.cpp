@@ -22,7 +22,7 @@ void AItemDanio::NotifyActorBeginOverlap(AActor* OtherActor)
    
 	//if (OtherActor->Implements<UPlayerInterface>())
 	//{
-		Super::mostrarMensaje(mensaje);
+	//	Super::mostrarMensaje(mensaje);
 	//if (OtherActor->)
 	//OtherActor->GetComponentByClass<UUHealthComponent>()->TakeDamage(danio);
 	URPGHelper::ApplyDamage(OtherActor, danio);

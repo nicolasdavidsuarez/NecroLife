@@ -101,7 +101,7 @@ void ANecroLifeCharacter::AbilityEnabled(const FInputActionValue& InputActionVal
 {
    int32 pressedKeys = static_cast<int32>(InputActionValue.Get<float>())-1;
    FString AbilityName =FString("se entra en modo combate " + FString::FromInt(pressedKeys));
-   ShowMsg(AbilityName);
+   //ShowMsg(AbilityName);
    if (!bEnabledAbility)
    {
       GetCharacterMovement()->bOrientRotationToMovement = false;
@@ -137,7 +137,7 @@ void ANecroLifeCharacter::AbilityDisambled(const FInputActionValue& InputActionV
 {
    if (bEnabledAbility)
    {
-      ShowMsg(FString::Printf(TEXT("Se Cancela Habilidad")));
+   //   ShowMsg(FString::Printf(TEXT("Se Cancela Habilidad")));
       GetCharacterMovement()->bOrientRotationToMovement = true;
       bUseControllerRotationYaw = false;
       bEnabledAbility = false;
@@ -202,14 +202,14 @@ void ANecroLifeCharacter::AplyAction()
 
       // 🔹 Debug del área del ataque
       
-      ShowMsg(FString::Printf(TEXT("Ability Ejecuted")));
+      //ShowMsg(FString::Printf(TEXT("Ability Ejecuted")));
       GetCharacterMovement()->bOrientRotationToMovement = true;
       bUseControllerRotationYaw = false;
       bEnabledAbility = false;
       Ability->ClearIndicator();
    }else
    {
-      ShowMsg(FString::Printf(TEXT("Se ejecuta Ataque Melee")));
+      //ShowMsg(FString::Printf(TEXT("Se ejecuta Ataque Melee")));
    }
      
 }
@@ -238,7 +238,7 @@ void ANecroLifeCharacter::RunActivated(const FInputActionValue& Value)
 {
    if (Value.Get<bool>())
    {
-      ShowMsg(TEXT("se cambia de estado de correr a trotar"));
+      //ShowMsg(TEXT("se cambia de estado de correr a trotar"));
       bIsRunning =!bIsRunning;
       GetCharacterMovement()->MaxWalkSpeed = bIsRunning? 2000.0f:500.0f;
    }
@@ -259,7 +259,7 @@ void ANecroLifeCharacter::TakePosion()
       HealthComponent->ApplyHealing(30.0f);
    }else
    {
-      ShowMsg(FString::Printf(TEXT("don´t have poison")));
+   //   ShowMsg(FString::Printf(TEXT("don´t have poison")));
    }
 }
 
@@ -332,7 +332,7 @@ void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
    }
    if (GetController() != nullptr&&bMouseMiddleDown)
    {
-      ShowMsg(FString::Printf(TEXT("middle button activa el pitch")));
+      //ShowMsg(FString::Printf(TEXT("middle button activa el pitch")));
       // AddControllerPitchInput(Pitch);
       //CameraBoom->SetRelativeRotation(FRotator(FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-10,-45),armLength), 0.0f, 0.0f));
       //  CameraBoom->GetRelativeRotation().Pitch;
@@ -340,7 +340,7 @@ void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
       if(CameraBoom->GetRelativeRotation().Pitch+Pitch>=MaxPitch&&CameraBoom->GetRelativeRotation().Pitch+Pitch<=MinPitch)
       {
          CameraBoom->AddRelativeRotation(FRotator(Pitch,0.0f,0.0f));
-         ShowMsg(FString::Printf(TEXT("Pitch: %f"),CameraBoom->GetRelativeRotation().Pitch));
+         //ShowMsg(FString::Printf(TEXT("Pitch: %f"),CameraBoom->GetRelativeRotation().Pitch));
       
       }else{
          if (Pitch!=0)
@@ -348,7 +348,7 @@ void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
             Pitch*=-1.0f;
             CameraBoom->AddRelativeRotation(FRotator(Pitch,0.0f,0.0f));
          }
-         ShowMsg(FString::Printf(TEXT("Pitch: %f"),Pitch));
+         //ShowMsg(FString::Printf(TEXT("Pitch: %f"),Pitch));
       }
    }
   // AddControllerPitchInput(Pitch);
