@@ -1,0 +1,14 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "d:\\proyectos\\ue\\plugin\\menurpgow\\plugins\\multiplayersessionow\\source\\multiplayersessionow\\private\\multiplayersessionow.cpp",
+        "ProvidedModule": "",
+        "PCH": "d:\\proyectos\\ue\\plugin\\menurpgow\\intermediate\\build\\win64\\x64\\menurpgoweditor\\development\\unrealed\\sharedpch.unrealed.project.valapi.valexpapi.cpp20.h.pch",
+        "Includes": [
+            "d:\\proyectos\\ue\\plugin\\menurpgow\\plugins\\multiplayersessionow\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\multiplayersessionow\\definitions.multiplayersessionow.h",
+            "d:\\proyectos\\ue\\plugin\\menurpgow\\plugins\\multiplayersessionow\\source\\multiplayersessionow\\public\\multiplayersessionow.h"
+        ],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}

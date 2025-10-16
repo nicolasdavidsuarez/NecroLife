@@ -1,0 +1,25 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "d:\\proyectos\\ue\\plugin\\menurpgow\\plugins\\multiplayersessionow\\source\\multiplayersessionow\\private\\multiplayersessionsubsystem.cpp",
+        "ProvidedModule": "",
+        "PCH": "d:\\proyectos\\ue\\plugin\\menurpgow\\intermediate\\build\\win64\\x64\\menurpgoweditor\\development\\unrealed\\sharedpch.unrealed.project.valapi.valexpapi.cpp20.h.pch",
+        "Includes": [
+            "d:\\proyectos\\ue\\plugin\\menurpgow\\plugins\\multiplayersessionow\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\multiplayersessionow\\definitions.multiplayersessionow.h",
+            "d:\\proyectos\\ue\\plugin\\menurpgow\\plugins\\multiplayersessionow\\source\\multiplayersessionow\\public\\multiplayersessionsubsystem.h",
+            "t:\\unreal\\lanzador\\ue_5.6\\engine\\plugins\\online\\onlinesubsystem\\source\\public\\interfaces\\onlinesessioninterface.h",
+            "t:\\unreal\\lanzador\\ue_5.6\\engine\\plugins\\online\\onlinesubsystem\\source\\public\\onlinesubsystemtypes.h",
+            "t:\\unreal\\lanzador\\ue_5.6\\engine\\plugins\\online\\onlinesubsystem\\source\\public\\onlinesubsystemnames.h",
+            "t:\\unreal\\lanzador\\ue_5.6\\engine\\plugins\\online\\onlinesubsystem\\source\\public\\onlinedelegatemacros.h",
+            "t:\\unreal\\lanzador\\ue_5.6\\engine\\plugins\\online\\onlinesubsystem\\source\\public\\interfaces\\onlinesessiondelegates.h",
+            "t:\\unreal\\lanzador\\ue_5.6\\engine\\plugins\\online\\onlinesubsystem\\source\\public\\onlinekeyvaluepair.h",
+            "d:\\proyectos\\ue\\plugin\\menurpgow\\plugins\\multiplayersessionow\\intermediate\\build\\win64\\unrealeditor\\inc\\multiplayersessionow\\uht\\multiplayersessionsubsystem.generated.h",
+            "t:\\unreal\\lanzador\\ue_5.6\\engine\\plugins\\online\\onlinesubsystem\\source\\public\\onlinesessionsettings.h",
+            "t:\\unreal\\lanzador\\ue_5.6\\engine\\plugins\\online\\onlinesubsystem\\source\\public\\onlinesubsystem.h",
+            "t:\\unreal\\lanzador\\ue_5.6\\engine\\plugins\\online\\onlinesubsystem\\source\\public\\onlinesubsystemmodule.h",
+            "t:\\unreal\\lanzador\\ue_5.6\\engine\\plugins\\online\\onlinebase\\source\\public\\online\\onlinesessionnames.h"
+        ],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}
