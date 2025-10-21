@@ -330,8 +330,8 @@ void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
      //AddControllerPitchInput(Pitch);
       //bLookAt=false;
    }
-   if (GetController() != nullptr&&bMouseMiddleDown)
-   {
+ //  if (GetController() != nullptr&&bMouseMiddleDown)
+   //{
       //ShowMsg(FString::Printf(TEXT("middle button activa el pitch")));
       // AddControllerPitchInput(Pitch);
       //CameraBoom->SetRelativeRotation(FRotator(FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-10,-45),armLength), 0.0f, 0.0f));
@@ -342,7 +342,8 @@ void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
          CameraBoom->AddRelativeRotation(FRotator(Pitch,0.0f,0.0f));
          //ShowMsg(FString::Printf(TEXT("Pitch: %f"),CameraBoom->GetRelativeRotation().Pitch));
       
-      }else{
+      }else
+         {
          if (Pitch!=0)
          {
             Pitch*=-1.0f;
@@ -352,7 +353,7 @@ void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
       }
    }
   // AddControllerPitchInput(Pitch);
-}
+//}
 
 
 void ANecroLifeCharacter::DoMove(float Right, float Forward)
