@@ -329,7 +329,7 @@ void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
       AddControllerYawInput(Yaw);
      //AddControllerPitchInput(Pitch);
       //bLookAt=false;
-   }
+   
  //  if (GetController() != nullptr&&bMouseMiddleDown)
    //{
       //ShowMsg(FString::Printf(TEXT("middle button activa el pitch")));
@@ -353,7 +353,7 @@ void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
       }
    }
   // AddControllerPitchInput(Pitch);
-//}
+}
 
 
 void ANecroLifeCharacter::DoMove(float Right, float Forward)

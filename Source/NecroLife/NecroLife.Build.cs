@@ -18,7 +18,9 @@ public class NecroLife : ModuleRules
 			"StateTreeModule",
 			"GameplayStateTreeModule",
 			"UMG",
-			"Slate", "Niagara"
+			"Slate", "Niagara",
+			"FMODStudio",
+			"FMODStudioNiagara"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
@@ -31,7 +33,7 @@ public class NecroLife : ModuleRules
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 
 		// Uncomment if you are using online features
-		// PrivateDependencyModuleNames.Add("OnlineSubsystem");
+		 PrivateDependencyModuleNames.Add("OnlineSubsystem");
 
 		// To include OnlineSubsystemSteam, add it to the plugins section in your uproject file with the Enabled attribute set to true
 	}
