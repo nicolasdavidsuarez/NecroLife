@@ -13,7 +13,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Ability/AbilityData.h"
+#include "Data/AbilityData.h"
 #include "NiagaraComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Components/ActorComponent.h"
