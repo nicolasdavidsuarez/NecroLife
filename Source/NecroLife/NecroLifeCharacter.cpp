@@ -15,8 +15,10 @@
 #include "Public/Components/AttributeComponent.h"
 #include "Public/Components/RPGHelper.h"
 #include "CollisionQueryParams.h"
+#include "NecroLifePlayerState.h"
 #include "Engine/EngineTypes.h"
 #include "Engine/OverlapResult.h"
+#include "GameFramework/PlayerState.h"
 
 
 ANecroLifeCharacter::ANecroLifeCharacter()
@@ -24,7 +26,7 @@ ANecroLifeCharacter::ANecroLifeCharacter()
    // crear y atachar el UHealthComponent
    HealthComponent = CreateDefaultSubobject<UUHealthComponent>(TEXT("HealthComponent"));
    //crear y atachar Inventario
-   Inventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
+ //  Inventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 //crear el UAbilityComponent
    Ability = CreateDefaultSubobject<UAbilityComponent>(TEXT("AbilityComponent"));
    
@@ -254,13 +256,16 @@ void ANecroLifeCharacter::RunActivated(const FInputActionValue& Value)
 
 void ANecroLifeCharacter::TakePosion()
 {
-   if (Inventory->UseHealtPosion())
+   if (MyPlayerState)
+   {
+   if (CachedInventoryComponent->UseHealtPosion())
    {
       HealthComponent->ApplyHealing(30.0f);
    }else
    {
-   //   ShowMsg(FString::Printf(TEXT("don´t have poison")));
+         ShowMsg(FString::Printf(TEXT("don´t have poison")));
    }
+}
 }
 
 
@@ -396,6 +401,30 @@ void ANecroLifeCharacter::DoJumpEnd()
 {
    // signal the character to stop jumping
    StopJumping();
+}
+
+void ANecroLifeCharacter::PossessedBy(AController* NewController)
+{
+   Super::PossessedBy(NewController);
+   // 1. Cacheamos el PlayerState como antes
+   MyPlayerState = GetPlayerState<ANecroLifePlayerState>();
+   if (MyPlayerState)
+   {
+      // 2. AHORA, usamos MyPlayerState para cachear sus componentes
+      CachedAttributeComponent = MyPlayerState->GetAttributeComponent();
+      CachedInventoryComponent = MyPlayerState->GetInventoryComponent();
+      CachedQuestComponent = MyPlayerState->GetQuestComponent();
+
+      // (Opcional pero recomendado) Comprobar que todos los componentes se encontraron
+      if (!CachedAttributeComponent || !CachedInventoryComponent || !CachedQuestComponent)
+      {
+         UE_LOG(LogTemp, Error, TEXT("Character %s failed to cache all components from PlayerState."), *GetName());
+      }
+   }
+   else
+   {
+      UE_LOG(LogTemp, Error, TEXT("Character %s possessed but failed to get PlayerState."), *GetName());
+   }
 }
 
 

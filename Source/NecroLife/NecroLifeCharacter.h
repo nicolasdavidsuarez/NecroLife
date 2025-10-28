@@ -23,6 +23,8 @@ class UUHealthComponent;
 class UAttributeComponent;
 class UInventoryComponent;
 class UAbilityComponent;
+class UQuestComponent;
+class ANecroLifePlayerState;
 struct FInputActionValue;
 
 
@@ -177,12 +179,27 @@ public:
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UAttributeComponent* Attribute;
     //componente inventario
-   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
-   UInventoryComponent* Inventory;
+   //UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
+  // UInventoryComponent* Inventory;
     //COmponente Habilidades
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UAbilityComponent* Ability;
    //retorna el puntero para usarlo en ability niagara y ??
+
+   protected:
+   UPROPERTY(BlueprintReadOnly, Category = "Components")
+   TObjectPtr<UAttributeComponent> CachedAttributeComponent;
+
+   UPROPERTY(BlueprintReadOnly, Category = "Components")
+   TObjectPtr<UInventoryComponent> CachedInventoryComponent;
+
+   UPROPERTY(BlueprintReadOnly, Category = "Components")
+   TObjectPtr<UQuestComponent> CachedQuestComponent;
+   
+   UPROPERTY(BlueprintReadOnly, Category = "Player State")
+   TObjectPtr<ANecroLifePlayerState> MyPlayerState;
+
+public:
    UFUNCTION(BlueprintCallable)
    FVector GetAbilityPointer() const {return CachedAbilityPointer;}
    
@@ -207,6 +224,7 @@ public:
 
 
 public:
+   virtual void PossessedBy (AController* NewController) override;
 FVector Direction;
 FRotator CurrentRotation,TargetRotation;
 
@@ -258,5 +276,6 @@ FRotator CurrentRotation,TargetRotation;
    class UInputMappingContext* InputMapping;
 
 
+   
   
 };

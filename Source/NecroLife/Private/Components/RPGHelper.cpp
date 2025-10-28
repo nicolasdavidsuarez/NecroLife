@@ -2,10 +2,15 @@
 
 
 #include "Public/Components/RPGHelper.h"
+
+#include "NecroLifeCharacter.h"
 #include "Public/Components/UHealthComponent.h"
 #include "Public/Components/AbilityComponent.h"
 #include "Public/Components/AttributeComponent.h"
 #include "Public/Components/InventoryComponent.h"
+#include "NecroLifeCharacter.h"
+#include "GameFramework/PlayerState.h"
+
 ////////////////////////
 /////HealthComponent
 /////////////////////
@@ -50,8 +55,10 @@ bool URPGHelper::TakeXP(AActor* Target, float Amount)
 bool URPGHelper::TakePosion(AActor* Target)
 {
 	if (!Target) return false;
-
-	if (UInventoryComponent* InventoryComponent = Target->FindComponentByClass<UInventoryComponent>())
+	ANecroLifeCharacter* MyNecroCharacter=Cast<ANecroLifeCharacter>(Target);
+	if (!MyNecroCharacter) return false;
+    APlayerState* PlayerState=MyNecroCharacter->GetPlayerState();
+	if (UInventoryComponent* InventoryComponent=PlayerState->FindComponentByClass<UInventoryComponent>())
 	{
 		InventoryComponent->TakeHealthPosion(1);
 		return true;
