@@ -35,3 +35,12 @@ void ANecroLifeEnemyBasic::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
+bool ANecroLifeEnemyBasic::IsAlive()
+{
+	if (HealthComponent->IsDead())
+	{
+		return false;
+	}
+	return true;
+}
+

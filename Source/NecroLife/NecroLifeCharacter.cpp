@@ -19,6 +19,7 @@
 #include "Engine/EngineTypes.h"
 #include "Engine/OverlapResult.h"
 #include "GameFramework/PlayerState.h"
+#include "NPC/NecroLifeEnemyBasic.h"
 
 
 ANecroLifeCharacter::ANecroLifeCharacter()
@@ -181,10 +182,11 @@ void ANecroLifeCharacter::AplyAction()
       for (auto& Result : Overlaps)
       {
          AActor* Other = Result.GetActor();
-         if (!Other || Other == this) continue;
+         ANecroLifeEnemyBasic* EnemyBasic=Cast<ANecroLifeEnemyBasic>(Other);
+         if (!EnemyBasic || Other == this) continue;
 
          // 🔹 Vector hacia el otro actor
-         FVector ToTarget = (Other->GetActorLocation() - Origin).GetSafeNormal();
+         FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
 
          // 🔹 Calculamos el ángulo con el forward vector
          float Dot = FVector::DotProduct(Forward, ToTarget);
@@ -195,10 +197,15 @@ void ANecroLifeCharacter::AplyAction()
          {
             //UGameplayStatics::ApplyDamage(Other, 20.f, GetController(), this, UDamageType::StaticClass());
             
-            URPGHelper::ApplyDamage(Other,100);
-
+            URPGHelper::ApplyDamage(Other,5);
+            if (!EnemyBasic->IsAlive())
+            {
+               ShowMsg(FString::Printf(TEXT("Aca Sumaria experiencia")));
+               URPGHelper::TakeXP(this,10);
+            }
             // 🔹 (Opcional) debug line
             DrawDebugLine(GetWorld(), Origin, Other->GetActorLocation(), FColor::Red, false, 1.f, 0, 1.f);
+            
          }
       }
 
@@ -352,7 +359,7 @@ void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
          if (Pitch!=0)
          {
             Pitch*=-1.0f;
-            CameraBoom->AddRelativeRotation(FRotator(Pitch,0.0f,0.0f));
+            CameraBoom->AddRelativeRotation(FRotator(-Pitch,0.0f,0.0f));
          }
          //ShowMsg(FString::Printf(TEXT("Pitch: %f"),Pitch));
       }

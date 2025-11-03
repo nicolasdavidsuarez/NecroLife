@@ -72,8 +72,11 @@ bool URPGHelper::TakePosion(AActor* Target)
  bool URPGHelper::PickUpItem(AActor* Target, UItemData* Item)  //DatosItem  ItemData
 {
 	if (!Target) return false;
-	if (UInventoryComponent* InventoryComponent = Target->FindComponentByClass<UInventoryComponent>())
-	{
+	ANecroLifeCharacter* MyNecroCharacter=Cast<ANecroLifeCharacter>(Target);
+	if (!MyNecroCharacter) return false;
+	APlayerState* PlayerState=MyNecroCharacter->GetPlayerState();
+	if (UInventoryComponent* InventoryComponent=PlayerState->FindComponentByClass<UInventoryComponent>())
+		{
 		//todo to do todo 
 		InventoryComponent->PickUp(Item);
 		return true;
