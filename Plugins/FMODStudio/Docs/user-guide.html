@@ -92,13 +92,10 @@
 <li><a href="#further-programming-documentation">Further Programming Documentation</a></li>
 </ul>
 </li>
-<li><a href="#programmer-sounds">Programmer Sounds</a><ul>
-<li><a href="#programmer-sounds-via-audio-tables">Programmer Sounds via Audio Tables</a><ul>
-<li><a href="#choosing-the-audio-entry-to-play">Choosing the audio entry to play</a></li>
-</ul>
-</li>
-<li><a href="#programmer-sounds-by-path">Programmer Sounds by Path</a></li>
-<li><a href="#programmer-sounds-via-api">Programmer Sounds via API</a></li>
+<li><a href="#programmer-instruments">Programmer Instruments</a><ul>
+<li><a href="#using-programmer-instruments-to-play-audio-table-assets">Using Programmer Instruments to Play Audio Table Assets</a></li>
+<li><a href="#using-programmer-instruments-to-play-loose-audio-files">Using Programmer Instruments to Play Loose Audio Files</a></li>
+<li><a href="#using-programmer-instruments-via-the-fmod-studio-api">Using programmer Instruments via the FMOD Studio API</a></li>
 <li><a href="#troubleshooting">Troubleshooting</a></li>
 </ul>
 </li>
@@ -447,25 +444,25 @@ You will need to add these parameter names to the integration settings.</p>
 - <a href="api-reference.html">Integration API Reference</a><br />
 - <a href="blueprint-reference.html">Integration Blueprint Reference</a><br />
 - <a href="https://fmod.com/docs/2.03/api/welcome.html">FMOD API Reference</a>.</p>
-<h2 id="programmer-sounds"><a href="#programmer-sounds">2.14 Programmer Sounds</a></h2>
-<p>FMOD Studio events can include programmer sound modules that are controlled at runtime. There are a few different ways of hooking them up.</p>
-<h3 id="programmer-sounds-via-audio-tables"><a href="#programmer-sounds-via-audio-tables">2.14.1 Programmer Sounds via Audio Tables</a></h3>
+<h2 id="programmer-instruments"><a href="#programmer-instruments">2.14 Programmer Instruments</a></h2>
+<p>FMOD Studio events can include programmer instruments that are controlled at runtime. There are a few different ways of hooking them up.</p>
+<h3 id="using-programmer-instruments-to-play-audio-table-assets"><a href="#using-programmer-instruments-to-play-audio-table-assets">2.14.1 Using Programmer Instruments to Play Audio Table Assets</a></h3>
 <p>With this approach, you don't need to do any programming at all!</p>
-<h4 id="choosing-the-audio-entry-to-play"><a href="#choosing-the-audio-entry-to-play">Choosing the audio entry to play</a></h4>
-<p>Create an event with a programmer sound module on it. If the module has a name, then if nothing else is assigned then that sound will be used. For example, if the sound designer sets the module name as "Welcome", then the audio table entry "Welcome" will be used by default.</p>
+<p>When an event instance triggers a programmer instrument with a name, the <a href="https://fmod.com/docs/2.03/studio/dialogue-and-localization.html#audio-tables">audio table</a> asset with that name is used by default. For example, if the sound designer sets the programmer instrument's name to "Welcome", then the audio table entry "Welcome" is used by default when that instrument is triggered.</p>
 <p><img alt="Studio programmer sound" src="images/studio-programmer.png" /></p>
-<p>To select at runtime what audio entry to use, set the programmer sound name field in the <a href="">FMODAudioComponent</a>.</p>
+<p>Alternatively, you can select a specific audio table entry at runtime. There are two ways to do this.</p>
+<p>One way is to set the programmer sound name field in the <a href="">FMODAudioComponent</a>.</p>
 <p><img alt="Programmer asset name" src="images/programmer-asset-name.png" /></p>
-<p>Or you can assign the name via blueprint.</p>
+<p>The second way is to assign the name of an asset by using a blueprint.</p>
 <p><img alt="Programmer blueprint" src="images/programmer-bp.png" /></p>
-<p>The name has to be one of the audio asset entries of a loaded audio table, or it won't find the sound to play.</p>
-<p>Be careful to set the name before you play the audio component. If the name is assigned after the event has started, it may not play the right sound.</p>
-<h3 id="programmer-sounds-by-path"><a href="#programmer-sounds-by-path">2.14.2 Programmer Sounds by Path</a></h3>
-<p>With this approach you can easily play any media file for your event, including loose files packaged with the project or found on the player's drive.</p>
-<p>To point a programmer sound directly to a file, set the FMOD audio component's programmer sound name to the path to the .wav or .ogg file that you want to load. If this path is relative, it will be looked up relative to the content directory.</p>
-<p>If you need to include these files in your packaged game, add the directory containing these media files to 'directories to package' in the packaging settings, otherwise it will work in the editor but not when packaged into the final game.</p>
+<p>In either case, the name has to be that of an audio asset in a loaded audio table, or FMOD for Unreal won't be able to find and play that asset.</p>
+<p>It is best to set the name before playing the audio component. If the name is assigned after the event instance has started, it may not be set in time for the programmer instrument to be triggered, resulting in the instrument playing its default asset instead.</p>
+<h3 id="using-programmer-instruments-to-play-loose-audio-files"><a href="#using-programmer-instruments-to-play-loose-audio-files">2.14.2 Using Programmer Instruments to Play Loose Audio Files</a></h3>
+<p>You can play any media file when a programmer instrument is triggered with this approach, including loose files packaged with the project or found on the player's drive.</p>
+<p>To point a programmer instrument directly to a file, set the FMOD audio component's programmer sound name to the path to a .wav or .ogg file that you want to load. If this path is relative, it is looked up relative to the content directory.</p>
+<p>If you need to include these files in your packaged game, add the directory containing these media files to 'directories to package' in the packaging settings. If you do not, the files will not be included in your packaged game, and so will not play in the packaged game, even if they do play correctly when you play in editor.</p>
 <p><img alt="Programmer file path" src="images/programmer-file-path.png" /></p>
-<h3 id="programmer-sounds-via-api"><a href="#programmer-sounds-via-api">2.14.3 Programmer Sounds via API</a></h3>
+<h3 id="using-programmer-instruments-via-the-fmod-studio-api"><a href="#using-programmer-instruments-via-the-fmod-studio-api">2.14.3 Using programmer Instruments via the FMOD Studio API</a></h3>
 <p>With this approach, you will need to create an C++ class actor that can be placed in the scene to then be added as a persistent reference in the Level Blueprint. The dialogue options will then be triggered by inputs from the keyboard.</p>
 <p>Creating the C++ Actor:<br />
 <img alt="Crate Class" src="images/programmer-sound-create.png" /><br />
@@ -480,20 +477,20 @@ Add the Actor the level:<br />
 <div class="highlight language-cpp"><pre><span></span><span class="c1">//--------------------------------------------------------------------</span>
 <span class="c1">//</span>
 <span class="c1">// This is an Unreal actor script that demonstrates how to use</span>
-<span class="c1">// Programmer Sounds and an Audio Table in your game code.</span>
+<span class="c1">// Programmer instruments and an audio table in your game code.</span>
 <span class="c1">//</span>
-<span class="c1">// Programmer sounds allows the game code to receive a callback at a</span>
+<span class="c1">// Programmer instruments allow the game code to receive a callback at a</span>
 <span class="c1">// sound-designer specified time and return a sound object to be</span>
 <span class="c1">// played within the event.</span>
 <span class="c1">//</span>
-<span class="c1">// The audio table is a group of audio files compressed in a Bank that</span>
+<span class="c1">// The audio table is a group of audio files compressed in a bank that</span>
 <span class="c1">// are not associated with any event and can be accessed by a string key.</span>
 <span class="c1">//</span>
-<span class="c1">// Together these two features allow for an efficient implementation of</span>
+<span class="c1">// Together, these two features allow for an efficient implementation of</span>
 <span class="c1">// dialogue systems where the sound designer can build a single template</span>
 <span class="c1">// event and different dialogue sounds can be played through it at runtime.</span>
 <span class="c1">//</span>
-<span class="c1">// This script will play one of three pieces of dialog through an event</span>
+<span class="c1">// This script plays one of three pieces of dialog through an event</span>
 <span class="c1">// on a key press from the player.</span>
 <span class="c1">//</span>
 <span class="c1">// This document assumes familiarity with Unreal Engine scripting. See</span>
@@ -531,7 +528,7 @@ Add the Actor the level:<br />
     <span class="c1">// Sets default values for this actor&#39;s properties</span>
     <span class="n">AProgrammerExample</span><span class="p">();</span>
 
-    <span class="c1">// Path of the Programmer Instrument in the FMOD Project</span>
+    <span class="c1">// Path of the programmer instrument in the FMOD project</span>
     <span class="n">UPROPERTY</span><span class="p">(</span><span class="n">EditAnywhere</span><span class="p">)</span>
     <span class="n">UFMODEvent</span><span class="o">*</span> <span class="n">dialogueEvent</span><span class="p">;</span>
     <span class="n">UFUNCTION</span><span class="p">(</span><span class="n">BlueprintCallable</span><span class="p">,</span> <span class="n">category</span> <span class="o">=</span> <span class="s">&quot;ProgrammerInstrumentFunction&quot;</span><span class="p">)</span>
@@ -619,8 +616,8 @@ Add the Actor the level:<br />
 <p>Following that, drag and drop the Actor into the Level Blueprint so that it can be triggered:<br />
 <img alt="Programmer Instrument Blueprint" src="images/programmer-sound-blueprint.png" /></p>
 <h3 id="troubleshooting"><a href="#troubleshooting">2.14.4 Troubleshooting</a></h3>
-<p>Also, when setting the name to an audio table entry, you will need to make sure the audio table bank is already loaded before the event starts.</p>
-<p>The FMOD audio component only supports a single programmer sound per event. If you want to have an event that has multiple programmer sounds, each one playing a different sound, then you'll need to create the event directly via the FMOD API and provide your own callback. You can look at how the FMOD audio component programmer sound callback works and use that as a base for your own class.</p>
+<p>When setting the name to an audio table entry, you will need to make sure the audio table's bank is already loaded before the event starts.</p>
+<p>The FMOD audio component only supports a single programmer instrument per event. If you want to have an event that triggers multiple programmer instruments, each one playing a different sound, then you'll need to create the event directly via the FMOD API and provide your own callback. You can look at how the FMOD audio component programmer instrument callback works and use that as a base for your own class.</p>
 <h2 id="deployment"><a href="#deployment">2.15 Deployment</a></h2>
 <p>These steps describe how to prepare your project for deployment. This is relevant to both the Launch option as well as the "File &gt; Package Project" menu item.<br />
 If any platforms require specific steps, they can be found in <a href="platform-specifics.html">Platform Specifics</a>.</p>
@@ -744,7 +741,7 @@ AudioMixerModuleName=
 </ul>
 <p>This can be especially useful for build machines that don't normally run the Editor at all, which is what normally triggers the assets to be built, and does not require the generated assets to be checked in to source control.</p></div>
 
-<p class="manual-footer">Unreal Integration 2.03.09 (2025-08-05). &copy; 2025 Firelight Technologies Pty Ltd.</p>
+<p class="manual-footer">Unreal Integration 2.03.10 (2025-10-22). &copy; 2025 Firelight Technologies Pty Ltd.</p>
 </body>
 </html>
 

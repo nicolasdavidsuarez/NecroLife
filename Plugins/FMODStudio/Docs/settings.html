@@ -20,6 +20,7 @@
 <li><a href="#bank-output-directory">Bank Output Directory</a></li>
 <li><a href="#output-format">Output Format</a></li>
 <li><a href="#output-type">Output Type</a></li>
+<li><a href="#stop-events-outside-max-distance">Stop Events Outside Max Distance</a></li>
 </ul>
 </li>
 <li><a href="#localization">Localization</a><ul>
@@ -125,6 +126,10 @@
 <h3 id="output-type"><a href="#output-type">3.1.7 Output Type</a></h3>
 <p>Built-in output types that can be used to run the mixer.</p>
 <pre><code>Default: TYPE_AUTODETECT
+</code></pre>
+<h3 id="stop-events-outside-max-distance"><a href="#stop-events-outside-max-distance">3.1.8 Stop Events Outside Max Distance</a></h3>
+<p>When enabled FMOD Audio Components will stop events that are further than their maximum distance from the nearest listener.</p>
+<pre><code>Default: Disabled
 </code></pre>
 <h2 id="localization"><a href="#localization">3.2 Localization</a></h2>
 <h3 id="locales"><a href="#locales">3.2.1 Locales</a></h3>
@@ -287,7 +292,7 @@ Default: 0
 <h2 id="packaging"><a href="#packaging">3.6 Packaging</a></h2>
 <p>As well as settings exposed by FMOD For Unreal you will need to add the directory containing the FMOD bank files to the Additional Non-asset Directory To Copy setting in Unreal's Project - Packaging settings. The FMOD Studio settings UI will prompt you to update this setting if it is not correctly configured. See <a href="user-guide.html#packaging-banks">Packaging banks</a> in the user guide for more information.</p></div>
 
-<p class="manual-footer">Unreal Integration 2.03.09 (2025-08-05). &copy; 2025 Firelight Technologies Pty Ltd.</p>
+<p class="manual-footer">Unreal Integration 2.03.10 (2025-10-22). &copy; 2025 Firelight Technologies Pty Ltd.</p>
 </body>
 </html>
 
