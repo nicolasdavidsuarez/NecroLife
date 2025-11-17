@@ -197,7 +197,7 @@ void ANecroLifeCharacter::AplyAction()
          {
             //UGameplayStatics::ApplyDamage(Other, 20.f, GetController(), this, UDamageType::StaticClass());
             
-            URPGHelper::ApplyDamage(Other,5);
+            URPGHelper::ApplyDamage(Other,100);
             if (!EnemyBasic->IsAlive())
             {
                ShowMsg(FString::Printf(TEXT("Aca Sumaria experiencia")));
