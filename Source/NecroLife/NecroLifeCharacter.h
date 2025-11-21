@@ -15,7 +15,7 @@
 #include "NecroLifeCharacter.generated.h"
 
 
-
+class UBoxComponent;
 class USpringArmComponent;
 class UCameraComponent;
 class UInputAction;
@@ -53,6 +53,10 @@ class ANecroLifeCharacter : public ACharacter
    /** Follow camera */
    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
    UCameraComponent* FollowCamera;
+
+public:
+   UPROPERTY(EditAnywhere, BlueprintReadWrite,Category="Components")
+   TObjectPtr<UBoxComponent> BoxCollision;
   
 protected:
 

@@ -16,6 +16,7 @@
 #include "Public/Components/RPGHelper.h"
 #include "CollisionQueryParams.h"
 #include "NecroLifePlayerState.h"
+#include "Components/BoxComponent.h"
 #include "Engine/EngineTypes.h"
 #include "Engine/OverlapResult.h"
 #include "GameFramework/PlayerState.h"
@@ -58,7 +59,11 @@ ANecroLifeCharacter::ANecroLifeCharacter()
    // Create a camera boom (pulls in towards the player if there is a collision)
    CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
    CameraBoom->SetupAttachment(RootComponent);
+   
    CameraBoom->TargetArmLength = 800.0f;
+   CameraBoom->bDoCollisionTest=true;
+   
+   CameraBoom->CameraLagSpeed=2.0f;
    CameraBoom->bUsePawnControlRotation = true;
    CameraBoom->bInheritPitch = true;
    CameraBoom->bInheritYaw=true;
@@ -71,7 +76,10 @@ ANecroLifeCharacter::ANecroLifeCharacter()
 
 
    Attribute = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributesComponent"));
-  
+
+   BoxCollision=CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCol"));
+   BoxCollision->SetBoxExtent(FVector(100,100,100),true);
+   
    // Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character)
    // are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
@@ -102,6 +110,8 @@ void ANecroLifeCharacter::SetBoomLength(const FInputActionValue& Value)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ANecroLifeCharacter::AbilityEnabled(const FInputActionValue& InputActionValue)
 {
+if (!bEnabledAbility)
+{
    int32 pressedKeys = static_cast<int32>(InputActionValue.Get<float>())-1;
    FString AbilityName =FString("se entra en modo combate " + FString::FromInt(pressedKeys));
    //ShowMsg(AbilityName);
@@ -121,9 +131,9 @@ void ANecroLifeCharacter::AbilityEnabled(const FInputActionValue& InputActionVal
          CurrentRotation = GetActorRotation();
          TargetRotation = Direction.Rotation();
          //Controller->SetControlRotation(NewRotation);
-       //  DrawDebugLine(GetWorld(),GetActorLocation(),TargetLocation,FColor::Emerald,
+         //  DrawDebugLine(GetWorld(),GetActorLocation(),TargetLocation,FColor::Emerald,
          //   false,3.0f,1,10);
-Ability->SelectAbility(pressedKeys);
+         Ability->SelectAbility(pressedKeys);
          if (Ability && Ability->CurrentAbility)
          {
             Ability->UpdateIndicator(HitResult.Location);
@@ -133,6 +143,7 @@ Ability->SelectAbility(pressedKeys);
       bEnabledAbility = true;      
    }
    Ability->InitPreview();
+}
 }
 
 
@@ -218,6 +229,10 @@ void ANecroLifeCharacter::AplyAction()
       Ability->ClearIndicator();
    }else
    {
+
+AActor* Actores=BoxCollision->GetOverlappingActors()
+
+      
       //ShowMsg(FString::Printf(TEXT("Se ejecuta Ataque Melee")));
    }
      
