@@ -172,7 +172,6 @@ void ANecroLifeCharacter::AplyAction()
       float AttackRadius = 300.f;        // Distancia del ataque
       float AttackAngle = 45.f;          // Mitad del ángulo del cono (en grados)
     
-     // DrawDebugCone(GetWorld(),GetActorLocation(),,450.0f,0.5,0.5,12,FColor::Blue,false,0.1f);
       FVector Origin = GetActorLocation();
       FVector Forward = GetActorForwardVector();
 
@@ -229,10 +228,52 @@ void ANecroLifeCharacter::AplyAction()
       Ability->ClearIndicator();
    }else
    {
+      TArray<FOverlapResult> Overlaps;
+      FVector Origin = GetActorLocation();
+      FCollisionShape CollisionShape = FCollisionShape::MakeBox(FVector(100,100,100));
 
-AActor* Actores=BoxCollision->GetOverlappingActors()
+      bool bHit = GetWorld()->OverlapMultiByChannel(
+                   Overlaps,
+                   Origin,
+                   FQuat::Identity,
+                   ECC_Pawn,          // Canal de colisión 
+                   CollisionShape
+               );
+      if (!bHit) return;
+      FVector Forward = GetActorForwardVector();
+      DrawDebugCone(GetWorld(),GetActorLocation(),Forward,100.0f,0.5,0.5,12,FColor::Red,false,0.5f);
 
       
+      for (auto& Result : Overlaps)
+      {
+         AActor* Other = Result.GetActor();
+         ANecroLifeEnemyBasic* EnemyBasic=Cast<ANecroLifeEnemyBasic>(Other);
+         if (!EnemyBasic || Other == this) continue;
+
+         // 🔹 Vector hacia el otro actor
+         FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
+
+         // 🔹 Calculamos el ángulo con el forward vector
+         float Dot = FVector::DotProduct(Forward, ToTarget);
+         float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
+         float AttackAngle = 45.f;  
+
+         // 🔹 Si está dentro del cono, aplicamos daño
+         if (AngleToTarget <= AttackAngle)
+         {
+            //UGameplayStatics::ApplyDamage(Other, 20.f, GetController(), this, UDamageType::StaticClass());
+            
+            URPGHelper::ApplyDamage(Other,10);
+            if (!EnemyBasic->IsAlive())
+            {
+               ShowMsg(FString::Printf(TEXT("Aca Sumaria experiencia")));
+               URPGHelper::TakeXP(this,10);
+            }
+            // 🔹 (Opcional) debug line
+            DrawDebugLine(GetWorld(), Origin, Other->GetActorLocation(), FColor::Red, false, 1.f, 0, 1.f);
+            
+         }
+      }
       //ShowMsg(FString::Printf(TEXT("Se ejecuta Ataque Melee")));
    }
      
