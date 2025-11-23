@@ -3,7 +3,7 @@
 
 #include "Scene/AdvancedPlatform.h"
 
-#include "LightmapResRatioAdjust.h"
+
 
 
 // Sets default values
@@ -23,6 +23,13 @@ AAdvancedPlatform::AAdvancedPlatform()
 	CurrentOpacity=0.f;
 	State=EPlatformState::Visible;
 	Material=PlatformMesh->CreateAndSetMaterialInstanceDynamic(0);
+	// SIEMPRE verifica que funcionó antes de usarlo
+	if (Material)
+	{
+		UE_LOG(LogTemp, Log, TEXT("¡Material Dinámico creado con éxito!"));
+		// Aquí puedes poner un valor inicial si quieres
+		Material->SetScalarParameterValue(FName("Opacity"), 0.5f);
+	}
 	
 } 
 
@@ -30,13 +37,21 @@ AAdvancedPlatform::AAdvancedPlatform()
 void AAdvancedPlatform::BeginPlay()
 {
 	Super::BeginPlay();
+	Material=PlatformMesh->CreateAndSetMaterialInstanceDynamic(0);
+	// SIEMPRE verifica que funcionó antes de usarlo
+	if (Material)
+	{
+		UE_LOG(LogTemp, Log, TEXT("¡Material Dinámico creado con éxito!"));
+		// Aquí puedes poner un valor inicial si quieres
+		Material->SetScalarParameterValue(FName("Opacity"), 1.0f);
+	}
 	UpdateOpacity();
 	if (State==EPlatformState::Hidden)
 	{
 		SetActorEnableCollision(false);
 		SetActorTickEnabled(false);
 	}
-	
+	State=EPlatformState::FadingIn;
 }
 
 
@@ -80,6 +95,8 @@ void AAdvancedPlatform::Tick(float DeltaTime)
                 
 				// YA NO NECESITAMOS TICK
 				SetActorTickEnabled(false);
+				// Y Hasta ahora solo me hacen falta una vez las plataformas
+				Destroy();
 			}
 			UpdateOpacity();
 						break;
@@ -91,22 +108,22 @@ void AAdvancedPlatform::Tick(float DeltaTime)
 	
 	if (Path.Num()>0&&bIsOverlappingPlatform)
 	{
+		if (Path.Num()==Nodo)
+		{
+			State=EPlatformState::FadingOut;
+		}else{
 		FVector Current = GetActorLocation();
 		FVector Target = Path[Nodo];
 
 		FVector NewLocation = FMath::VInterpConstantTo(Current, Target, DeltaTime, Speed);
 		SetActorLocation(NewLocation);
 
-		if (FVector::Dist(NewLocation, Target) < 2.f)
+		if (FVector::Dist(NewLocation, Target) < 2.f&&State!=EPlatformState::FadingOut)
 		{
 	     Nodo++;
-			if (Path.Num()==Nodo)
-			{
-				Destroy();
-			}
 		}
+		}	
 	}
-	
 }
 
 
