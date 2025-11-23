@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Data/QuestData.h"
 #include "QuestComponent.generated.h"
 
 
@@ -24,4 +25,16 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
+
+	//Agregar quest
+	void AddQuest(UQuestData* QuestData);
+	
+	//FString Lista de tareas (ya editada)
+	
+    //void ingresar evento
+
+private:
+	UQuestData* CurrentQuest;
+	bool bAsQuest;
+		
 };

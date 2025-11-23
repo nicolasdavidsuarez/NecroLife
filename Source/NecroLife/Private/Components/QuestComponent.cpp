@@ -33,3 +33,9 @@ void UQuestComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	// ...
 }
 
+void UQuestComponent::AddQuest(UQuestData* QuestData)
+{
+	CurrentQuest = QuestData;
+		
+}
+
