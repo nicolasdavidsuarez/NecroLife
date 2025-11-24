@@ -3,6 +3,8 @@
 
 #include "Components/QuestComponent.h"
 
+//#include "Runtime/Android/AndroidRuntimeSettings/Classes/AndroidRuntimeSettings.h"
+
 
 // Sets default values for this component's properties
 UQuestComponent::UQuestComponent()
@@ -35,7 +37,17 @@ void UQuestComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 
 void UQuestComponent::AddQuest(UQuestData* QuestData)
 {
-	CurrentQuest = QuestData;
-		
+	Quest.Add(QuestData);
+	ActualizarQuests();
+	//CurrentQuest = QuestData;		
 }
+
+void UQuestComponent::ActualizarQuests()
+{
+	for (int i = 0; i < Quest.Num(); i++)
+	{
+	//	Quest[i].
+	}
+}
+
 

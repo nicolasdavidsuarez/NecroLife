@@ -28,12 +28,17 @@ public:
 
 	//Agregar quest
 	void AddQuest(UQuestData* QuestData);
+
+	//actualizar quests activas
+	void ActualizarQuests();
+	
 	
 	//FString Lista de tareas (ya editada)
 	
     //void ingresar evento
 
 private:
+	TArray<UQuestData*> Quest;
 	UQuestData* CurrentQuest;
 	bool bAsQuest;
 		

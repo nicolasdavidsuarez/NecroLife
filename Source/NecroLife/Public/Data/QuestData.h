@@ -28,12 +28,13 @@ struct FQuestObjective
 {
 	GENERATED_BODY()
 
-	// Texto que sale en el HUD: "Busca bencina en el granero"
+	// Texto que sale en el HUD: "Busca bencina por el cementerio"
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FText Description;
 	
 //Fase de la mision, todas las fases que se pueden hacer en paralelo tienen el mismo numero de fase
-	//Ej: se puede matar enemigos mientras se busca la bencina
+	//Ej: se puede matar enemigos mientras se busca la bencina, y no se pasa de objetivo hasta que todos esten
+	//completo, si es lineal se le asigna un numero a cada uno.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	int32 Stage;
 
@@ -69,11 +70,10 @@ class NECROLIFE_API UQuestData : public UDataAsset
 	// Icono para el UI
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
 	UTexture2D* QuestIcon;
+	//
 
 	//  Una lista ordenada de pasos
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives")
 	TArray<FQuestObjective> Objectives;
-
-	
 	
 };
