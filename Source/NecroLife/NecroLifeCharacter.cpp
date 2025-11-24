@@ -16,6 +16,7 @@
 #include "Public/Components/RPGHelper.h"
 #include "CollisionQueryParams.h"
 #include "NecroLifePlayerState.h"
+#include "Components/BoxComponent.h"
 #include "Engine/EngineTypes.h"
 #include "Engine/OverlapResult.h"
 #include "GameFramework/PlayerState.h"
@@ -58,7 +59,11 @@ ANecroLifeCharacter::ANecroLifeCharacter()
    // Create a camera boom (pulls in towards the player if there is a collision)
    CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
    CameraBoom->SetupAttachment(RootComponent);
+   
    CameraBoom->TargetArmLength = 800.0f;
+   CameraBoom->bDoCollisionTest=true;
+   
+   CameraBoom->CameraLagSpeed=2.0f;
    CameraBoom->bUsePawnControlRotation = true;
    CameraBoom->bInheritPitch = true;
    CameraBoom->bInheritYaw=true;
@@ -71,7 +76,10 @@ ANecroLifeCharacter::ANecroLifeCharacter()
 
 
    Attribute = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributesComponent"));
-  
+
+   BoxCollision=CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCol"));
+   BoxCollision->SetBoxExtent(FVector(100,100,100),true);
+   
    // Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character)
    // are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
@@ -102,6 +110,8 @@ void ANecroLifeCharacter::SetBoomLength(const FInputActionValue& Value)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ANecroLifeCharacter::AbilityEnabled(const FInputActionValue& InputActionValue)
 {
+if (!bEnabledAbility)
+{
    int32 pressedKeys = static_cast<int32>(InputActionValue.Get<float>())-1;
    FString AbilityName =FString("se entra en modo combate " + FString::FromInt(pressedKeys));
    //ShowMsg(AbilityName);
@@ -121,9 +131,9 @@ void ANecroLifeCharacter::AbilityEnabled(const FInputActionValue& InputActionVal
          CurrentRotation = GetActorRotation();
          TargetRotation = Direction.Rotation();
          //Controller->SetControlRotation(NewRotation);
-       //  DrawDebugLine(GetWorld(),GetActorLocation(),TargetLocation,FColor::Emerald,
+         //  DrawDebugLine(GetWorld(),GetActorLocation(),TargetLocation,FColor::Emerald,
          //   false,3.0f,1,10);
-Ability->SelectAbility(pressedKeys);
+         Ability->SelectAbility(pressedKeys);
          if (Ability && Ability->CurrentAbility)
          {
             Ability->UpdateIndicator(HitResult.Location);
@@ -133,6 +143,7 @@ Ability->SelectAbility(pressedKeys);
       bEnabledAbility = true;      
    }
    Ability->InitPreview();
+}
 }
 
 
@@ -161,7 +172,6 @@ void ANecroLifeCharacter::AplyAction()
       float AttackRadius = 300.f;        // Distancia del ataque
       float AttackAngle = 45.f;          // Mitad del ángulo del cono (en grados)
     
-     // DrawDebugCone(GetWorld(),GetActorLocation(),,450.0f,0.5,0.5,12,FColor::Blue,false,0.1f);
       FVector Origin = GetActorLocation();
       FVector Forward = GetActorForwardVector();
 
@@ -197,7 +207,7 @@ void ANecroLifeCharacter::AplyAction()
          {
             //UGameplayStatics::ApplyDamage(Other, 20.f, GetController(), this, UDamageType::StaticClass());
             
-            URPGHelper::ApplyDamage(Other,5);
+            URPGHelper::ApplyDamage(Other,100);
             if (!EnemyBasic->IsAlive())
             {
                ShowMsg(FString::Printf(TEXT("Aca Sumaria experiencia")));
@@ -218,6 +228,52 @@ void ANecroLifeCharacter::AplyAction()
       Ability->ClearIndicator();
    }else
    {
+      TArray<FOverlapResult> Overlaps;
+      FVector Origin = GetActorLocation();
+      FCollisionShape CollisionShape = FCollisionShape::MakeBox(FVector(100,100,100));
+
+      bool bHit = GetWorld()->OverlapMultiByChannel(
+                   Overlaps,
+                   Origin,
+                   FQuat::Identity,
+                   ECC_Pawn,          // Canal de colisión 
+                   CollisionShape
+               );
+      if (!bHit) return;
+      FVector Forward = GetActorForwardVector();
+      DrawDebugCone(GetWorld(),GetActorLocation(),Forward,100.0f,0.5,0.5,12,FColor::Red,false,0.5f);
+
+      
+      for (auto& Result : Overlaps)
+      {
+         AActor* Other = Result.GetActor();
+         ANecroLifeEnemyBasic* EnemyBasic=Cast<ANecroLifeEnemyBasic>(Other);
+         if (!EnemyBasic || Other == this) continue;
+
+         // 🔹 Vector hacia el otro actor
+         FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
+
+         // 🔹 Calculamos el ángulo con el forward vector
+         float Dot = FVector::DotProduct(Forward, ToTarget);
+         float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
+         float AttackAngle = 45.f;  
+
+         // 🔹 Si está dentro del cono, aplicamos daño
+         if (AngleToTarget <= AttackAngle)
+         {
+            //UGameplayStatics::ApplyDamage(Other, 20.f, GetController(), this, UDamageType::StaticClass());
+            
+            URPGHelper::ApplyDamage(Other,10);
+            if (!EnemyBasic->IsAlive())
+            {
+               ShowMsg(FString::Printf(TEXT("Aca Sumaria experiencia")));
+               URPGHelper::TakeXP(this,10);
+            }
+            // 🔹 (Opcional) debug line
+            DrawDebugLine(GetWorld(), Origin, Other->GetActorLocation(), FColor::Red, false, 1.f, 0, 1.f);
+            
+         }
+      }
       //ShowMsg(FString::Printf(TEXT("Se ejecuta Ataque Melee")));
    }
      

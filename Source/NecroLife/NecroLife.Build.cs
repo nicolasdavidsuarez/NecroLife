@@ -20,7 +20,9 @@ public class NecroLife : ModuleRules
 			"UMG",
 			"Slate", "Niagara",
 			"FMODStudio",
-			"FMODStudioNiagara"
+			"FMODStudioNiagara",
+			"GameplayTags",
+			"GameplayTasks"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
