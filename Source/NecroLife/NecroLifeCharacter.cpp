@@ -415,7 +415,7 @@ void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
          if (Pitch!=0)
          {
             Pitch*=-1.0f;
-            CameraBoom->AddRelativeRotation(FRotator(-Pitch,0.0f,0.0f));
+            CameraBoom->AddRelativeRotation(FRotator(Pitch,0.0f,0.0f));
          }
          //ShowMsg(FString::Printf(TEXT("Pitch: %f"),Pitch));
       }
