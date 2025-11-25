@@ -17,6 +17,7 @@
 #include "CollisionQueryParams.h"
 #include "NecroLifePlayerState.h"
 #include "Components/BoxComponent.h"
+#include "Components/QuestComponent.h"
 #include "Engine/EngineTypes.h"
 #include "Engine/OverlapResult.h"
 #include "GameFramework/PlayerState.h"
@@ -31,6 +32,8 @@ ANecroLifeCharacter::ANecroLifeCharacter()
  //  Inventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 //crear el UAbilityComponent
    Ability = CreateDefaultSubobject<UAbilityComponent>(TEXT("AbilityComponent"));
+   //crear y atachar el quest component
+   QuestComponent= CreateDefaultSubobject<UQuestComponent>(TEXT("QuestComponent"));
    
    // Set size for collision capsule
    GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);

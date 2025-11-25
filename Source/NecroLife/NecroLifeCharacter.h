@@ -188,7 +188,10 @@ public:
     //COmponente Habilidades
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UAbilityComponent* Ability;
-   //retorna el puntero para usarlo en ability niagara y ??
+
+
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
+   UQuestComponent* QuestComponent;
 
    protected:
    UPROPERTY(BlueprintReadOnly, Category = "Components")

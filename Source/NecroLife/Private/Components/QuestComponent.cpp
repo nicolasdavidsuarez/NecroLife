@@ -2,8 +2,7 @@
 
 
 #include "Components/QuestComponent.h"
-
-//#include "Runtime/Android/AndroidRuntimeSettings/Classes/AndroidRuntimeSettings.h"
+#include "Data/QuestData.h"
 
 
 // Sets default values for this component's properties
@@ -21,7 +20,7 @@ UQuestComponent::UQuestComponent()
 void UQuestComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
+	ActualizarQuests();
 	// ...
 	
 }
@@ -31,8 +30,7 @@ void UQuestComponent::BeginPlay()
 void UQuestComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
+		// ...
 }
 
 void UQuestComponent::AddQuest(UQuestData* QuestData)
@@ -46,8 +44,17 @@ void UQuestComponent::ActualizarQuests()
 {
 	for (int i = 0; i < Quest.Num(); i++)
 	{
-	//	Quest[i].
+		for (int j=0;j<Quest[i]->Objectives.Num();j++)
+		{
+		ObjetivosActuales.Add(Quest[i]->Objectives[j]);
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green,
+		ObjetivosActuales[j].Description.ToString());			
+		}
 	}
+}
+
+void UQuestComponent::UpdateQuestProgress(FGameplayTag ObjectiveID, int32 Amount)
+{
 }
 
 
