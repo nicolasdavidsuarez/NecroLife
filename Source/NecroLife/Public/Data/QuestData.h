@@ -54,6 +54,10 @@ struct FQuestObjective
 	// (Opcional) ¿Necesita un item previo? Ej: Tener bencina para prender antorcha
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FGameplayTag PrerequisiteItemID;
+
+	//(Opcional) Mas facil guardar aca que termino con el objetivo
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bObjetivoCumplido=false;
 };
 
 UCLASS()
@@ -70,10 +74,11 @@ class NECROLIFE_API UQuestData : public UDataAsset
 	// Icono para el UI
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
 	UTexture2D* QuestIcon;
-	//
-
+	
 	//  Una lista ordenada de pasos
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives")
 	TArray<FQuestObjective> Objectives;
+	//guardo aca si termino la quest(mas facil para la logica)
+	bool bQuestDone=false;
 	
 };

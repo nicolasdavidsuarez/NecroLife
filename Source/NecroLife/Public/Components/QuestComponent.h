@@ -13,7 +13,7 @@ struct FActiveQuestData
 	GENERATED_BODY()
 	// 1. ¿Qué misión es? (La referencia al "Menú", solo lectura)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UQuestData* QuestDataAsset;
+	UQuestData* QuestDataAsset=nullptr;
 
 	// 2. ¿Por qué fase va? (El estado variable)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -53,6 +53,7 @@ public:
 	// Función para actualizar progreso (cuando matas algo)
 	UFUNCTION(BlueprintCallable, Category="Quests")
 	void UpdateQuestProgress(FGameplayTag ObjectiveID, int32 Amount);
+	void CheckObjetivoComplete(FActiveQuestData& QuestData, FGameplayTag ObjectiveID, int32 Amount);
 	//FString Lista de tareas (ya editada)
 	
 	//void ingresar evento
@@ -72,7 +73,8 @@ public:
 private:
 	
 	TArray<FQuestObjective> ObjetivosActuales;
-	UQuestData* CurrentQuest;
+	UQuestData* CurrentQuest=nullptr;
+	TArray<FActiveQuestData> ActiveQuest;
 	bool bAsQuest;
 		
 };

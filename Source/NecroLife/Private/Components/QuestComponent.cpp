@@ -35,26 +35,99 @@ void UQuestComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 
 void UQuestComponent::AddQuest(UQuestData* QuestData)
 {
+if (Quest.Contains(QuestData))
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green,
+	FString(TEXT("Ya contenia el data Asset")));			
+	
+}else{
 	Quest.Add(QuestData);
 	ActualizarQuests();
-	//CurrentQuest = QuestData;		
+}
+		//CurrentQuest = QuestData;		
 }
 
 void UQuestComponent::ActualizarQuests()
 {
+	
+if (Quest.Num() == 0) return;
+
 	for (int i = 0; i < Quest.Num(); i++)
 	{
-		for (int j=0;j<Quest[i]->Objectives.Num();j++)
+		if (Quest[i]->bQuestDone)
 		{
-		ObjetivosActuales.Add(Quest[i]->Objectives[j]);
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green,
-		ObjetivosActuales[j].Description.ToString());			
+			
+		}else{
+			FActiveQuestData NewActiveQuest;
+			NewActiveQuest.QuestDataAsset = Quest[i];
+			NewActiveQuest.CurrentStage=0;
+			for (int j=0;j<Quest[i]->Objectives.Num();j++)
+			{
+				NewActiveQuest.ObjectiveProgress.Emplace(Quest[i]->Objectives[j].TargetID,
+					Quest[i]->Objectives[j].AmountRequired);
+			}
+			ActiveQuest.Add(NewActiveQuest);		
 		}
 	}
+	
+	for (int i = 0; i < ActiveQuest.Num(); i++)
+	{		
+	for (int j=0;j<ActiveQuest[i].QuestDataAsset->Objectives.Num();j++)
+	{
+		if (ActiveQuest[i].CurrentStage==ActiveQuest[i].QuestDataAsset->Objectives[j].Stage)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green,
+			ActiveQuest[i].QuestDataAsset->Objectives[j].Description.ToString());
+		}
+	}
+	}
+	
 }
 
 void UQuestComponent::UpdateQuestProgress(FGameplayTag ObjectiveID, int32 Amount)
 {
+	if (!ObjectiveID.IsValid()) return;
+	for (FActiveQuestData& QuestData : ActiveQuest)
+	{
+		int32* CurrentValue = QuestData.ObjectiveProgress.Find(ObjectiveID);
+
+		if (CurrentValue)
+		{
+					Amount += Amount;
+		}
+		CheckObjetivoComplete(QuestData,ObjectiveID,Amount);
+	}
+	
+}
+
+void UQuestComponent::CheckObjetivoComplete(FActiveQuestData& QuestData, FGameplayTag ObjectiveID, int32 Amount)
+{
+	int cantidadNecesaria=0;
+for (UQuestData* CurrentQuestEnLista:Quest){
+	for (int i=0;i<CurrentQuestEnLista->Objectives.Num();i++)
+	{
+		if (CurrentQuestEnLista->Objectives[i].TargetID == ObjectiveID)
+		{
+		cantidadNecesaria=CurrentQuestEnLista->Objectives[i].AmountRequired;
+		}
+	}
+}
+	if (cantidadNecesaria<=Amount)
+	{
+		for (FActiveQuestData& QuestDataEnLista : ActiveQuest)
+		{
+			if (QuestDataEnLista.ObjectiveProgress.Contains(ObjectiveID))
+			{
+				QuestDataEnLista.QuestDataAsset->bQuestDone=true;
+				QuestDataEnLista.CurrentStage++;
+
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green,
+			FString("aca sumo el current stage"));
+				ActualizarQuests();
+			}
+	}
+	
+	}
 }
 
 
