@@ -213,8 +213,9 @@ void ANecroLifeCharacter::AplyAction()
             URPGHelper::ApplyDamage(Other,100);
             if (!EnemyBasic->IsAlive())
             {
-               ShowMsg(FString::Printf(TEXT("Aca Sumaria experiencia")));
+             //  ShowMsg(FString::Printf(TEXT("Aca Sumaria experiencia")));
                URPGHelper::TakeXP(this,10);
+               QuestComponent->UpdateQuestProgress(EnemyBasic->GetTag(),1);
             }
             // 🔹 (Opcional) debug line
             DrawDebugLine(GetWorld(), Origin, Other->GetActorLocation(), FColor::Red, false, 1.f, 0, 1.f);

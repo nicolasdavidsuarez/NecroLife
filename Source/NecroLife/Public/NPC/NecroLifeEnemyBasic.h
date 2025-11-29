@@ -3,12 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/Character.h"
 #include "Public/Components/UHealthComponent.h"
 #include "NecroLifeEnemyBasic.generated.h"
 
 
 class UUHealthComponent;
+
 
 UCLASS()
 class NECROLIFE_API ANecroLifeEnemyBasic : public ACharacter
@@ -23,7 +25,16 @@ public:
 	//componente de salud
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
 	UUHealthComponent* HealthComponent;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
+	FGameplayTag Tag;
+
+	UFUNCTION(BlueprintCallable)
+	FGameplayTag GetTag()
+	{
+		return Tag;
+	}
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

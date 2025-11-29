@@ -23,12 +23,16 @@ struct FActiveQuestData
 	// Usamos un Map: La clave es el ID del objetivo (Tag) y el valor es la cantidad actual.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TMap<FGameplayTag, int32> ObjectiveProgress;
-    
+
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bIsDone;
 	// Un constructor simple para inicializar
 	FActiveQuestData()
 	{
 		QuestDataAsset = nullptr;
 		CurrentStage = 0;
+		bIsDone = false;
 	}
 };
 
@@ -53,7 +57,7 @@ public:
 	// Función para actualizar progreso (cuando matas algo)
 	UFUNCTION(BlueprintCallable, Category="Quests")
 	void UpdateQuestProgress(FGameplayTag ObjectiveID, int32 Amount);
-	void CheckObjetivoComplete(FActiveQuestData& QuestData, FGameplayTag ObjectiveID, int32 Amount);
+	void CheckObjetivoComplete(FActiveQuestData& QuestToCheck, FGameplayTag ObjectiveID);
 	//FString Lista de tareas (ya editada)
 	
 	//void ingresar evento
@@ -63,7 +67,7 @@ public:
 							   FActorComponentTickFunction* ThisTickFunction) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<UQuestData*> Quest;
+	TArray<UQuestData*> Quests;
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -71,9 +75,6 @@ protected:
 public:
 	
 private:
-	
-	TArray<FQuestObjective> ObjetivosActuales;
-	UQuestData* CurrentQuest=nullptr;
 	TArray<FActiveQuestData> ActiveQuest;
 	bool bAsQuest;
 		
