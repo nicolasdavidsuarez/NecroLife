@@ -7,6 +7,11 @@
 #include "Data/QuestData.h"
 #include "QuestComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUpdateObjetiveList, const TArray<FQuestUIData>&, ItemsToMisionList);
+
+
+
+
 USTRUCT(BlueprintType)
 struct FActiveQuestData
 {
@@ -24,9 +29,20 @@ struct FActiveQuestData
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TMap<FGameplayTag, int32> ObjectiveProgress;
 
+	//TSet: Lista de grupos de elementos unicos. no admite duplicados. no se ordena.
+	//aca tendria que administrar las misiones para no escribir el UQuestData
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TSet<FGameplayTag> ObjetivosCompletados;
 
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool bIsDone;
+
+	/*bool operator==(const FActiveQuestData& Other) const
+	{
+			return QuestDataAsset == Other.QuestDataAsset;
+	}*/
+	
 	// Un constructor simple para inicializar
 	FActiveQuestData()
 	{
@@ -35,6 +51,8 @@ struct FActiveQuestData
 		bIsDone = false;
 	}
 };
+
+
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -54,9 +72,24 @@ public:
 	//actualizar quests activas
 	void ActualizarQuests();
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI | Quests")
+	TArray<FName> QuestsCompletadasNombre;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI | Quests")
+	TArray<FName> QuestsActivasNombre;
+
+	// En QuestComponent.h (dentro de la clase UQuestComponent)
+	UPROPERTY(BlueprintAssignable, Category = "Quests|UI")
+	FOnUpdateObjetiveList OnUpdateObjectiveList;
+
+	// Función para actualizar listas de completadas y listas
+	UFUNCTION(BlueprintCallable, Category = "Quests")
+	void ActualizarListasQuests();
+	
 	// Función para actualizar progreso (cuando matas algo)
 	UFUNCTION(BlueprintCallable, Category="Quests")
-	void UpdateQuestProgress(FGameplayTag ObjectiveID, int32 Amount);
+	bool UpdateQuestProgress(FGameplayTag ObjectiveID, int32 Amount);
+	
 	void CheckObjetivoComplete(FActiveQuestData& QuestToCheck, FGameplayTag ObjectiveID);
 	//FString Lista de tareas (ya editada)
 	
@@ -73,9 +106,9 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	
-private:
-	TArray<FActiveQuestData> ActiveQuest;
+	TArray<FActiveQuestData> ActiveQuests;
 	bool bAsQuest;
-		
+	
+	
+			
 };

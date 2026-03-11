@@ -24,6 +24,33 @@ enum class EQuestObjectiveType : uint8
 // La estructura de un paso individual (Un "Stage" de la misión)
 // todo ver si se ve en el editor!!
 USTRUCT(BlueprintType)
+struct FQuestObjectiveListEntry
+{
+	GENERATED_BODY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FText EntryText;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UTexture2D* img;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bIsDone=false;
+};
+
+USTRUCT(BlueprintType)
+struct FQuestUIData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FText QuestName; 
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<FQuestObjectiveListEntry> Objectives;
+	//esta struct es unicamente para la ui, la anterior da el objetivo con el estado. y esta con el titulo de la quest
+};
+
+USTRUCT(BlueprintType)
 struct FQuestObjective
 {
 	GENERATED_BODY()
@@ -51,10 +78,10 @@ struct FQuestObjective
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	int32 AmountRequired = 1;
 
-	// (Opcional) ¿Necesita un item previo? Ej: Tener bencina para prender antorcha
+/*	// (Opcional) ¿Necesita un item previo? Ej: Tener bencina para prender antorcha
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FGameplayTag PrerequisiteItemID;
-
+*/
 	//(Opcional) Mas facil guardar aca que termino con el objetivo
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool bObjetivoCumplido=false;

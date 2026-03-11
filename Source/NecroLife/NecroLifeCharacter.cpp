@@ -16,12 +16,15 @@
 #include "Public/Components/RPGHelper.h"
 #include "CollisionQueryParams.h"
 #include "NecroLifePlayerState.h"
+#include "Blueprint/UserWidget.h"
 #include "Components/BoxComponent.h"
 #include "Components/QuestComponent.h"
 #include "Engine/EngineTypes.h"
 #include "Engine/OverlapResult.h"
 #include "GameFramework/PlayerState.h"
+#include "Interface/NecroLifeInterface.h"
 #include "NPC/NecroLifeEnemyBasic.h"
+#include "NPC/NecroLifeNpcBasic.h"
 
 
 ANecroLifeCharacter::ANecroLifeCharacter()
@@ -113,14 +116,17 @@ void ANecroLifeCharacter::SetBoomLength(const FInputActionValue& Value)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ANecroLifeCharacter::AbilityEnabled(const FInputActionValue& InputActionValue)
 {
-if (!bEnabledAbility)
-{
+
    int32 pressedKeys = static_cast<int32>(InputActionValue.Get<float>())-1;
    FString AbilityName =FString("se entra en modo combate " + FString::FromInt(pressedKeys));
-   //ShowMsg(AbilityName);
-   if (!bEnabledAbility)
-   {
-      GetCharacterMovement()->bOrientRotationToMovement = false;
+   ShowMsg(AbilityName);
+   Ability->SelectAbility(pressedKeys);
+     
+   
+   
+   if (!Ability->isCoolDownAply(Ability->CurrentAbility))
+      {
+         GetCharacterMovement()->bOrientRotationToMovement = false;
       bUseControllerRotationYaw = true;
       FHitResult HitResult;
   
@@ -136,7 +142,7 @@ if (!bEnabledAbility)
          //Controller->SetControlRotation(NewRotation);
          //  DrawDebugLine(GetWorld(),GetActorLocation(),TargetLocation,FColor::Emerald,
          //   false,3.0f,1,10);
-         Ability->SelectAbility(pressedKeys);
+         //Ability->SelectAbility(pressedKeys);
          if (Ability && Ability->CurrentAbility)
          {
             Ability->UpdateIndicator(HitResult.Location);
@@ -144,11 +150,16 @@ if (!bEnabledAbility)
       }
   
       bEnabledAbility = true;      
-   }
-   Ability->InitPreview();
-}
-}
+     Ability->InitPreview();
 
+}else
+{
+   //aca iria si la habilidad esta en cool down, por ahora no hace nada. no se si hacer que se vea distinta
+   //o que reproduzca sonido de eeee!
+   
+}
+   
+}
 
 void ANecroLifeCharacter::AbilityDisambled(const FInputActionValue& InputActionValue)
 {
@@ -190,6 +201,12 @@ void ANecroLifeCharacter::AplyAction()
              CollisionShape
          );
 
+      GetCharacterMovement()->bOrientRotationToMovement = true;
+      bUseControllerRotationYaw = false;
+      bEnabledAbility = false;
+      Ability->AbilityAply();
+      Ability->ClearIndicator();
+
       if (!bHit) return;
 
       for (auto& Result : Overlaps)
@@ -226,10 +243,8 @@ void ANecroLifeCharacter::AplyAction()
       // 🔹 Debug del área del ataque
       
       //ShowMsg(FString::Printf(TEXT("Ability Ejecuted")));
-      GetCharacterMovement()->bOrientRotationToMovement = true;
-      bUseControllerRotationYaw = false;
-      bEnabledAbility = false;
-      Ability->ClearIndicator();
+      
+     
    }else
    {
       TArray<FOverlapResult> Overlaps;
@@ -275,7 +290,7 @@ void ANecroLifeCharacter::AplyAction()
             }
             // 🔹 (Opcional) debug line
             DrawDebugLine(GetWorld(), Origin, Other->GetActorLocation(), FColor::Red, false, 1.f, 0, 1.f);
-            
+            //Ability->AbilityAply();
          }
       }
       //ShowMsg(FString::Printf(TEXT("Se ejecuta Ataque Melee")));
@@ -334,6 +349,64 @@ void ANecroLifeCharacter::TakePosion()
    }
 }
 }
+///////////Para cuando apreta boton de interactuar, "t" de talk
+void ANecroLifeCharacter::Interact()
+{
+   // Si tenemos un objeto guardado y ese objeto usa nuestra interfaz
+   if (CurrentInteractable&&CurrentInteractable->Implements<UNecroLifeInterface>())
+   {
+      // Ejecutamos la función (esto hará que el objeto lance su lógica y el PJ lo mire)
+      UE_LOG(LogTemp, Warning, TEXT("implementa on interact"));
+   INecroLifeInterface::Execute_OnInteract(CurrentInteractable,this);
+      
+
+   }else
+   {
+      UE_LOG(LogTemp, Warning, TEXT("no hay nadie con quien interactuar, y se presiono la t "));
+   }
+    
+}
+
+void ANecroLifeCharacter::AddCurrentQuest()
+{
+   ANecroLifeNpcBasic* NpcBasic=Cast<ANecroLifeNpcBasic>(CurrentInteractable);
+   QuestComponent->AddQuest(NpcBasic->QuestActual);
+   NpcBasic->NextAddQuest();
+}
+
+void ANecroLifeCharacter::CancelCurrentQuest()
+{
+   ANecroLifeNpcBasic* NpcBasic=Cast<ANecroLifeNpcBasic>(CurrentInteractable);
+   NpcBasic->CancelAddQuest();
+}
+
+bool ANecroLifeCharacter::ShowDialogue(FDialogLine CurrentLine)
+{
+   
+   if (HubWidget)
+   {
+      UFunction* Func = HubWidget->FindFunction(FName("ShowDialogueLine"));
+      if (Func)
+      {
+         HubWidget->ProcessEvent(Func, &CurrentLine);
+         // Esto te dirá en el log si el nombre está mal escrito o no se encuentra
+         UE_LOG(LogTemp, Warning, TEXT("se encontró la función ShowDialogueLine en el Hub"));
+         return CurrentLine.bIsMissionChoice;
+      }
+      else 
+      {
+         // Esto te dirá en el log si el nombre está mal escrito o no se encuentra
+         UE_LOG(LogTemp, Warning, TEXT("No se encontró la función ShowDialogueLine en el Hub"));
+      }
+   }
+   else 
+   {
+      UE_LOG(LogTemp, Error, TEXT("HubWidget es NULO en el Character"));
+   }
+   
+   return false;
+}
+
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -362,12 +435,14 @@ void ANecroLifeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
       EnhancedInputComponent->BindAction(AbilityCancelAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::AbilityDisambled);
       ///Dash//////////////////
       EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Dash);
+//interactuar
+      EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Interact);
       //correr////////////
       EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::RunActivated);
       ///CUrar si tiene pociones//////////////////
       EnhancedInputComponent->BindAction(ApplyPosion, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::TakePosion);
       //ACTION!!!
-      EnhancedInputComponent->BindAction(Action, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::AplyAction);
+      EnhancedInputComponent->BindAction(Action, ETriggerEvent::Started, this, &ANecroLifeCharacter::AplyAction);
    }
    else
    {
@@ -425,6 +500,21 @@ void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
       }
    }
   // AddControllerPitchInput(Pitch);
+}
+
+void ANecroLifeCharacter::LookAt(FVector TargetLocation)
+{
+   // 1. Obtenemos el punto de origen (generalmente los ojos o la cámara)
+   FVector StartLocation = GetPawnViewLocation(); 
+
+   // 2. Calculamos el vector dirección y lo convertimos en rotación
+   FVector LookDirection = TargetLocation - StartLocation;
+   FRotator LookAtRot = LookDirection.Rotation();
+
+   // 3. Pasamos los valores resultantes a tu función original DoLook
+   // Nota: Dependiendo de tu eje, podrías necesitar ajustar estos valores
+   DoLook(LookAtRot.Yaw, LookAtRot.Pitch);
+   GetController()->SetControlRotation(LookAtRot);
 }
 
 
@@ -524,6 +614,7 @@ void ANecroLifeCharacter::Tick(float DeltaTime)
   
    UpdateAbilityPointer();
    LookToCastAbility();
+  
 }
 
 
@@ -612,4 +703,25 @@ void ANecroLifeCharacter::StopDash()
    {
       bCanDash = true;
    }, Attribute->DashCooldown, false);
+}
+void ANecroLifeCharacter::SetUIState(bool bIsTalking)
+{
+   APlayerController* PC = Cast<APlayerController>(GetController());
+   if (PC)
+   {
+      if (bIsTalking)
+      {
+         // Bloqueamos el input de movimiento
+         PC->SetInputMode(FInputModeGameAndUI());
+         PC->bShowMouseCursor = true;
+         GetCharacterMovement()->DisableMovement();
+      }
+      else
+      {
+         // Devolvemos el control al juego
+         PC->SetInputMode(FInputModeGameOnly());
+         PC->bShowMouseCursor = false;
+         GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+      }
+   }
 }

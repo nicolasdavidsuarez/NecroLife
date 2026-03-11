@@ -35,6 +35,12 @@ public:
 		return Tag;
 	}
 
+	UFUNCTION(BlueprintCallable)
+	void SetTag(FGameplayTag newTag)
+	{
+		Tag=newTag;
+	}
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

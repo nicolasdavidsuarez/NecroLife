@@ -22,6 +22,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="General")
 	FName AbilityName;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="General")
+	float AbilityColdDown;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="General")
+	float AbilityEnergyNeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Visual")
+	UTexture2D* Icon;
+
 	// Rango máximo del cursor (opcional)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="General")
 	float Range = 1000.f;

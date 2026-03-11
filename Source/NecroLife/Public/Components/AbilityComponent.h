@@ -20,6 +20,8 @@
 #include "AbilityComponent.generated.h"
 
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCoolDownAbility, int, AbilitySlot);
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class NECROLIFE_API UAbilityComponent : public UActorComponent
 {
@@ -37,6 +39,9 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	UAbilityData* CurrentAbility;
 
+	UPROPERTY(BlueprintAssignable, Category="Abilities")
+	FCoolDownAbility AbilitySlot;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* MeshComp;
 
@@ -44,11 +49,28 @@ public:
 	UPROPERTY()
 	UNiagaraComponent* ActiveIndicator;
 
+	UFUNCTION(BLueprintCallable, Category="Abilities")
+	void AbilityAply();
+
+	UFUNCTION(BLueprintCallable, Category="Abilities")
+	bool isCoolDownAply(UAbilityData* Ability);
+
+	UFUNCTION(BLueprintCallable, Category="Abilities")
+	TArray<UAbilityData*> getAbilitySlots();
+
+protected:
+	// Mapa para almacenar en qué segundo del juego termina el cooldown de cada habilidad
+	UPROPERTY(BlueprintReadOnly, Category="Abilities")
+	TMap<UAbilityData*, float> AbilityCooldownEndTimes;
+
+public:	
+	int32 CurrentAbilitySlot;
 	void SelectAbility(int32 Index);
 	void InitPreview();
 	void UpdatePreview(FVector posicionPointer);
 	void UpdateIndicator(const FVector& TargetLocation);
 	void ClearIndicator();
+	
 ////////////////////////////////////////////////////////////////////
 protected:
 	// Called when the game starts

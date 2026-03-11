@@ -12,6 +12,8 @@
 #include "Public/Components/InventoryComponent.h"
 #include "Public/Components/AbilityComponent.h"
 #include "Engine/EngineTypes.h"
+#include "Interface/NecroLifeInterface.h"
+#include "Types/NecroLifeTypes.h"   
 #include "NecroLifeCharacter.generated.h"
 
 
@@ -25,6 +27,7 @@ class UInventoryComponent;
 class UAbilityComponent;
 class UQuestComponent;
 class ANecroLifePlayerState;
+//class INecroLifeInterface;
 struct FInputActionValue;
 
 
@@ -36,7 +39,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 *  Implements a controllable orbiting camera
 */
 UCLASS(abstract)
-class ANecroLifeCharacter : public ACharacter
+class ANecroLifeCharacter : public ACharacter, public INecroLifeInterface
 {
    GENERATED_BODY()
 
@@ -83,10 +86,17 @@ protected:
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* DashAction;
 
+   //Interactuar
+   UPROPERTY(EditAnywhere, Category="Input")
+   UInputAction* InteractAction;
+
+
 
    /** Mouse Look Input Action */
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* MouseLookAction;
+
+   
 
 
    /** Ability Action */
@@ -160,6 +170,7 @@ protected:
    void OnMiddleMouseDown();
    void RunActivated(const FInputActionValue& Value);
    void TakePosion();
+   void Interact();
    /** Initialize input action bindings */
    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
@@ -206,6 +217,11 @@ public:
    UPROPERTY(BlueprintReadOnly, Category = "Player State")
    TObjectPtr<ANecroLifePlayerState> MyPlayerState;
 
+protected:
+   // Referencia genérica al Hub
+   UPROPERTY(BlueprintReadWrite, Category = "UI")
+   UUserWidget* HubWidget;
+   
 public:
    UFUNCTION(BlueprintCallable)
    FVector GetAbilityPointer() const {return CachedAbilityPointer;}
@@ -219,6 +235,9 @@ public:
    UFUNCTION(BlueprintCallable, Category="Input")
    virtual void DoLook(float Yaw, float Pitch);
 
+   UFUNCTION(BlueprintCallable, Category="Input")
+   virtual void LookAt(FVector TargetLocation);
+
 
    /** Handles jump pressed inputs from either controls or UI interfaces */
    UFUNCTION(BlueprintCallable, Category="Input")
@@ -229,9 +248,30 @@ public:
    UFUNCTION(BlueprintCallable, Category="Input")
    virtual void DoJumpEnd();
 
-
+   UPROPERTY()
+   AActor* CurrentInteractable; 
 public:
    virtual void PossessedBy (AController* NewController) override;
+   // El objeto llama a estas funciones desde su Overlap
+   UFUNCTION(BLueprintCallable, Category="Interact")
+   void SetCurrentInteractable(AActor* NewInteractable) { CurrentInteractable = NewInteractable; }
+   UFUNCTION(BLueprintCallable, Category="Interact")
+   void ClearCurrentInteractable() { CurrentInteractable = nullptr; }
+
+   UFUNCTION(BLueprintCallable, Category="Interact")
+  AActor *getCurrentInteractable() { return CurrentInteractable; }
+
+   UFUNCTION(BLueprintCallable, Category="Interact")
+   void AddCurrentQuest();
+
+   UFUNCTION(BLueprintCallable, Category="Interact")
+   void CancelCurrentQuest();
+   
+   UFUNCTION(BLueprintCallable, Category="Interact")
+   bool ShowDialogue(FDialogLine CurrentLine);
+
+   
+   
 FVector Direction;
 FRotator CurrentRotation,TargetRotation;
 
@@ -278,7 +318,10 @@ FRotator CurrentRotation,TargetRotation;
    //dash
    void Dash();
    void StopDash();
-  
+
+   UFUNCTION(BlueprintCallable)
+   void SetUIState(bool bIsTalking);
+
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
    class UInputMappingContext* InputMapping;
 
