@@ -176,6 +176,8 @@ protected:
 
 
 protected:
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
+   UAttributeComponent* CachedAttributeComponent;
 
 
    /** Called for movement input */
@@ -204,9 +206,7 @@ public:
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UQuestComponent* QuestComponent;
 
-   protected:
-   UPROPERTY(BlueprintReadOnly, Category = "Components")
-   TObjectPtr<UAttributeComponent> CachedAttributeComponent;
+   
 
    UPROPERTY(BlueprintReadOnly, Category = "Components")
    TObjectPtr<UInventoryComponent> CachedInventoryComponent;
