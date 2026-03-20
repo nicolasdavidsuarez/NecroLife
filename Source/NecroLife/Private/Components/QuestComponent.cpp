@@ -276,7 +276,7 @@ void UQuestComponent::CheckObjetivoComplete(FActiveQuestData& QuestToCheck, FGam
 				break;
 			}
 		}
-
+   
 		
 
 			

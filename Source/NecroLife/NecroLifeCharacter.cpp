@@ -367,6 +367,23 @@ void ANecroLifeCharacter::Interact()
     
 }
 
+
+
+void ANecroLifeCharacter::Inventory()
+{
+   if (!bShowInventory)
+   {
+      bShowInventory=true;
+      SetUIState(true);
+      ShowInventory.Broadcast();
+   }else
+   {
+      SetUIState(false);
+      bShowInventory=false;
+      ShowInventory.Broadcast();
+   }
+}
+
 void ANecroLifeCharacter::AddCurrentQuest()
 {
    ANecroLifeNpcBasic* NpcBasic=Cast<ANecroLifeNpcBasic>(CurrentInteractable);
@@ -433,6 +450,7 @@ void ANecroLifeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
       EnhancedInputComponent->BindAction(CameraBoomAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::SetBoomLength);
       EnhancedInputComponent->BindAction(AbilityAction, ETriggerEvent::Started, this, &ANecroLifeCharacter::AbilityEnabled);
       EnhancedInputComponent->BindAction(AbilityCancelAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::AbilityDisambled);
+      EnhancedInputComponent->BindAction(OpenInventory, ETriggerEvent::Started, this, &ANecroLifeCharacter::Inventory);
       ///Dash//////////////////
       EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Dash);
 //interactuar

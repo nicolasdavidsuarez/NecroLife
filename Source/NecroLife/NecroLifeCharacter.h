@@ -33,7 +33,7 @@ struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMostrarInventario);
 /**
 *  A simple player-controllable third person character
 *  Implements a controllable orbiting camera
@@ -60,6 +60,10 @@ class ANecroLifeCharacter : public ACharacter, public INecroLifeInterface
 public:
    UPROPERTY(EditAnywhere, BlueprintReadWrite,Category="Components")
    TObjectPtr<UBoxComponent> BoxCollision;
+
+   // En QuestComponent.h (dentro de la clase UQuestComponent)
+   UPROPERTY(BlueprintAssignable, Category = "Mostrar Inventario|UI")
+   FMostrarInventario ShowInventory;
   
 protected:
 
@@ -111,7 +115,9 @@ protected:
    //curar si tiene pocion de cura
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* ApplyPosion;
-  
+   UPROPERTY(EditAnywhere, Category="Input")
+   UInputAction* OpenInventory;
+   
    //distancia del puntero
    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability")
    float AbilityPointerMaxDistance = 300.f;
@@ -171,6 +177,7 @@ protected:
    void RunActivated(const FInputActionValue& Value);
    void TakePosion();
    void Interact();
+   void Inventory();
    /** Initialize input action bindings */
    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
@@ -278,6 +285,7 @@ FRotator CurrentRotation,TargetRotation;
 
    //variables necesarias para dash
    bool bIsDashing = false;
+   bool bShowInventory=false;
    bool bCanDash = true;
    bool bMouseRightDown = false;
    bool bMouseMiddleDown = false;
