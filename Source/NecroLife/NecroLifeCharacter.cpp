@@ -32,7 +32,7 @@ ANecroLifeCharacter::ANecroLifeCharacter()
    // crear y atachar el UHealthComponent
    HealthComponent = CreateDefaultSubobject<UUHealthComponent>(TEXT("HealthComponent"));
    //crear y atachar Inventario
- //  Inventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
+   Inventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 //crear el UAbilityComponent
    Ability = CreateDefaultSubobject<UAbilityComponent>(TEXT("AbilityComponent"));
    //crear y atachar el quest component
@@ -369,7 +369,7 @@ void ANecroLifeCharacter::Interact()
 
 
 
-void ANecroLifeCharacter::Inventory()
+void ANecroLifeCharacter::InventoryInput()
 {
    if (!bShowInventory)
    {
@@ -450,7 +450,7 @@ void ANecroLifeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
       EnhancedInputComponent->BindAction(CameraBoomAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::SetBoomLength);
       EnhancedInputComponent->BindAction(AbilityAction, ETriggerEvent::Started, this, &ANecroLifeCharacter::AbilityEnabled);
       EnhancedInputComponent->BindAction(AbilityCancelAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::AbilityDisambled);
-      EnhancedInputComponent->BindAction(OpenInventory, ETriggerEvent::Started, this, &ANecroLifeCharacter::Inventory);
+      EnhancedInputComponent->BindAction(OpenInventory, ETriggerEvent::Started, this, &ANecroLifeCharacter::InventoryInput);
       ///Dash//////////////////
       EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Dash);
 //interactuar

@@ -3,6 +3,7 @@
 
 #include "Public/Components/InventoryComponent.h"
 
+#include "Components/AttributeComponent.h"
 
 
 // Sets default values for this component's properties
@@ -63,5 +64,34 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
+}
+
+void UInventoryComponent::AddGems(FDatosGema gema)
+{
+	GemsItems.Add(gema);
+	GemsToShow.Broadcast(GemsItems);
+}
+
+void UInventoryComponent::AddGemToSlot(FDatosGema gema)
+{
+	// 1. Buscamos la gema en el inventario principal
+	for (int32 i = 0; i < GemsItems.Num(); ++i)
+	{
+		// Comparamos por el ID para saber que es la gema correcta
+		if (GemsItems[i].ID_Gema == gema.ID_Gema)
+		{
+			// La borramos del inventario
+			GemsItems.RemoveAt(i);
+            
+			// Usamos break para que, si tenés 3 gemas iguales, solo borre UNA
+			break; 
+		}
+	}
+	GemsInSlots.Add(gema);
+	GemsToShow.Broadcast(GemsItems);
+	if (UAttributeComponent* Atributos = GetOwner()->FindComponentByClass<UAttributeComponent>())
+	{
+		Atributos->RecalcularEstadisticas(GemsInSlots);
+	}
 }
 

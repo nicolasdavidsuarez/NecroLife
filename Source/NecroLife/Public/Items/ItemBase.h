@@ -30,7 +30,7 @@ public:
 	TObjectPtr<USphereComponent> SphereCollision;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TObjectPtr<UStaticMeshComponent> SphereMesh;
+	TObjectPtr<UStaticMeshComponent> ItemMesh;
 
 	UFUNCTION(BlueprintCallable)
 	void mostrarMensaje(FString msg);

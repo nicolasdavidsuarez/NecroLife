@@ -177,7 +177,7 @@ protected:
    void RunActivated(const FInputActionValue& Value);
    void TakePosion();
    void Interact();
-   void Inventory();
+   void InventoryInput();
    /** Initialize input action bindings */
    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
@@ -186,6 +186,8 @@ protected:
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UAttributeComponent* CachedAttributeComponent;
 
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
+   UInventoryComponent* CachedInventoryComponent;
 
    /** Called for movement input */
    void Move(const FInputActionValue& Value);
@@ -203,8 +205,8 @@ public:
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UAttributeComponent* Attribute;
     //componente inventario
-   //UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
-  // UInventoryComponent* Inventory;
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
+   UInventoryComponent* Inventory;
     //COmponente Habilidades
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UAbilityComponent* Ability;
@@ -215,9 +217,7 @@ public:
 
    
 
-   UPROPERTY(BlueprintReadOnly, Category = "Components")
-   TObjectPtr<UInventoryComponent> CachedInventoryComponent;
-
+   
    UPROPERTY(BlueprintReadOnly, Category = "Components")
    TObjectPtr<UQuestComponent> CachedQuestComponent;
    
