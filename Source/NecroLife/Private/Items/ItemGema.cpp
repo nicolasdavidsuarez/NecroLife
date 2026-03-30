@@ -9,6 +9,7 @@ AItemGema::AItemGema()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	bReplicates=true;
 }
 
 // Called when the game starts or when spawned
@@ -21,6 +22,11 @@ void AItemGema::BeginPlay()
 void AItemGema::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
+
+	if (!HasAuthority())
+	{
+		return;
+	}
 	UInventoryComponent* Inventory= OtherActor->FindComponentByClass<UInventoryComponent>();
 	
 	Inventory->AddGems(GemaData);

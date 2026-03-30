@@ -2,7 +2,7 @@
 
 
 #include "Public/Components/InventoryComponent.h"
-
+#include "Net/UnrealNetwork.h"
 #include "Components/AttributeComponent.h"
 
 
@@ -12,8 +12,16 @@ UInventoryComponent::UInventoryComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
+	SetIsReplicatedByDefault(true);
 	// ...
+}
+
+void UInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	
+	DOREPLIFETIME(UInventoryComponent, GemsItems);
 }
 
 void UInventoryComponent::TakeHealthPosion(int Amount)
@@ -47,6 +55,11 @@ void UInventoryComponent::PickUp(UItemData* Aitem)
 	OnShowItem.Broadcast(InventoryItems);
 }
 
+void UInventoryComponent::OnRep_GemsItems()
+{
+	GemsToShow.Broadcast(GemsItems);
+}
+
 // Called when the game starts
 void UInventoryComponent::BeginPlay()
 {
@@ -68,8 +81,13 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 void UInventoryComponent::AddGems(FDatosGema gema)
 {
-	GemsItems.Add(gema);
-	GemsToShow.Broadcast(GemsItems);
+	if (GetOwner()->HasAuthority())
+	{
+		GemsItems.Add(gema);
+		GemsToShow.Broadcast(GemsItems);
+	}
+	
+	
 }
 
 void UInventoryComponent::AddGemToSlot(FDatosGema gema)

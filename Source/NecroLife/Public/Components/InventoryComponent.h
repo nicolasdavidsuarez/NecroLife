@@ -93,11 +93,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TArray<UItemData*> InventoryItems;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
+	UPROPERTY(ReplicatedUsing= OnRep_GemsItems, EditAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TArray<FDatosGema> GemsItems;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TArray<FDatosGema> GemsInSlots;
+
+	UFUNCTION()
+	void OnRep_GemsItems();
 	
 
 protected:
@@ -108,6 +111,9 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+		
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void AddGems(FDatosGema gema);

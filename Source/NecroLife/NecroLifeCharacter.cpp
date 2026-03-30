@@ -85,9 +85,12 @@ ANecroLifeCharacter::ANecroLifeCharacter()
 
    BoxCollision=CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCol"));
    BoxCollision->SetBoxExtent(FVector(100,100,100),true);
-   
-   // Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character)
-   // are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+
+
+   //Network
+   bReplicates=true;
+   SetReplicatingMovement(true);
+   GetMesh()->SetIsReplicated(true);
 }
 ///////////////////////////////////////////////////////////////////////////////////////////
 void ANecroLifeCharacter::SetBoomLength(const FInputActionValue& Value)
@@ -371,6 +374,11 @@ void ANecroLifeCharacter::Interact()
 
 void ANecroLifeCharacter::InventoryInput()
 {
+
+   if (!IsLocallyControlled())
+   {
+      return;
+   }
    if (!bShowInventory)
    {
       bShowInventory=true;
@@ -470,6 +478,10 @@ void ANecroLifeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ANecroLifeCharacter::Move(const FInputActionValue& Value)
 {
+   if (bShowInventory)
+   {
+      return;  //esto es porque se movia el player 1 cuando habria el inventario
+   }
    // input is a Vector2D
    FVector2D MovementVector = Value.Get<FVector2D>();
    // route the input
@@ -732,14 +744,15 @@ void ANecroLifeCharacter::SetUIState(bool bIsTalking)
          // Bloqueamos el input de movimiento
          PC->SetInputMode(FInputModeGameAndUI());
          PC->bShowMouseCursor = true;
-         GetCharacterMovement()->DisableMovement();
+        // GetCharacterMovement()->DisableMovement();  desde el bIsTalking desabilitamos el moviemiento
+        // en la funcion move(). cuando es true sale antes de mover. dejo la camara(el look()) prendida por que me parece bien
       }
       else
       {
          // Devolvemos el control al juego
          PC->SetInputMode(FInputModeGameOnly());
          PC->bShowMouseCursor = false;
-         GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+        // GetCharacterMovement()->SetMovementMode(MOVE_Walking);
       }
    }
 }
