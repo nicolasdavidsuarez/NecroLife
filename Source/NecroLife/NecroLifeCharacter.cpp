@@ -15,6 +15,7 @@
 #include "Public/Components/AttributeComponent.h"
 #include "Public/Components/RPGHelper.h"
 #include "CollisionQueryParams.h"
+#include "NecroLifeGameState.h"
 #include "NecroLifePlayerState.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/BoxComponent.h"
@@ -26,6 +27,37 @@
 #include "NPC/NecroLifeEnemyBasic.h"
 #include "NPC/NecroLifeNpcBasic.h"
 
+//NET
+void ANecroLifeCharacter::Server_ActualizarProgresoMision_Implementation(FGameplayTag ObjectiveID, int32 Amount)
+{
+   // 1. Buscamos el GameState de nuestra partida
+   // (Como esta función corre en el Servidor, GetGameState siempre será válido y tendrá la última información)
+   ANecroLifeGameState* GS = GetWorld()->GetGameState<ANecroLifeGameState>();
+
+   if (GS && GS->QuestManager)
+   {
+      // 2. Le pasamos la pelota al Quest Manager que ahora vive ahí
+      GS->QuestManager->UpdateQuestProgress(ObjectiveID, Amount);
+        
+      // Opcional: Un log para confirmar que el servidor lo recibió
+      GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("El Servidor recibió la interacción y actualizó el GameState"));
+   }
+}
+
+void ANecroLifeCharacter::Server_AgregarMision_Implementation(UQuestData* QuestData)
+{
+   // 1. Buscamos el GameState (que es la autoridad)
+   ANecroLifeGameState* GS = GetWorld()->GetGameState<ANecroLifeGameState>();
+
+   // 2. Si existe el GameState y tiene nuestro QuestManager
+   if (GS && GS->QuestManager)
+   {
+      // 3. Agregamos la misión de forma global para todos
+      GS->QuestManager->AddQuest(QuestData);
+   }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ANecroLifeCharacter::ANecroLifeCharacter()
 {
@@ -37,6 +69,9 @@ ANecroLifeCharacter::ANecroLifeCharacter()
    Ability = CreateDefaultSubobject<UAbilityComponent>(TEXT("AbilityComponent"));
    //crear y atachar el quest component
    QuestComponent= CreateDefaultSubobject<UQuestComponent>(TEXT("QuestComponent"));
+   //
+   Attribute = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributesComponent"));
+
    
    // Set size for collision capsule
    GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -81,7 +116,6 @@ ANecroLifeCharacter::ANecroLifeCharacter()
    FollowCamera->bUsePawnControlRotation = false;
 
 
-   Attribute = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributesComponent"));
 
    BoxCollision=CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCol"));
    BoxCollision->SetBoxExtent(FVector(100,100,100),true);
@@ -235,7 +269,8 @@ void ANecroLifeCharacter::AplyAction()
             {
              //  ShowMsg(FString::Printf(TEXT("Aca Sumaria experiencia")));
                URPGHelper::TakeXP(this,10);
-               QuestComponent->UpdateQuestProgress(EnemyBasic->GetTag(),1);
+               //QuestComponent->UpdateQuestProgress(EnemyBasic->GetTag(),1);
+               Server_ActualizarProgresoMision(EnemyBasic->GetTag(),1);
             }
             // 🔹 (Opcional) debug line
             DrawDebugLine(GetWorld(), Origin, Other->GetActorLocation(), FColor::Red, false, 1.f, 0, 1.f);
@@ -394,15 +429,27 @@ void ANecroLifeCharacter::InventoryInput()
 
 void ANecroLifeCharacter::AddCurrentQuest()
 {
-   ANecroLifeNpcBasic* NpcBasic=Cast<ANecroLifeNpcBasic>(CurrentInteractable);
-   QuestComponent->AddQuest(NpcBasic->QuestActual);
-   NpcBasic->NextAddQuest();
+//   ANecroLifeNpcBasic* NpcBasic=Cast<ANecroLifeNpcBasic>(CurrentInteractable);
+   //QuestComponent->AddQuest(NpcBasic->QuestActual);   
+  // NpcBasic->NextAddQuest();
+   // Hacemos el Cast y verificamos que no sea nulo (buena práctica en C++)
+   if (ANecroLifeNpcBasic* NpcBasic = Cast<ANecroLifeNpcBasic>(CurrentInteractable))
+   {
+      // 1. En lugar de llamar al componente local, le avisamos al Servidor
+      Server_AgregarMision(NpcBasic->QuestActual);
+        
+      // 2. Esto lo dejamos tal cual. Asumo que NextAddQuest() cierra la interfaz 
+      // gráfica o avanza el diálogo del NPC en la pantalla del jugador.
+      NpcBasic->NextAddQuest(); 
+   }
 }
 
 void ANecroLifeCharacter::CancelCurrentQuest()
 {
-   ANecroLifeNpcBasic* NpcBasic=Cast<ANecroLifeNpcBasic>(CurrentInteractable);
-   NpcBasic->CancelAddQuest();
+   if (ANecroLifeNpcBasic* NpcBasic = Cast<ANecroLifeNpcBasic>(CurrentInteractable))
+   {
+      NpcBasic->CancelAddQuest();
+   }
 }
 
 bool ANecroLifeCharacter::ShowDialogue(FDialogLine CurrentLine)
@@ -534,17 +581,18 @@ void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
 
 void ANecroLifeCharacter::LookAt(FVector TargetLocation)
 {
-   // 1. Obtenemos el punto de origen (generalmente los ojos o la cámara)
-   FVector StartLocation = GetPawnViewLocation(); 
+    FVector StartLocation = GetPawnViewLocation(); 
 
-   // 2. Calculamos el vector dirección y lo convertimos en rotación
    FVector LookDirection = TargetLocation - StartLocation;
    FRotator LookAtRot = LookDirection.Rotation();
 
-   // 3. Pasamos los valores resultantes a tu función original DoLook
-   // Nota: Dependiendo de tu eje, podrías necesitar ajustar estos valores
    DoLook(LookAtRot.Yaw, LookAtRot.Pitch);
-   GetController()->SetControlRotation(LookAtRot);
+   //para que no crashee despues lo analizo
+   if (AController* CharController = GetController())
+   {
+      CharController->SetControlRotation(LookAtRot);
+   }
+   //GetController()->SetControlRotation(LookAtRot);
 }
 
 

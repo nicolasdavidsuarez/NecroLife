@@ -158,8 +158,14 @@ protected:
    float MinArmLenght=200;
 
 
+//Net
 public:
-
+   // Esta es la función que va a llamar el objeto cuando interactúes con él.
+   // "Server" indica que viaja por red. "Reliable" asegura que el mensaje llegue sí o sí.
+   UFUNCTION(Server, Reliable)
+   void Server_ActualizarProgresoMision(FGameplayTag ObjectiveID, int32 Amount);
+   UFUNCTION(Server, Reliable)
+   void Server_AgregarMision(UQuestData* QuestData);
 
    /** Constructor */
    ANecroLifeCharacter();

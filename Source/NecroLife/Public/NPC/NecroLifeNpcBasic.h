@@ -71,10 +71,23 @@ protected:
 	UNecroLifeDialogData* DialogueData;
 
 	// Para saber por qué línea del diálogo vamos
-	int32 CurrentDialogIndex = 0;
-	int32 CurrentQuestIndex = 0;
+	//int32 CurrentDialogIndex = 0;
+	//int32 CurrentQuestIndex = 0;
 	int32 LastQuestIndex = 0;
 	int32 LastDialogIndex = 0;
+//net
+protected:
+	// Le avisamos al sistema de red que llame a 'OnRep_CurrentQuestIndex' al recibir el cambio
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentQuestIndex)
+	int32 CurrentQuestIndex=0;
+
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentQuestIndex)
+	int32 CurrentDialogIndex = 0;
+
+	// Esta función se ejecutará en los Clientes automáticamente
+	UFUNCTION()
+	void OnRep_CurrentQuestIndex();
+
 	
 	
 
