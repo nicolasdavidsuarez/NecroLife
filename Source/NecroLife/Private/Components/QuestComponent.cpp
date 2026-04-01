@@ -15,6 +15,7 @@ UQuestComponent::UQuestComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
+	SetIsReplicatedByDefault(true);
 
 	// ...
 }
@@ -27,6 +28,13 @@ void UQuestComponent::BeginPlay()
 	Quests.Empty();
 }
 
+void UQuestComponent::OnRep_ActiveQuests()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, TEXT("CLIENTE: Recibí la actualización de misiones por red!"));
+	ActualizarQuests();
+	
+}
+
 
 // Called every frame
 void UQuestComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -37,6 +45,9 @@ void UQuestComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 
 void UQuestComponent::AddQuest(UQuestData* QuestData)
 {
+
+	if (!GetOwner()->HasAuthority()) return;
+	
 //La lista quets, tiene todas las que han sido cargadas, pueden estar completadas o no
     if (Quests.Contains(QuestData))
 	{
@@ -68,7 +79,7 @@ void UQuestComponent::AddQuest(UQuestData* QuestData)
 
 void UQuestComponent::ActualizarQuests()
 {
-	if (Quests.Num() == 0) return;
+	//if (Quests.Num() == 0) return;
 
 	// 1. Arreglo principal que enviaremos a la UI
 	TArray<FQuestUIData> ListaQuestsParaUI;
@@ -145,6 +156,11 @@ void UQuestComponent::ActualizarListasQuests()
 
 bool UQuestComponent::UpdateQuestProgress(FGameplayTag ObjectiveID, int32 Amount)
 {
+
+	// Si NO somos el servidor (Autoridad), no hacemos nada.
+	if (!GetOwner()->HasAuthority()) return false; 
+
+	
 	if (!ObjectiveID.IsValid()) return false;
 
 	bool bHasUpdatedProgress = false;
@@ -308,6 +324,17 @@ FString::Printf(TEXT("¡Objetivo Completado! Nueva etapa: %d"), QuestToCheck.Cur
 	}
 	ActualizarQuests();
 }
+
+//esto no se para que es pero es obligatorio a todas las variables que se repliquen
+void UQuestComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// Registramos ActiveQuests para que se envíe a todos los clientes
+	DOREPLIFETIME(UQuestComponent, ActiveQuests);
+	DOREPLIFETIME(UQuestComponent,Quests);
+}
+
 
 
 

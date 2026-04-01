@@ -88,6 +88,13 @@ void ANecroLifeNpcBasic::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActo
 }
 
 
+void ANecroLifeNpcBasic::OnRep_CurrentQuestIndex()
+{
+	///ejecutar aca que pasa en el cliente que no esta hablando con el character npc
+	
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, TEXT("mostrar si no es el que habla con npc"));
+}
+
 void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 {
 	//ACA se implementa la interface, muestra las lineas de dialogo que tiene el npc hasta que pregunta}
@@ -216,3 +223,11 @@ void ANecroLifeNpcBasic::NextAddQuest()
 	bIsWaitingForResponse = false;
 }
 
+//net
+void ANecroLifeNpcBasic::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// Registramos la variable para que viaje por internet
+	DOREPLIFETIME(ANecroLifeNpcBasic, CurrentQuestIndex);
+}

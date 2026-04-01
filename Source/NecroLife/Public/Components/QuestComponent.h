@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Data/QuestData.h"
+#include "Net/UnrealNetwork.h"
 #include "QuestComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUpdateObjetiveList, const TArray<FQuestUIData>&, ItemsToMisionList);
@@ -99,16 +100,21 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 							   FActorComponentTickFunction* ThisTickFunction) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
 	TArray<UQuestData*> Quests;
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
 public:
+
+	UPROPERTY(ReplicatedUsing = OnRep_ActiveQuests)
 	TArray<FActiveQuestData> ActiveQuests;
-	bool bAsQuest;
 	
+	bool bAsQuest;
+
+	UFUNCTION(BlueprintCallable, Category = "Quests")
+	void OnRep_ActiveQuests();	
 	
 			
 };
