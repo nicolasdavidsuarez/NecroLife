@@ -49,8 +49,10 @@ struct FEstadisticasPersonaje
 	// Agregá acá todos los atributos que quieras mostrar en pantalla
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnXPChanged, float, XP, float, XPtoNextLevel);
+//DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnXPChanged, float, XP, float, XPtoNextLevel);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAtributosActualizados, const FEstadisticasPersonaje&, NuevosAtributos);
+// Arriba del UCLASS
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnXPChanged, float, CurrentXP, float, XPToNextLevel, int32, CurrentLevel);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class NECROLIFE_API UAttributeComponent : public UActorComponent
@@ -136,10 +138,10 @@ public:
 
 	
 	
-	UPROPERTY(BlueprintAssignable, Category="XP_Level")
+
+	UPROPERTY(BlueprintAssignable, Category = "NecroLife | Attributes")
 	FOnXPChanged OnXPChanged;
 	
-
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
