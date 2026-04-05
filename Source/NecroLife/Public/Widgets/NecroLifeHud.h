@@ -27,10 +27,10 @@ protected:
 	void HandleXPChanged(float CurrentXP, float XPToNextLevel, int32 CurrentLevel);
 
 	// Si tienes la referencia a la barra de XP bindeada:
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(BlueprintReadWrite,meta = (BindWidget))
 	class UProgressBar* XPBar;
 
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
 	class UTextBlock* LevelText;
 	
 };

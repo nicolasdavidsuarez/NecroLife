@@ -3,7 +3,8 @@
 
 #include "NecroLifeGameState.h"
 // [PARA PROGRAMADORES]: Ahora sí incluimos el archivo real de nuestro componente para poder usarlo.
-#include "Components/QuestComponent.h"
+
+#include "Public/Components/QuestComponent.h"
 
 ANecroLifeGameState::ANecroLifeGameState()
 {
