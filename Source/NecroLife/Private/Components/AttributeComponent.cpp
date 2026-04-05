@@ -39,7 +39,7 @@ void UAttributeComponent::TakeXP(float Amount)
 	{
 		XP += Amount;
 	}
-	OnXPChanged.Broadcast(XP,XPtoNextLevel);
+	OnXPChanged.Broadcast(XP,XPtoNextLevel,Level);
 }
 
 // Called when the game starts
