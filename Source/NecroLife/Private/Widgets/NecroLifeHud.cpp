@@ -33,7 +33,23 @@ void UNecroLifeHud::NativeConstruct()
 		Attributes->OnXPChanged.AddDynamic(this, &UNecroLifeHud::HandleXPChanged);
 
 	}
+
 	
+	ANecroLifePlayerState* MyPS = Cast<ANecroLifePlayerState>(GetOwningPlayerState());
+	if (MyPS )
+	{
+			
+		UInventoryComponent* Inventory= MyPS->FindComponentByClass<UInventoryComponent>();
+		if (Inventory)
+		{
+			Inventory->OnShowItem.AddDynamic(this, &UNecroLifeHud::ActualizarInventario);
+			bBindeo = true;
+		}
+		GEngine->AddOnScreenDebugMessage(-1,5.0f, FColor::Green, "ActualizarInventario pero no bindeo y tiene player state");	
+	
+	}
+	GEngine->AddOnScreenDebugMessage(-1,5.0f, FColor::Red, "ActualizarInventario pero no bindeo");	
+
 }
 
 void UNecroLifeHud::HandleHealthChanged(float CurrentHealth, float MaxHealth)
@@ -66,18 +82,6 @@ void UNecroLifeHud::ActualizarInventario(const TArray<UItemData*>& ItemsRecibido
 
 	if (!bBindeo)
 	{
-		ANecroLifePlayerState* MyPS = Cast<ANecroLifePlayerState>(GetOwningPlayerState());
-		if (MyPS )
-		{
-			
-			UInventoryComponent* Inventory= MyPS->FindComponentByClass<UInventoryComponent>();
-			if (Inventory)
-			{
-				Inventory->OnShowItem.AddDynamic(this, &UNecroLifeHud::ActualizarInventario);
-				bBindeo = true;
-			}
-			
-		}
 		GEngine->AddOnScreenDebugMessage(-1,5.0f, FColor::Red, "ActualizarInventario pero no bindeo");	
 
 	}else
