@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "NecroLifeHud.generated.h"
 
+class UItemData;
 /**
  * 
  */
@@ -16,6 +17,10 @@ class NECROLIFE_API UNecroLifeHud : public UUserWidget
 protected:
 	// Este es el "BeginPlay" de los widgets
 	virtual void NativeConstruct() override;
+
+private:
+	bool bBindeo = false;
+	
 	public:
 	
 	UPROPERTY(BlueprintReadWrite,meta = (BindWidget))
@@ -32,5 +37,12 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
 	class UTextBlock* LevelText;
+
+	// En tu clase de UI (donde recibes el evento)
+	UFUNCTION()
+	void ActualizarInventario(const TArray<UItemData*>& ItemsRecibidos);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Inventory")
+	void BP_UpdateInventoryUI(const TArray<UItemData*>& ItemsToShow);
 	
 };
