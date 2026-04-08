@@ -20,8 +20,13 @@ protected:
 
 private:
 	bool bBindeo = false;
+	bool bBindeoHealth=false;
+	bool bBindeoAtribute = false;
+    FTimerHandle TimerHandleBind;
 	
 	public:
+
+	
 	
 	UPROPERTY(BlueprintReadWrite,meta = (BindWidget))
 	class UProgressBar* HealthBar;
@@ -41,6 +46,9 @@ private:
 	// En tu clase de UI (donde recibes el evento)
 	UFUNCTION()
 	void ActualizarInventario(const TArray<UItemData*>& ItemsRecibidos);
+
+	UFUNCTION()
+	void BindDelegate();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Inventory")
 	void BP_UpdateInventoryUI(const TArray<UItemData*>& ItemsToShow);

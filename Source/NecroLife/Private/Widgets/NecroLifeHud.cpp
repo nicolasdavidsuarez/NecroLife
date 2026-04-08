@@ -12,44 +12,12 @@
 
 void UNecroLifeHud::NativeConstruct()
 {
-	Super::NativeConstruct();
+	Super::NativeConstruct();	
 
-	APawn* PlayerPawn = GetOwningPlayerPawn();
-	if (!PlayerPawn) return;
-
-	// 2. Buscamos el componente de salud (usa el nombre exacto de tu clase en C++)
-	UUHealthComponent* HealthComp = PlayerPawn->FindComponentByClass<UUHealthComponent>();
-
-	if (HealthComp)
+	if (UWorld* World=GetWorld())
 	{
-		HealthComp->OnHealthChanged.AddDynamic(this, &UNecroLifeHud::HandleHealthChanged);
-
-	}
-	UAttributeComponent* Attributes = PlayerPawn->FindComponentByClass<UAttributeComponent>();
-
-	if (Attributes)
-	{
-
-		Attributes->OnXPChanged.AddDynamic(this, &UNecroLifeHud::HandleXPChanged);
-
-	}
-
-	
-	ANecroLifePlayerState* MyPS = Cast<ANecroLifePlayerState>(GetOwningPlayerState());
-	if (MyPS )
-	{
-			
-		UInventoryComponent* Inventory= MyPS->FindComponentByClass<UInventoryComponent>();
-		if (Inventory)
-		{
-			Inventory->OnShowItem.AddDynamic(this, &UNecroLifeHud::ActualizarInventario);
-			bBindeo = true;
-		}
-		GEngine->AddOnScreenDebugMessage(-1,5.0f, FColor::Green, "ActualizarInventario pero no bindeo y tiene player state");	
-	
-	}
-	GEngine->AddOnScreenDebugMessage(-1,5.0f, FColor::Red, "ActualizarInventario pero no bindeo");	
-
+		World->GetTimerManager().SetTimer(TimerHandleBind,this,&UNecroLifeHud::BindDelegate,0.5f,true);	
+	}	
 }
 
 void UNecroLifeHud::HandleHealthChanged(float CurrentHealth, float MaxHealth)
@@ -79,13 +47,53 @@ void UNecroLifeHud::HandleXPChanged(float CurrentXP, float XPToNextLevel, int32 
 
 void UNecroLifeHud::ActualizarInventario(const TArray<UItemData*>& ItemsRecibidos)
 {
+		BP_UpdateInventoryUI(ItemsRecibidos);	
+}
 
+void UNecroLifeHud::BindDelegate()
+{
 	if (!bBindeo)
 	{
-		GEngine->AddOnScreenDebugMessage(-1,5.0f, FColor::Red, "ActualizarInventario pero no bindeo");	
-
-	}else
-	{		
-		BP_UpdateInventoryUI(ItemsRecibidos);	
+		ANecroLifePlayerState* MyPS = Cast<ANecroLifePlayerState>(GetOwningPlayerState());
+		if (MyPS )
+		{			
+			UInventoryComponent* Inventory= MyPS->FindComponentByClass<UInventoryComponent>();
+			if (Inventory)
+			{
+				Inventory->OnShowItem.AddDynamic(this, &UNecroLifeHud::ActualizarInventario);
+				bBindeo = true;
+			}
+		}
 	}
+	APawn* PlayerPawn = GetOwningPlayerPawn();
+	if (!PlayerPawn) return;
+	if (!bBindeoHealth)
+	{
+		
+		UUHealthComponent* HealthComp = PlayerPawn->FindComponentByClass<UUHealthComponent>();
+		if (HealthComp)
+		{
+			HealthComp->OnHealthChanged.AddDynamic(this, &UNecroLifeHud::HandleHealthChanged);
+			bBindeoHealth=true;
+		}
+	
+	}
+	if (!bBindeoAtribute)
+	{
+		UAttributeComponent* Attributes = PlayerPawn->FindComponentByClass<UAttributeComponent>();
+		if (Attributes)
+		{
+			Attributes->OnXPChanged.AddDynamic(this, &UNecroLifeHud::HandleXPChanged);
+			bBindeoAtribute=true;
+		}
+	}
+
+	if (bBindeoAtribute&&bBindeoHealth&&bBindeo)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(TimerHandleBind);
+		GEngine->AddOnScreenDebugMessage(-1,5.0f, FColor::Red, "cLeAr tImEr");			
+
+	}
+	GEngine->AddOnScreenDebugMessage(-1,5.0f, FColor::Red, "tImEr");			
+
 }
