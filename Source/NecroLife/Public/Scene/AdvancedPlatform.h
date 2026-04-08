@@ -7,6 +7,16 @@
 #include "Components/SphereComponent.h"
 #include "AdvancedPlatform.generated.h"
 
+
+UENUM(BlueprintType)
+enum class EPlatformState:uint8
+{
+	Hidden,
+	FadingIn,
+	Visible,
+	FadingOut	
+};
+
 UCLASS()
 class NECROLIFE_API AAdvancedPlatform : public AActor
 {
@@ -31,6 +41,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UStaticMeshComponent> PlatformDoors;
 
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UMaterialInstanceDynamic> Material ;
+
 	UPROPERTY(EditAnywhere)
 	FVector PlatformClose;
 
@@ -49,7 +62,17 @@ public:
 	UPROPERTY(EditAnywhere,Category="Movement")
 	TArray<FVector> Path;
 
-	private:
+	UPROPERTY(EditAnywhere, Category = "Fade")
+    float FadeDuration=2.f; 
+
+	void FadeIn();
+	void FadeOut();
+	void UpdateOpacity();
+	
+private:
+	EPlatformState State;
+	float CurrentOpacity;
+	
 	bool bIsOverlappingPlatform=false;
 	int Nodo=0;
 };

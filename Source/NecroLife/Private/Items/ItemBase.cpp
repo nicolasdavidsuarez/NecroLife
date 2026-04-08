@@ -12,8 +12,8 @@ AItemBase::AItemBase()
 	//Crear componentes
 	SphereCollision = CreateDefaultSubobject<USphereComponent>(TEXT("SphereCollision"));
 	RootComponent = SphereCollision;
-	SphereMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SphereMesh"));
-	SphereMesh->SetupAttachment(SphereCollision);
+	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SphereMesh"));
+	ItemMesh->SetupAttachment(SphereCollision);
 }
 
 // Called when the game starts or when spawned

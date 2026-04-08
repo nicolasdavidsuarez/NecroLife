@@ -35,31 +35,63 @@ void UAbilityComponent::BeginPlay()
 	// ...
 	
 }
+
+void UAbilityComponent::AbilityAply()
+{
+	// 1. Verificamos que haya una habilidad y que NO esté en cooldown
+	if (CurrentAbility && !isCoolDownAply(CurrentAbility))
+	{
+		// ... (Aquí va tu lógica para aplicar daño, instanciar proyectiles, animaciones, etc.) ...
+
+		// 2. Calculamos cuándo terminará el cooldown y lo registramos
+		float CurrentTime = GetWorld()->GetTimeSeconds();
+		float CooldownTime = CurrentAbility->AbilityColdDown; // Asegúrate de tener esta variable en AbilityData
+        
+		AbilityCooldownEndTimes.Add(CurrentAbility, CurrentTime + CooldownTime);
+
+		// 3. Disparamos tu delegado para actualizar la UI (ej: iniciar la animación de reloj en la barra de habilidades)
+		AbilitySlot.Broadcast(CurrentAbilitySlot);
+	}
+	AbilitySlot.Broadcast(CurrentAbilitySlot);
+}
+
+bool UAbilityComponent::isCoolDownAply(UAbilityData* Ability)
+{
+	// Validación de seguridad básica
+	if (!Ability || !GetWorld())
+	{
+		return false; 
+	}
+
+	// Buscamos si la habilidad tiene un registro de cooldown en el mapa
+	if (const float* CooldownEndTime = AbilityCooldownEndTimes.Find(Ability))
+	{
+		// Si el tiempo actual del juego es menor al tiempo en que termina el cooldown, sigue bloqueada
+		if (GetWorld()->GetTimeSeconds() < *CooldownEndTime)
+		{
+			//para no hacer otro delegado, cambiar algo visual.
+			AbilitySlot.Broadcast(CurrentAbilitySlot);
+			return true; // ¡La habilidad AÚN ESTÁ en cooldown!
+			}
+	}
+
+	// Si no está en el mapa o el tiempo ya pasó, no está en cooldown
+	return false;
+}
+
+TArray<UAbilityData*> UAbilityComponent::getAbilitySlots()
+{
+	return Abilities;
+}
+
 void UAbilityComponent::SelectAbility(int32 Index)
 {
 	if (!Abilities.IsValidIndex(Index)) return;
 
 	CurrentAbility = Abilities[Index];
-
+    CurrentAbilitySlot=Index;
 	// Si ya hay un indicador activo, eliminarlo
 	ClearIndicator();
-
-/*	if (CurrentAbility && CurrentAbility->IndicatorNiagaraSystem)
-	{
-		// Spawn temporal (sin posición todavía)
-   	ActiveIndicator = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			GetWorld(),
-			CurrentAbility->IndicatorNiagaraSystem,
-			FVector::ZeroVector,
-			FRotator::ZeroRotator,
-			FVector(1.0f)
-		);
-
-		// Pasar el radio como variable
-		ActiveIndicator->SetVariableFloat(TEXT("Radius"), CurrentAbility->Radius);
-	}
-*/
-	
 }
 
 void UAbilityComponent::InitPreview()

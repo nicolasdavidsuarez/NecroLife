@@ -12,10 +12,12 @@
 #include "Public/Components/InventoryComponent.h"
 #include "Public/Components/AbilityComponent.h"
 #include "Engine/EngineTypes.h"
+#include "Interface/NecroLifeInterface.h"
+#include "Types/NecroLifeTypes.h"   
 #include "NecroLifeCharacter.generated.h"
 
 
-
+class UBoxComponent;
 class USpringArmComponent;
 class UCameraComponent;
 class UInputAction;
@@ -25,18 +27,19 @@ class UInventoryComponent;
 class UAbilityComponent;
 class UQuestComponent;
 class ANecroLifePlayerState;
+//class INecroLifeInterface;
 struct FInputActionValue;
 
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMostrarInventario);
 /**
 *  A simple player-controllable third person character
 *  Implements a controllable orbiting camera
 */
 UCLASS(abstract)
-class ANecroLifeCharacter : public ACharacter
+class ANecroLifeCharacter : public ACharacter, public INecroLifeInterface
 {
    GENERATED_BODY()
 
@@ -53,6 +56,14 @@ class ANecroLifeCharacter : public ACharacter
    /** Follow camera */
    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
    UCameraComponent* FollowCamera;
+
+public:
+   UPROPERTY(EditAnywhere, BlueprintReadWrite,Category="Components")
+   TObjectPtr<UBoxComponent> BoxCollision;
+
+   // En QuestComponent.h (dentro de la clase UQuestComponent)
+   UPROPERTY(BlueprintAssignable, Category = "Mostrar Inventario|UI")
+   FMostrarInventario ShowInventory;
   
 protected:
 
@@ -79,10 +90,17 @@ protected:
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* DashAction;
 
+   //Interactuar
+   UPROPERTY(EditAnywhere, Category="Input")
+   UInputAction* InteractAction;
+
+
 
    /** Mouse Look Input Action */
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* MouseLookAction;
+
+   
 
 
    /** Ability Action */
@@ -97,7 +115,9 @@ protected:
    //curar si tiene pocion de cura
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* ApplyPosion;
-  
+   UPROPERTY(EditAnywhere, Category="Input")
+   UInputAction* OpenInventory;
+   
    //distancia del puntero
    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability")
    float AbilityPointerMaxDistance = 300.f;
@@ -138,8 +158,14 @@ protected:
    float MinArmLenght=200;
 
 
+//Net
 public:
-
+   // Esta es la función que va a llamar el objeto cuando interactúes con él.
+   // "Server" indica que viaja por red. "Reliable" asegura que el mensaje llegue sí o sí.
+   UFUNCTION(Server, Reliable)
+   void Server_ActualizarProgresoMision(FGameplayTag ObjectiveID, int32 Amount);
+   UFUNCTION(Server, Reliable)
+   void Server_AgregarMision(UQuestData* QuestData);
 
    /** Constructor */
    ANecroLifeCharacter();
@@ -156,12 +182,18 @@ protected:
    void OnMiddleMouseDown();
    void RunActivated(const FInputActionValue& Value);
    void TakePosion();
+   void Interact();
+   void InventoryInput();
    /** Initialize input action bindings */
    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 
 protected:
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
+   UAttributeComponent* CachedAttributeComponent;
 
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
+   UInventoryComponent* CachedInventoryComponent;
 
    /** Called for movement input */
    void Move(const FInputActionValue& Value);
@@ -179,26 +211,30 @@ public:
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UAttributeComponent* Attribute;
     //componente inventario
-   //UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
-  // UInventoryComponent* Inventory;
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
+   UInventoryComponent* Inventory;
     //COmponente Habilidades
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UAbilityComponent* Ability;
-   //retorna el puntero para usarlo en ability niagara y ??
 
-   protected:
-   UPROPERTY(BlueprintReadOnly, Category = "Components")
-   TObjectPtr<UAttributeComponent> CachedAttributeComponent;
 
-   UPROPERTY(BlueprintReadOnly, Category = "Components")
-   TObjectPtr<UInventoryComponent> CachedInventoryComponent;
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
+   UQuestComponent* QuestComponent;
 
+   
+
+   
    UPROPERTY(BlueprintReadOnly, Category = "Components")
    TObjectPtr<UQuestComponent> CachedQuestComponent;
    
    UPROPERTY(BlueprintReadOnly, Category = "Player State")
    TObjectPtr<ANecroLifePlayerState> MyPlayerState;
 
+protected:
+   // Referencia genérica al Hub
+   UPROPERTY(BlueprintReadWrite, Category = "UI")
+   UUserWidget* HubWidget;
+   
 public:
    UFUNCTION(BlueprintCallable)
    FVector GetAbilityPointer() const {return CachedAbilityPointer;}
@@ -212,6 +248,9 @@ public:
    UFUNCTION(BlueprintCallable, Category="Input")
    virtual void DoLook(float Yaw, float Pitch);
 
+   UFUNCTION(BlueprintCallable, Category="Input")
+   virtual void LookAt(FVector TargetLocation);
+
 
    /** Handles jump pressed inputs from either controls or UI interfaces */
    UFUNCTION(BlueprintCallable, Category="Input")
@@ -222,15 +261,37 @@ public:
    UFUNCTION(BlueprintCallable, Category="Input")
    virtual void DoJumpEnd();
 
-
+   UPROPERTY()
+   AActor* CurrentInteractable; 
 public:
    virtual void PossessedBy (AController* NewController) override;
+   // El objeto llama a estas funciones desde su Overlap
+   UFUNCTION(BLueprintCallable, Category="Interact")
+   void SetCurrentInteractable(AActor* NewInteractable) { CurrentInteractable = NewInteractable; }
+   UFUNCTION(BLueprintCallable, Category="Interact")
+   void ClearCurrentInteractable() { CurrentInteractable = nullptr; }
+
+   UFUNCTION(BLueprintCallable, Category="Interact")
+  AActor *getCurrentInteractable() { return CurrentInteractable; }
+
+   UFUNCTION(BLueprintCallable, Category="Interact")
+   void AddCurrentQuest();
+
+   UFUNCTION(BLueprintCallable, Category="Interact")
+   void CancelCurrentQuest();
+   
+   UFUNCTION(BLueprintCallable, Category="Interact")
+   bool ShowDialogue(FDialogLine CurrentLine);
+
+   
+   
 FVector Direction;
 FRotator CurrentRotation,TargetRotation;
 
 
    //variables necesarias para dash
    bool bIsDashing = false;
+   bool bShowInventory=false;
    bool bCanDash = true;
    bool bMouseRightDown = false;
    bool bMouseMiddleDown = false;
@@ -271,7 +332,10 @@ FRotator CurrentRotation,TargetRotation;
    //dash
    void Dash();
    void StopDash();
-  
+
+   UFUNCTION(BlueprintCallable)
+   void SetUIState(bool bIsTalking);
+
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
    class UInputMappingContext* InputMapping;
 
