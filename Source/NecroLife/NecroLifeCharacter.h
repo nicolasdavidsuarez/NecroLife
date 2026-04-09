@@ -157,6 +157,13 @@ protected:
    UPROPERTY(EditAnywhere, Category="Camera in game")
    float MinArmLenght=200;
 
+   // Referencia al montaje de ataque básico
+   UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+   UAnimMontage* MeleeAttackMontage;
+
+   // Referencia al montaje de la habilidad
+   UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+   UAnimMontage* AbilityAttackMontage;
 
 //Net
 public:
@@ -262,7 +269,8 @@ public:
    virtual void DoJumpEnd();
 
    UPROPERTY()
-   AActor* CurrentInteractable; 
+   AActor* CurrentInteractable;
+
 public:
    virtual void PossessedBy (AController* NewController) override;
    // El objeto llama a estas funciones desde su Overlap
@@ -283,7 +291,12 @@ public:
    UFUNCTION(BLueprintCallable, Category="Interact")
    bool ShowDialogue(FDialogLine CurrentLine);
 
-   
+   // Esta es la función que vas a llamar desde el AnimBP cuando ocurra el impacto
+    UFUNCTION(BlueprintCallable, Category = "Combat")
+    void ExecuteAttackHit();
+
+    UFUNCTION(BlueprintCallable, Category = "Combat")
+    void ExecuteAbilityHit();
    
 FVector Direction;
 FRotator CurrentRotation,TargetRotation;
@@ -339,7 +352,4 @@ FRotator CurrentRotation,TargetRotation;
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
    class UInputMappingContext* InputMapping;
 
-
-   
-  
 };

@@ -214,126 +214,150 @@ void ANecroLifeCharacter::AbilityDisambled(const FInputActionValue& InputActionV
 }
 
 
-void ANecroLifeCharacter::AplyAction()
+void ANecroLifeCharacter::AplyAction()   
 {
-   if (bEnabledAbility)
-   {
-       //FOverlapResult result;
-      // 🔹 Parámetros del cono
-      float AttackRadius = 300.f;        // Distancia del ataque
-      float AttackAngle = 45.f;          // Mitad del ángulo del cono (en grados)
-    
-      FVector Origin = GetActorLocation();
-      FVector Forward = GetActorForwardVector();
+    // Si el inventario está abierto o estás hablando, ignoramos el clic
+    if (bShowInventory || CurrentInteractable) return;
 
-      // 🔹 Buscamos actores cercanos con una esfera
-      TArray<FOverlapResult> Overlaps;
-      FCollisionShape CollisionShape = FCollisionShape::MakeSphere(AttackRadius);
+    if (bEnabledAbility)
+    {
+        // 1. Orientación y limpieza de indicadores
+        GetCharacterMovement()->bOrientRotationToMovement = true;
+        bUseControllerRotationYaw = false;
+        bEnabledAbility = false;
+        Ability->ClearIndicator();
 
-      bool bHit = GetWorld()->OverlapMultiByChannel(
-             Overlaps,
-             Origin,
-             FQuat::Identity,
-             ECC_Pawn,          // Canal de colisión 
-             CollisionShape
-         );
+        // 2. Reproducir la animación de la habilidad
+        if (AbilityAttackMontage)
+        {
+            PlayAnimMontage(AbilityAttackMontage);
+        }
+    }
+    else
+    {
+        // Reproducir la animación del ataque cuerpo a cuerpo
+        if (MeleeAttackMontage)
+        {
+            PlayAnimMontage(MeleeAttackMontage);
+        }
+    }
+}
 
-      GetCharacterMovement()->bOrientRotationToMovement = true;
-      bUseControllerRotationYaw = false;
-      bEnabledAbility = false;
-      Ability->AbilityAply();
-      Ability->ClearIndicator();
+void ANecroLifeCharacter::ExecuteAttackHit()
+{
+    TArray<FOverlapResult> Overlaps;
+    FVector Origin = GetActorLocation();
+    FCollisionShape CollisionShape = FCollisionShape::MakeBox(FVector(100, 100, 100));
 
-      if (!bHit) return;
+    bool bHit = GetWorld()->OverlapMultiByChannel(
+        Overlaps,
+        Origin,
+        FQuat::Identity,
+        ECC_Pawn,          // Canal de colisión 
+        CollisionShape);
 
-      for (auto& Result : Overlaps)
-      {
-         AActor* Other = Result.GetActor();
-         ANecroLifeEnemyBasic* EnemyBasic=Cast<ANecroLifeEnemyBasic>(Other);
-         if (!EnemyBasic || Other == this) continue;
+    if (!bHit) return;
+    FVector Forward = GetActorForwardVector();
+    DrawDebugCone(GetWorld(), GetActorLocation(), Forward, 100.0f, 0.5, 0.5, 12, FColor::Red, false, 0.5f);
 
-         // 🔹 Vector hacia el otro actor
-         FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
 
-         // 🔹 Calculamos el ángulo con el forward vector
-         float Dot = FVector::DotProduct(Forward, ToTarget);
-         float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
+    for (auto& Result : Overlaps)
+    {
+        AActor* Other = Result.GetActor();
+        ANecroLifeEnemyBasic* EnemyBasic = Cast<ANecroLifeEnemyBasic>(Other);
+        if (!EnemyBasic || Other == this) continue;
 
-         // 🔹 Si está dentro del cono, aplicamos daño
-         if (AngleToTarget <= AttackAngle)
-         {
+        // 🔹 Vector hacia el otro actor
+        FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
+
+        // 🔹 Calculamos el ángulo con el forward vector
+        float Dot = FVector::DotProduct(Forward, ToTarget);
+        float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
+        float AttackAngle = 45.f;
+
+        // 🔹 Si está dentro del cono, aplicamos daño
+        if (AngleToTarget <= AttackAngle)
+        {
             //UGameplayStatics::ApplyDamage(Other, 20.f, GetController(), this, UDamageType::StaticClass());
-            
-            URPGHelper::ApplyDamage(Other,100);
+
+            URPGHelper::ApplyDamage(Other, 10);
             if (!EnemyBasic->IsAlive())
             {
-             //  ShowMsg(FString::Printf(TEXT("Aca Sumaria experiencia")));
-               URPGHelper::TakeXP(this,10);
-               //QuestComponent->UpdateQuestProgress(EnemyBasic->GetTag(),1);
-               Server_ActualizarProgresoMision(EnemyBasic->GetTag(),1);
-            }
-            // 🔹 (Opcional) debug line
-            DrawDebugLine(GetWorld(), Origin, Other->GetActorLocation(), FColor::Red, false, 1.f, 0, 1.f);
-            
-         }
-      }
-
-      // 🔹 Debug del área del ataque
-      
-      //ShowMsg(FString::Printf(TEXT("Ability Ejecuted")));
-      
-     
-   }else
-   {
-      TArray<FOverlapResult> Overlaps;
-      FVector Origin = GetActorLocation();
-      FCollisionShape CollisionShape = FCollisionShape::MakeBox(FVector(100,100,100));
-
-      bool bHit = GetWorld()->OverlapMultiByChannel(
-                   Overlaps,
-                   Origin,
-                   FQuat::Identity,
-                   ECC_Pawn,          // Canal de colisión 
-                   CollisionShape
-               );
-      if (!bHit) return;
-      FVector Forward = GetActorForwardVector();
-      DrawDebugCone(GetWorld(),GetActorLocation(),Forward,100.0f,0.5,0.5,12,FColor::Red,false,0.5f);
-
-      
-      for (auto& Result : Overlaps)
-      {
-         AActor* Other = Result.GetActor();
-         ANecroLifeEnemyBasic* EnemyBasic=Cast<ANecroLifeEnemyBasic>(Other);
-         if (!EnemyBasic || Other == this) continue;
-
-         // 🔹 Vector hacia el otro actor
-         FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
-
-         // 🔹 Calculamos el ángulo con el forward vector
-         float Dot = FVector::DotProduct(Forward, ToTarget);
-         float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
-         float AttackAngle = 45.f;  
-
-         // 🔹 Si está dentro del cono, aplicamos daño
-         if (AngleToTarget <= AttackAngle)
-         {
-            //UGameplayStatics::ApplyDamage(Other, 20.f, GetController(), this, UDamageType::StaticClass());
-            
-            URPGHelper::ApplyDamage(Other,10);
-            if (!EnemyBasic->IsAlive())
-            {
-               ShowMsg(FString::Printf(TEXT("Aca Sumaria experiencia")));
-               URPGHelper::TakeXP(this,10);
+                ShowMsg(FString::Printf(TEXT("Aca Sumaria experiencia")));
+                URPGHelper::TakeXP(this, 10);
             }
             // 🔹 (Opcional) debug line
             DrawDebugLine(GetWorld(), Origin, Other->GetActorLocation(), FColor::Red, false, 1.f, 0, 1.f);
             //Ability->AbilityAply();
-         }
-      }
-      //ShowMsg(FString::Printf(TEXT("Se ejecuta Ataque Melee")));
-   }
-     
+        }
+    }
+    //ShowMsg(FString::Printf(TEXT("Se ejecuta Ataque Melee")));
+}
+    
+void ANecroLifeCharacter::ExecuteAbilityHit()
+{
+    //FOverlapResult result;
+    // 🔹 Parámetros del cono
+    float AttackRadius = 300.f;        // Distancia del ataque
+    float AttackAngle = 45.f;          // Mitad del ángulo del cono (en grados)
+
+    FVector Origin = GetActorLocation();
+    FVector Forward = GetActorForwardVector();
+
+    // 🔹 Buscamos actores cercanos con una esfera
+    TArray<FOverlapResult> Overlaps;
+    FCollisionShape CollisionShape = FCollisionShape::MakeSphere(AttackRadius);
+
+    bool bHit = GetWorld()->OverlapMultiByChannel(
+        Overlaps,
+        Origin,
+        FQuat::Identity,
+        ECC_Pawn,          // Canal de colisión 
+        CollisionShape);
+
+    GetCharacterMovement()->bOrientRotationToMovement = true;
+    bUseControllerRotationYaw = false;
+    bEnabledAbility = false;
+    Ability->AbilityAply();
+    Ability->ClearIndicator();
+
+    if (!bHit) return;
+
+    for (auto& Result : Overlaps)
+    {
+        AActor* Other = Result.GetActor();
+        ANecroLifeEnemyBasic* EnemyBasic = Cast<ANecroLifeEnemyBasic>(Other);
+        if (!EnemyBasic || Other == this) continue;
+
+        // 🔹 Vector hacia el otro actor
+        FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
+
+        // 🔹 Calculamos el ángulo con el forward vector
+        float Dot = FVector::DotProduct(Forward, ToTarget);
+        float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
+
+        // 🔹 Si está dentro del cono, aplicamos daño
+        if (AngleToTarget <= AttackAngle)
+        {
+            //UGameplayStatics::ApplyDamage(Other, 20.f, GetController(), this, UDamageType::StaticClass());
+
+            URPGHelper::ApplyDamage(Other, 100);
+            if (!EnemyBasic->IsAlive())
+            {
+                //  ShowMsg(FString::Printf(TEXT("Aca Sumaria experiencia")));
+                URPGHelper::TakeXP(this, 10);
+                //QuestComponent->UpdateQuestProgress(EnemyBasic->GetTag(),1);
+                Server_ActualizarProgresoMision(EnemyBasic->GetTag(), 1);
+            }
+            // 🔹 (Opcional) debug line
+            DrawDebugLine(GetWorld(), Origin, Other->GetActorLocation(), FColor::Red, false, 1.f, 0, 1.f);
+
+        }
+    }
+
+    // 🔹 Debug del área del ataque
+
+    //ShowMsg(FString::Printf(TEXT("Ability Ejecuted")));
 }
 
 void ANecroLifeCharacter::OnRightMouseDown()
