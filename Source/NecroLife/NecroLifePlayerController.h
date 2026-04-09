@@ -41,4 +41,9 @@ protected:
 	/** Input mapping context setup */
 	virtual void SetupInputComponent() override;
 
+	UFUNCTION()
+	void RefrescarInventarioVisual(const TArray<FDatosGema>& DatosGemas);
+	
+	void OnPossess(APawn* InPawn) override;
+
 };

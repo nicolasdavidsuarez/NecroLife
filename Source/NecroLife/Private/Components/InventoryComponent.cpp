@@ -57,7 +57,11 @@ void UInventoryComponent::PickUp(UItemData* Aitem)
 
 void UInventoryComponent::OnRep_GemsItems()
 {
-	GemsToShow.Broadcast(GemsItems);
+	if (GemsToShow.IsBound())
+	{
+		GemsToShow.Broadcast(GemsItems);
+	}
+	
 }
 
 // Called when the game starts
@@ -81,27 +85,18 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 void UInventoryComponent::AddGems(FDatosGema gema)
 {
-	if (GetOwner()->HasAuthority())
-	{
-		GemsItems.Add(gema);
-		GemsToShow.Broadcast(GemsItems);
-	}
-	
-	
+	    GemsItems.Add(gema);
+		GemsToShow.Broadcast(GemsItems);	
 }
 
 void UInventoryComponent::AddGemToSlot(FDatosGema gema)
 {
-	// 1. Buscamos la gema en el inventario principal
 	for (int32 i = 0; i < GemsItems.Num(); ++i)
 	{
-		// Comparamos por el ID para saber que es la gema correcta
 		if (GemsItems[i].ID_Gema == gema.ID_Gema)
 		{
-			// La borramos del inventario
 			GemsItems.RemoveAt(i);
             
-			// Usamos break para que, si tenés 3 gemas iguales, solo borre UNA
 			break; 
 		}
 	}

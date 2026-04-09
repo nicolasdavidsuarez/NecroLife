@@ -167,6 +167,7 @@ public:
    UFUNCTION(Server, Reliable)
    void Server_AgregarMision(UQuestData* QuestData);
 
+   void Server_ActualizarProgresoMision_Implementation(FGameplayTag ObjectiveID, int32 Amount);
    /** Constructor */
    ANecroLifeCharacter();
 
@@ -230,10 +231,13 @@ public:
    UPROPERTY(BlueprintReadOnly, Category = "Player State")
    TObjectPtr<ANecroLifePlayerState> MyPlayerState;
 
-protected:
-   // Referencia genérica al Hub
+// Referencia genérica al Hub
    UPROPERTY(BlueprintReadWrite, Category = "UI")
    UUserWidget* HubWidget;
+
+protected:
+   
+   
    
 public:
    UFUNCTION(BlueprintCallable)
