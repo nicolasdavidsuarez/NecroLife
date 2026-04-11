@@ -60,8 +60,18 @@ void UInventoryComponent::OnRep_GemsItems()
 	if (GemsToShow.IsBound())
 	{
 		GemsToShow.Broadcast(GemsItems);
+		GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Yellow,"Broadcasted");
 	}
 	
+}
+
+void UInventoryComponent::OnRep_GemsInSlots()
+{
+	if (GemsToShow.IsBound())
+	{
+		GemsToShow.Broadcast(GemsItems);
+		GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Yellow,"Broadcasted");
+	}
 }
 
 // Called when the game starts
@@ -95,8 +105,7 @@ void UInventoryComponent::AddGemToSlot(FDatosGema gema)
 	{
 		if (GemsItems[i].ID_Gema == gema.ID_Gema)
 		{
-			GemsItems.RemoveAt(i);
-            
+			GemsItems.RemoveAt(i);            
 			break; 
 		}
 	}

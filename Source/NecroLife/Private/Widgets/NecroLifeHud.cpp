@@ -45,7 +45,7 @@ void UNecroLifeHud::HandleXPChanged(float CurrentXP, float XPToNextLevel, int32 
 	}
 }
 
-void UNecroLifeHud::ActualizarInventario(const TArray<UItemData*>& ItemsRecibidos)
+void UNecroLifeHud::ActualizarInventario(const TArray<FDatosGema>& ItemsRecibidos)
 {
 		BP_UpdateInventoryUI(ItemsRecibidos);	
 }
@@ -60,7 +60,7 @@ void UNecroLifeHud::BindDelegate()
 			UInventoryComponent* Inventory= MyPS->FindComponentByClass<UInventoryComponent>();
 			if (Inventory)
 			{
-				Inventory->OnShowItem.AddDynamic(this, &UNecroLifeHud::ActualizarInventario);
+				Inventory->GemsToShow.AddDynamic(this, &UNecroLifeHud::ActualizarInventario);
 				bBindeo = true;
 			}
 		}

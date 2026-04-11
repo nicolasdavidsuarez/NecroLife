@@ -4,9 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/InventoryComponent.h"
+#include "Types/NecroLifeTypes.h"
 #include "NecroLifeHud.generated.h"
 
 class UItemData;
+
 /**
  * 
  */
@@ -45,12 +48,13 @@ private:
 
 	// En tu clase de UI (donde recibes el evento)
 	UFUNCTION()
-	void ActualizarInventario(const TArray<UItemData*>& ItemsRecibidos);
+	void ActualizarInventario(const TArray<FDatosGema>& ItemsRecibidos);
 
 	UFUNCTION()
 	void BindDelegate();
 
+	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Inventory")
-	void BP_UpdateInventoryUI(const TArray<UItemData*>& ItemsToShow);
+	void BP_UpdateInventoryUI(const TArray<FDatosGema>& GemsToShow);
 	
 };

@@ -84,5 +84,18 @@ void ANecroLifePlayerController::OnPossess(APawn* InPawn)
 	if (InvComp)
 	{		
 		InvComp->GemsToShow.AddDynamic(this, &ANecroLifePlayerController::RefrescarInventarioVisual);
+		InvComp->GemsToShow.AddDynamic(this, &ANecroLifePlayerController::Client_RefrescarInventarioVisual);
 	}
+}
+
+void ANecroLifePlayerController::Client_RefrescarInventarioVisual_Implementation(const TArray<FDatosGema>& DatosGemas)
+{
+	ANecroLifeCharacter* MiChar = Cast<ANecroLifeCharacter>(GetPawn());
+
+	
+	if (MiChar&&MiChar->HubWidget)
+	{
+		UNecroLifeHud* MiHUD = Cast<UNecroLifeHud>(MiChar->HubWidget);
+		MiHUD->ActualizarInventario(DatosGemas);
+	}	
 }

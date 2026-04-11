@@ -23,10 +23,10 @@ void AItemGema::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
 
-	/*if (!HasAuthority())
+	if (!HasAuthority())
 	{
 		return;
-	}*/
+	}
 	UInventoryComponent* Inventory= OtherActor->FindComponentByClass<UInventoryComponent>();
 	
 	Inventory->AddGems(GemaData);

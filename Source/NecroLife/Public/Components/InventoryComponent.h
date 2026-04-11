@@ -96,11 +96,14 @@ public:
 	UPROPERTY(ReplicatedUsing= OnRep_GemsItems, EditAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TArray<FDatosGema> GemsItems;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
+	UPROPERTY(ReplicatedUsing= OnRep_GemsInSlots, EditAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TArray<FDatosGema> GemsInSlots;
 
 	UFUNCTION()
 	void OnRep_GemsItems();
+
+	UFUNCTION()
+	void OnRep_GemsInSlots();
 	
 
 protected:
