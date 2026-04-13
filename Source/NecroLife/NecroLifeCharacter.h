@@ -166,8 +166,17 @@ public:
    void Server_ActualizarProgresoMision(FGameplayTag ObjectiveID, int32 Amount);
    UFUNCTION(Server, Reliable)
    void Server_AgregarMision(UQuestData* QuestData);
+   // Declaramos el RPC para que el servidor haga el ataque
+   UFUNCTION(Server, Reliable, WithValidation) // WithValidation es buena práctica para evitar trampas
+   void Server_AplyAction();
+   // Para el ataque con Habilidad
+   UFUNCTION(Server, Reliable, WithValidation)
+   void Server_AplyAbility();
 
    void Server_ActualizarProgresoMision_Implementation(FGameplayTag ObjectiveID, int32 Amount);
+
+   UFUNCTION(BlueprintImplementableEvent)
+   void SetCoolDownAbility(int32 slot);
    /** Constructor */
    ANecroLifeCharacter();
 
@@ -219,8 +228,8 @@ public:
    UAbilityComponent* Ability;
 
 
-   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
-   UQuestComponent* QuestComponent;
+   //UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
+  // UQuestComponent* QuestComponent;
 
    
 
@@ -344,6 +353,7 @@ FRotator CurrentRotation,TargetRotation;
    class UInputMappingContext* InputMapping;
 
 
-   
+   UFUNCTION(BlueprintImplementableEvent)
+   void SetAbilitySlot(int32 CoolDownAbility);
   
 };

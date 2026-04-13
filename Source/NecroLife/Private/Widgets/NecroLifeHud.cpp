@@ -3,10 +3,14 @@
 
 #include "Widgets/NecroLifeHud.h"
 
+#include "NecroLifeCharacter.h"
+#include "NecroLifeGameState.h"
 #include "NecroLifePlayerState.h"
+#include "Components/AbilityComponent.h"
 #include "Components/AttributeComponent.h"
 #include "Components/InventoryComponent.h"
 #include "Components/ProgressBar.h"
+#include "Components/QuestComponent.h"
 #include "Components/TextBlock.h"
 #include "Components/UHealthComponent.h"
 
@@ -50,6 +54,28 @@ void UNecroLifeHud::ActualizarInventario(const TArray<FDatosGema>& ItemsRecibido
 		BP_UpdateInventoryUI(ItemsRecibidos);	
 }
 
+void UNecroLifeHud::HandleCoolDown(int32 AbilitySlot)
+{
+	ANecroLifeCharacter* Player = Cast<ANecroLifeCharacter>(GetOwningPlayerPawn());
+	if (Player)
+	{
+		Player->SetCoolDownAbility(AbilitySlot);
+		bBindeoAbility=true;
+	}
+}
+
+void UNecroLifeHud::HandleOnPotionChange(int CantPosiones)
+{
+	if (TxtPosiones)
+	{
+		// Esto hace el equivalente al "Append" y al "To Text" todo en una línea
+		FString TextoFormateado = FString::Printf(TEXT("Posions: %d"), CantPosiones);
+        
+		// Seteamos el texto en la UI (el nodo "SET Text")
+		TxtPosiones->SetText(FText::FromString(TextoFormateado));
+	}
+}
+
 void UNecroLifeHud::BindDelegate()
 {
 	if (!bBindeo)
@@ -61,6 +87,7 @@ void UNecroLifeHud::BindDelegate()
 			if (Inventory)
 			{
 				Inventory->GemsToShow.AddDynamic(this, &UNecroLifeHud::ActualizarInventario);
+				Inventory->OnPotionChange.AddDynamic(this,&UNecroLifeHud::HandleOnPotionChange);
 				bBindeo = true;
 			}
 		}
@@ -88,12 +115,42 @@ void UNecroLifeHud::BindDelegate()
 		}
 	}
 
-	if (bBindeoAtribute&&bBindeoHealth&&bBindeo)
+	if (!bBindeoAbility)
+	{
+		UAbilityComponent* AbilityComp =Cast<UAbilityComponent>(PlayerPawn->FindComponentByClass<UAbilityComponent>());
+		if (AbilityComp)
+		{
+			AbilityComp->AbilitySlot.AddDynamic(this,&UNecroLifeHud::HandleCoolDown);
+			
+			bBindeoAbility=true;
+		}
+	}
+if (!bBindeoMisiones)
+{
+	if (ANecroLifeGameState* GS = Cast<ANecroLifeGameState>(GetWorld()->GetGameState()))
+	{
+		if (UQuestComponent* QuestComp = GS->FindComponentByClass<UQuestComponent>())
+		{
+			// Bindeamos el evento (asegúrate de que el nombre OnUpdateObjectiveList coincida con el tuyo)
+			QuestComp->OnUpdateObjectiveList.AddDynamic(this, &UNecroLifeHud::ActualizarQuestList);
+			bBindeoMisiones = true;
+		}
+	}
+}
+	
+
+	if (bBindeoAtribute&&bBindeoHealth&&bBindeo&&bBindeoMisiones&&bBindeoAbility)
 	{
 		GetWorld()->GetTimerManager().ClearTimer(TimerHandleBind);
 		GEngine->AddOnScreenDebugMessage(-1,5.0f, FColor::Red, "cLeAr tImEr");			
 
 	}
-	GEngine->AddOnScreenDebugMessage(-1,5.0f, FColor::Red, "tImEr");			
+	//GEngine->AddOnScreenDebugMessage(-1,5.0f, FColor::Red, "tImEr");
+	
 
+}
+
+void UNecroLifeHud::ActualizarQuestList(const TArray<FQuestUIData>& QuestUi)
+{
+	BP_UpdateMisionesUI(QuestUi);
 }

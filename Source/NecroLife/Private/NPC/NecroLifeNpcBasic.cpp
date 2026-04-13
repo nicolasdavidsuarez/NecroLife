@@ -3,6 +3,7 @@
 
 #include "NPC/NecroLifeNpcBasic.h"
 #include "NecroLifeCharacter.h"
+#include "NecroLifeGameState.h"
 #include "Components/QuestComponent.h"
 
 #include "Components/SphereComponent.h"
@@ -148,15 +149,21 @@ void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 		if (CurrentLine.bRequiresPreviousObjective)
 		{
 			// Si el jugador cumplió el objetivo y la quest se actualiza
-			if (MyCharacter->QuestComponent->UpdateQuestProgress(NpcTag, 1))
+			ANecroLifeGameState* GS = GetWorld()->GetGameState<ANecroLifeGameState>();
+
+			if (GS && GS->QuestComponent)
 			{
+				// 2. Le pasamos la pelota al Quest Manager que ahora vive ahí
+				GS->QuestComponent->UpdateQuestProgress(NpcTag, 1);
 				// Avanzamos el índice al diálogo de "¡Gracias por ayudarme!"
 				CurrentDialogIndex++;
 				CurrentLine = DialogueData->DialogLines[CurrentDialogIndex];
-				UE_LOG(LogTemp, Warning, TEXT("MANDA A IMPRIMIR MENSAJE LUEGO DEL UPDATEQUESTPROGRESS"));
-				//MyCharacter->ShowDialogue(CurrentLine);
 			
+				// Opcional: Un log para confirmar que el servidor lo recibió
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("El Servidor recibió la interacción y actualizó el GameState"));
 			}
+			
+				
 			// Si UpdateQuestProgress dio false, CurrentDialogIndex no avanza, 
 			// y CurrentLine sigue siendo la de "Aún no terminaste, ve a buscar eso".
 

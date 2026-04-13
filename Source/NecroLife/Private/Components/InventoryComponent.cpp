@@ -27,7 +27,7 @@ void UInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 void UInventoryComponent::TakeHealthPosion(int Amount)
 {
 	HealthPosion += Amount;
-	OnPosionChange.Broadcast(HealthPosion);
+	OnPotionChange.Broadcast(HealthPosion);
 }
 
 bool UInventoryComponent::UseHealtPosion()
@@ -35,7 +35,7 @@ bool UInventoryComponent::UseHealtPosion()
 	if (HealthPosion > 0)
 	{
 		HealthPosion -= 1;
-		OnPosionChange.Broadcast(HealthPosion);
+		OnPotionChange.Broadcast(HealthPosion);
      		return true;
 	}else{
 		return false;

@@ -22,7 +22,7 @@ class NECROLIFE_API ANecroLifePlayerState : public APlayerState
 
 	UAttributeComponent* GetAttributeComponent() const { return AttributeComponent; }
 	UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
-	UQuestComponent* GetQuestComponent() const { return QuestComponent; }
+	//UQuestComponent* GetQuestComponent() const { return QuestComponent; }
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -31,6 +31,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UInventoryComponent> InventoryComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	TObjectPtr<UQuestComponent> QuestComponent;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	//TObjectPtr<UQuestComponent> QuestComponent;
 };

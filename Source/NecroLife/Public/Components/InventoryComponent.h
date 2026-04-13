@@ -79,7 +79,7 @@ public:
 	bool UseHealtPosion();
 
 	UPROPERTY(BlueprintAssignable, Category="Inventory")
-	FOnPosionChange OnPosionChange;
+	FOnPosionChange OnPotionChange;
 
 	UPROPERTY(BlueprintAssignable, Category="Inventory")
 	FOnShowItem OnShowItem;

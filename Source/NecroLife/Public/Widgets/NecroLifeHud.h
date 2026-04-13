@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/InventoryComponent.h"
+#include "Data/QuestData.h"
 #include "Types/NecroLifeTypes.h"
 #include "NecroLifeHud.generated.h"
 
@@ -25,6 +26,8 @@ private:
 	bool bBindeo = false;
 	bool bBindeoHealth=false;
 	bool bBindeoAtribute = false;
+	bool bBindeoMisiones=false;
+	bool bBindeoAbility = false;
     FTimerHandle TimerHandleBind;
 	
 	public:
@@ -33,6 +36,9 @@ private:
 	
 	UPROPERTY(BlueprintReadWrite,meta = (BindWidget))
 	class UProgressBar* HealthBar;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* TxtPosiones;
 	
 	UFUNCTION(BlueprintCallable)
 	void HandleHealthChanged(float CurrentHealth, float MaxHealth);
@@ -51,10 +57,25 @@ private:
 	void ActualizarInventario(const TArray<FDatosGema>& ItemsRecibidos);
 
 	UFUNCTION()
+	void HandleCoolDown(int32 AbilitySlot);
+
+	UFUNCTION()
+	void HandleOnPotionChange(int CantPosiones);
+	
+	UFUNCTION()
 	void BindDelegate();
 
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Inventory")
 	void BP_UpdateInventoryUI(const TArray<FDatosGema>& GemsToShow);
+
+
+
+	UFUNCTION()
+	void ActualizarQuestList(const TArray<FQuestUIData>& QuestUi);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Quest")
+	void BP_UpdateMisionesUI(const TArray<FQuestUIData>& QuestUi);
+
 	
 };

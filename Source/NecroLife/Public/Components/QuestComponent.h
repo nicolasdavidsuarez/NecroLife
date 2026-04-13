@@ -12,6 +12,17 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUpdateObjetiveList, const TArray<
 
 
 
+USTRUCT(BlueprintType)
+struct FProgresoObjetivo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite)
+	FGameplayTag TargetID;
+
+	UPROPERTY(BlueprintReadWrite)
+	int32 CantidadActual = 0;
+};
 
 USTRUCT(BlueprintType)
 struct FActiveQuestData
@@ -27,13 +38,17 @@ struct FActiveQuestData
 
 	// 3. Contadores específicos (Ej: "lobo: 2", "saqueador: 1")
 	// Usamos un Map: La clave es el ID del objetivo (Tag) y el valor es la cantidad actual.
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TMap<FGameplayTag, int32> ObjectiveProgress;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	//TMap<FGameplayTag, int32> ObjectiveProgress;
+	UPROPERTY(BlueprintReadWrite, Category = "Quest")
+	TArray<FProgresoObjetivo> ObjectiveProgress;
+	
 
 	//TSet: Lista de grupos de elementos unicos. no admite duplicados. no se ordena.
 	//aca tendria que administrar las misiones para no escribir el UQuestData
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TSet<FGameplayTag> ObjetivosCompletados;
+	UPROPERTY(BlueprintReadWrite, Category = "Quest")
+	TArray<FGameplayTag> ObjetivosCompletados;
+	//TSet<FGameplayTag> ObjetivosCompletados;
 
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -100,8 +115,11 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 							   FActorComponentTickFunction* ThisTickFunction) override;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(ReplicatedUsing = OnRep_MisionesActualizadas)
 	TArray<UQuestData*> Quests;
+	
+	UFUNCTION()
+	void OnRep_MisionesActualizadas();
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;

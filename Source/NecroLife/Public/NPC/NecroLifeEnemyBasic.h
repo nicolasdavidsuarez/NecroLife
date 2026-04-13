@@ -21,6 +21,13 @@ public:
 	// Sets default values for this character's properties
 	ANecroLifeEnemyBasic();
 
+	// En NecroLifeEnemyBasic.h
+	UPROPERTY(ReplicatedUsing = OnRep_IsDead)
+	bool bIsDead = false;
+
+	UFUNCTION()
+	void OnRep_IsDead();
+	void Die();
 
 	//componente de salud
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
@@ -53,4 +60,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual bool IsAlive();
+
+protected:
+	// Esta función es obligatoria para replicar variables
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

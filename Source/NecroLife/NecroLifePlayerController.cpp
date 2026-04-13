@@ -63,18 +63,7 @@ void ANecroLifePlayerController::SetupInputComponent()
 	}
 }
 
-void ANecroLifePlayerController::RefrescarInventarioVisual(const TArray<FDatosGema>& DatosGemas)
-{
-	if (!IsLocalController()) return;
-	ANecroLifeCharacter* MiChar = Cast<ANecroLifeCharacter>(GetPawn());
 
-	
-	if (MiChar&&MiChar->HubWidget)
-	{
-		UNecroLifeHud* MiHUD = Cast<UNecroLifeHud>(MiChar->HubWidget);
-		MiHUD->ActualizarInventario(DatosGemas);
-	}	
-}
 
 void ANecroLifePlayerController::OnPossess(APawn* InPawn)
 {
@@ -83,19 +72,30 @@ void ANecroLifePlayerController::OnPossess(APawn* InPawn)
 	UInventoryComponent* InvComp = InPawn->FindComponentByClass<UInventoryComponent>();
 	if (InvComp)
 	{		
-		InvComp->GemsToShow.AddDynamic(this, &ANecroLifePlayerController::RefrescarInventarioVisual);
+		//InvComp->GemsToShow.AddDynamic(this, &ANecroLifePlayerController::RefrescarInventarioVisual);
 		InvComp->GemsToShow.AddDynamic(this, &ANecroLifePlayerController::Client_RefrescarInventarioVisual);
 	}
 }
 
 void ANecroLifePlayerController::Client_RefrescarInventarioVisual_Implementation(const TArray<FDatosGema>& DatosGemas)
 {
-	ANecroLifeCharacter* MiChar = Cast<ANecroLifeCharacter>(GetPawn());
-
+   ////////////////DRY!!!  don´t repeat yourself
+	/*ANecroLifeCharacter* MiChar = Cast<ANecroLifeCharacter>(GetPawn());
 	
 	if (MiChar&&MiChar->HubWidget)
 	{
 		UNecroLifeHud* MiHUD = Cast<UNecroLifeHud>(MiChar->HubWidget);
 		MiHUD->ActualizarInventario(DatosGemas);
-	}	
+	}*/
+	RefrescarInventarioVisual(DatosGemas);
 }
+void ANecroLifePlayerController::RefrescarInventarioVisual(const TArray<FDatosGema>& DatosGemas)
+ {
+ 	if (!IsLocalController()) return;
+ 	ANecroLifeCharacter* MiChar = Cast<ANecroLifeCharacter>(GetPawn());	
+ 	if (MiChar&&MiChar->HubWidget)
+ 	{
+ 		UNecroLifeHud* MiHUD = Cast<UNecroLifeHud>(MiChar->HubWidget);
+ 		MiHUD->ActualizarInventario(DatosGemas);
+ 	}	
+ }

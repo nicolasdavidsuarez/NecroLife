@@ -27,6 +27,73 @@
 #include "NPC/NecroLifeEnemyBasic.h"
 #include "NPC/NecroLifeNpcBasic.h"
 
+void ANecroLifeCharacter::Server_AplyAbility_Implementation()
+{
+   TArray<FOverlapResult> Overlaps;
+   FVector Origin = GetActorLocation();
+   FCollisionShape CollisionShape = FCollisionShape::MakeSphere(300.f); // AttackRadius
+
+   bool bHit = GetWorld()->OverlapMultiByChannel(Overlaps, Origin, FQuat::Identity, ECC_Pawn, CollisionShape);
+   if (!bHit) return;
+
+   FVector Forward = GetActorForwardVector();
+
+   for (auto& Result : Overlaps)
+   {
+      AActor* Other = Result.GetActor();
+      ANecroLifeEnemyBasic* EnemyBasic = Cast<ANecroLifeEnemyBasic>(Other);
+      if (!EnemyBasic || Other == this) continue;
+
+      FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
+      float Dot = FVector::DotProduct(Forward, ToTarget);
+      float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
+
+      if (AngleToTarget <= 45.f) // AttackAngle
+      {
+         URPGHelper::ApplyDamage(Other, 100); // Daño de Habilidad
+         if (!EnemyBasic->IsAlive())
+         {
+            URPGHelper::TakeXP(this, 10);
+            Server_ActualizarProgresoMision(EnemyBasic->GetTag(), 1);
+         }
+      }
+   }
+}
+bool ANecroLifeCharacter::Server_AplyAbility_Validate() { return true; }
+void ANecroLifeCharacter::Server_AplyAction_Implementation()
+{
+   TArray<FOverlapResult> Overlaps;
+   FVector Origin = GetActorLocation();
+   FCollisionShape CollisionShape = FCollisionShape::MakeBox(FVector(100, 100, 100));
+
+   bool bHit = GetWorld()->OverlapMultiByChannel(Overlaps, Origin, FQuat::Identity, ECC_Pawn, CollisionShape);
+   if (!bHit) return;
+
+   FVector Forward = GetActorForwardVector();
+
+   for (auto& Result : Overlaps)
+   {
+      AActor* Other = Result.GetActor();
+      ANecroLifeEnemyBasic* EnemyBasic = Cast<ANecroLifeEnemyBasic>(Other);
+      if (!EnemyBasic || Other == this) continue;
+
+      FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
+      float Dot = FVector::DotProduct(Forward, ToTarget);
+      float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
+
+      if (AngleToTarget <= 45.f) // AttackAngle
+      {
+         URPGHelper::ApplyDamage(Other, 10); // Daño Melee
+         if (!EnemyBasic->IsAlive())
+         {
+            URPGHelper::TakeXP(this, 10);
+            Server_ActualizarProgresoMision(EnemyBasic->GetTag(), 1);
+         }
+      }
+   }
+}
+bool ANecroLifeCharacter::Server_AplyAction_Validate(){ return true;}
+
 //NET
 void ANecroLifeCharacter::Server_ActualizarProgresoMision_Implementation(FGameplayTag ObjectiveID, int32 Amount)
 {
@@ -34,10 +101,10 @@ void ANecroLifeCharacter::Server_ActualizarProgresoMision_Implementation(FGamepl
    // (Como esta función corre en el Servidor, GetGameState siempre será válido y tendrá la última información)
    ANecroLifeGameState* GS = GetWorld()->GetGameState<ANecroLifeGameState>();
 
-   if (GS && GS->QuestManager)
+   if (GS && GS->QuestComponent)
    {
       // 2. Le pasamos la pelota al Quest Manager que ahora vive ahí
-      GS->QuestManager->UpdateQuestProgress(ObjectiveID, Amount);
+      GS->QuestComponent->UpdateQuestProgress(ObjectiveID, Amount);
         
       // Opcional: Un log para confirmar que el servidor lo recibió
       GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("El Servidor recibió la interacción y actualizó el GameState"));
@@ -46,14 +113,11 @@ void ANecroLifeCharacter::Server_ActualizarProgresoMision_Implementation(FGamepl
 
 void ANecroLifeCharacter::Server_AgregarMision_Implementation(UQuestData* QuestData)
 {
-   // 1. Buscamos el GameState (que es la autoridad)
+   
    ANecroLifeGameState* GS = GetWorld()->GetGameState<ANecroLifeGameState>();
-
-   // 2. Si existe el GameState y tiene nuestro QuestManager
-   if (GS && GS->QuestManager)
+      if (GS && GS->QuestComponent)
    {
-      // 3. Agregamos la misión de forma global para todos
-      GS->QuestManager->AddQuest(QuestData);
+           GS->QuestComponent->AddQuest(QuestData);
    }
 }
 
@@ -68,7 +132,7 @@ ANecroLifeCharacter::ANecroLifeCharacter()
 //crear el UAbilityComponent
    Ability = CreateDefaultSubobject<UAbilityComponent>(TEXT("AbilityComponent"));
    //crear y atachar el quest component
-   QuestComponent= CreateDefaultSubobject<UQuestComponent>(TEXT("QuestComponent"));
+  // QuestComponent= CreateDefaultSubobject<UQuestComponent>(TEXT("QuestComponent"));
    //
    Attribute = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributesComponent"));
 
@@ -159,8 +223,7 @@ void ANecroLifeCharacter::AbilityEnabled(const FInputActionValue& InputActionVal
    ShowMsg(AbilityName);
    Ability->SelectAbility(pressedKeys);
      
-   
-   
+     
    if (!Ability->isCoolDownAply(Ability->CurrentAbility))
       {
          GetCharacterMovement()->bOrientRotationToMovement = false;
@@ -216,6 +279,31 @@ void ANecroLifeCharacter::AbilityDisambled(const FInputActionValue& InputActionV
 
 void ANecroLifeCharacter::AplyAction()
 {
+   if (bEnabledAbility)
+   {
+      // --- 1. LO VISUAL (CLIENTE) ---
+      GetCharacterMovement()->bOrientRotationToMovement = true;
+      bUseControllerRotationYaw = false;
+      bEnabledAbility = false;
+      
+      // Esto dispara el efecto visual y limpia el área verde/roja
+      Ability->AbilityAply(); 
+      Ability->ClearIndicator();
+
+      // --- 2. EL DAÑO (SERVIDOR) ---
+      // Le pedimos al servidor que calcule las físicas de la habilidad
+      Server_AplyAbility(); 
+   }
+   else
+   {
+      // --- 1. LO VISUAL (CLIENTE) ---
+      // (Aquí en el futuro pondrás la animación o sonido de tu ataque Melee)
+      FVector Forward = GetActorForwardVector();
+      DrawDebugCone(GetWorld(),GetActorLocation(),Forward,100.0f,0.5,0.5,12,FColor::Red,false,0.5f);
+      // --- 2. EL DAÑO (SERVIDOR) ---
+      Server_AplyAction();
+   }
+   /*
    if (bEnabledAbility)
    {
        //FOverlapResult result;
@@ -325,6 +413,7 @@ void ANecroLifeCharacter::AplyAction()
             {
                ShowMsg(FString::Printf(TEXT("Aca Sumaria experiencia")));
                URPGHelper::TakeXP(this,10);
+               Server_ActualizarProgresoMision(EnemyBasic->GetTag(), 1);
             }
             // 🔹 (Opcional) debug line
             DrawDebugLine(GetWorld(), Origin, Other->GetActorLocation(), FColor::Red, false, 1.f, 0, 1.f);
@@ -332,7 +421,7 @@ void ANecroLifeCharacter::AplyAction()
          }
       }
       //ShowMsg(FString::Printf(TEXT("Se ejecuta Ataque Melee")));
-   }
+   }*/
      
 }
 
@@ -648,7 +737,7 @@ void ANecroLifeCharacter::PossessedBy(AController* NewController)
       // 2. AHORA, usamos MyPlayerState para cachear sus componentes
       CachedAttributeComponent = MyPlayerState->GetAttributeComponent();
       CachedInventoryComponent = MyPlayerState->GetInventoryComponent();
-      CachedQuestComponent = MyPlayerState->GetQuestComponent();
+      //CachedQuestComponent = MyPlayerState->GetQuestComponent();  lo saque porque esta en el game state ahora
 
       // (Opcional pero recomendado) Comprobar que todos los componentes se encontraron
       if (!CachedAttributeComponent || !CachedInventoryComponent || !CachedQuestComponent)
