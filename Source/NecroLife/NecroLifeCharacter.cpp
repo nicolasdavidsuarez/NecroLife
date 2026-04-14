@@ -84,6 +84,7 @@ void ANecroLifeCharacter::Server_AplyAction_Implementation()
       if (AngleToTarget <= 45.f) // AttackAngle
       {
          URPGHelper::ApplyDamage(Other, 10); // Daño Melee
+EnemyBasic->setHealtBar();
          if (!EnemyBasic->IsAlive())
          {
             URPGHelper::TakeXP(this, 10);

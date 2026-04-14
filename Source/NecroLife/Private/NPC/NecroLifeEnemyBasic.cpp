@@ -6,6 +6,7 @@
 #include "Net/UnrealNetwork.h"
 
 
+
 // Sets default values
 ANecroLifeEnemyBasic::ANecroLifeEnemyBasic()
 {
@@ -13,14 +14,13 @@ ANecroLifeEnemyBasic::ANecroLifeEnemyBasic()
 	HealthComponent = CreateDefaultSubobject<UUHealthComponent>(TEXT("HealthComponent"));
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	
+	SetReplicates(true);
 }
 
 void ANecroLifeEnemyBasic::OnRep_IsDead()
 {
-			// Esto se ejecuta en TODAS las pantallas
-		// Aquí desactivas las colisiones, reproduces la animación de muerte (Ragdoll) y apagas su IA
-		GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+	//
+	    GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
 		GetMesh()->SetSimulatePhysics(true);	
 }
 
@@ -36,11 +36,30 @@ void ANecroLifeEnemyBasic::Die() // Función que llamas cuando su vida llega a 0
 	}
 }
 
+void ANecroLifeEnemyBasic::setHealtBar()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("set Healt Bar HealtBar"));
+	if(HealthComponent && HealthComponent->MaxHealth > 0)
+	{
+		float HealthPercent = HealthComponent->CurrentHealth / HealthComponent->MaxHealth;
+		BP_SetHealthBar(HealthPercent);
+	}
+}
+
+
+void ANecroLifeEnemyBasic::HandleOnHealthChange(float Health, float HealthMax)
+{
+	float percent=Health/HealthMax;
+	BP_SetHealthBar(percent);
+}
 // Called when the game starts or when spawned
 void ANecroLifeEnemyBasic::BeginPlay()
 {
 	Super::BeginPlay();
-	
+if (HealthComponent)
+{
+	HealthComponent->OnHealthChanged.AddDynamic(this,&ANecroLifeEnemyBasic::HandleOnHealthChange);
+}
 }
 
 // Called every frame

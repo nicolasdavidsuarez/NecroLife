@@ -18,16 +18,26 @@ class NECROLIFE_API ANecroLifeEnemyBasic : public ACharacter
 	GENERATED_BODY()
 
 public:
+	UFUNCTION()
+	void HandleOnHealthChange(float X, float Arg);
 	// Sets default values for this character's properties
 	ANecroLifeEnemyBasic();
 
 	// En NecroLifeEnemyBasic.h
 	UPROPERTY(ReplicatedUsing = OnRep_IsDead)
 	bool bIsDead = false;
-
+	
 	UFUNCTION()
 	void OnRep_IsDead();
+
+	UFUNCTION()
 	void Die();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Event")
+	void BP_SetHealthBar(float Percent);
+	
+	UFUNCTION()
+	void setHealtBar();
 
 	//componente de salud
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")

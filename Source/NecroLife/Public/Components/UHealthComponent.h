@@ -35,11 +35,14 @@ public:
 	UPROPERTY(BlueprintAssignable, Category="Health")
 	FOnHealthChanged OnHealthChanged;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Health")
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Health")
 	float MaxHealth = 100.f;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Health")
+    UPROPERTY(ReplicatedUsing = OnRep_CurrentHealth, BlueprintReadOnly, Category = "Health")
 	float CurrentHealth;
+
+	UFUNCTION()
+	void OnRep_CurrentHealth();
 
 	UFUNCTION(BlueprintCallable, Category="Health")
 	void TakeDamage(float Amount);

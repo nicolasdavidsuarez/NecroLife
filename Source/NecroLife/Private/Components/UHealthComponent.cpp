@@ -3,6 +3,8 @@
 
 #include "Public/Components/UHealthComponent.h"
 
+#include "Net/UnrealNetwork.h"
+#include "NPC/NecroLifeEnemyBasic.h"
 
 
 // Sets default values for this component's properties
@@ -11,8 +13,9 @@ UUHealthComponent::UUHealthComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
 	// ...
+    SetIsReplicatedByDefault(true);
+	
 }
 
 
@@ -35,8 +38,20 @@ void UUHealthComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	// ...
 }
 
+void UUHealthComponent::OnRep_CurrentHealth()
+{
+	OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
+	/*ANecroLifeEnemyBasic* Owner = Cast<ANecroLifeEnemyBasic>(GetOwner());
+	if (Owner)
+	{
+		Owner->setHealtBar();
+	}*/
+}
+
 void UUHealthComponent::TakeDamage(float Amount)
 {
+	if (GetOwnerRole() < ROLE_Authority) return;
+	
 	CurrentHealth -= Amount;
 	if (CurrentHealth <= 0.f)
 	{
@@ -73,3 +88,10 @@ void UUHealthComponent::ApplyDamageOverTimer()
 	OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
 }
 
+void UUHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UUHealthComponent, CurrentHealth);
+	DOREPLIFETIME(UUHealthComponent, MaxHealth);
+	
+}
