@@ -165,6 +165,21 @@ protected:
    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
    UAnimMontage* AbilityAttackMontage;
 
+   // Referencia al arma para poder modificarla desde C++
+   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Equipment")
+   class UMeshComponent* WeaponMesh;
+
+   // Y asegurate de tener la lista temporal que armamos en el paso anterior
+   UPROPERTY()
+   TArray<class UMaterialInterface*> OriginalWeaponMaterials;
+
+   // Efecto visual (Niagara) que spawnea al impactar a un enemigo
+   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|VFX")
+   class UNiagaraSystem* HitVFX;
+
+   // Guarda el ID del Root Motion para el Dash
+   uint16 DashRootMotionID;
+
 //Net
 public:
    // Esta es la función que va a llamar el objeto cuando interactúes con él.
@@ -195,7 +210,6 @@ protected:
    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 
-protected:
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UAttributeComponent* CachedAttributeComponent;
 
@@ -209,6 +223,19 @@ protected:
    /** Called for looking input */
    void Look(const FInputActionValue& Value);
 
+   // Funciones de red para el Dash
+   UFUNCTION(Server, Reliable)
+   void Server_Dash(FVector DashDir);
+
+   UFUNCTION(NetMulticast, Unreliable)
+   void Multicast_DashFX();
+
+   // Lógica física central del Dash
+   void PerformDashLogic(FVector DashDir);
+
+   // Lista para guardar la "ropa" original del personaje
+   UPROPERTY()
+   TArray<class UMaterialInterface*> OriginalMaterials;
 
 public:
    //componente de salud
@@ -280,7 +307,7 @@ public:
    void ClearCurrentInteractable() { CurrentInteractable = nullptr; }
 
    UFUNCTION(BLueprintCallable, Category="Interact")
-  AActor *getCurrentInteractable() { return CurrentInteractable; }
+   AActor *getCurrentInteractable() { return CurrentInteractable; }
 
    UFUNCTION(BLueprintCallable, Category="Interact")
    void AddCurrentQuest();
@@ -297,7 +324,20 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Combat")
     void ExecuteAbilityHit();
-   
+
+    // Material transparente para el efecto de invisibilidad
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|VFX")
+    class UMaterialInterface* TransparentMaterial;
+
+    // Efecto visual para el Dash
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|VFX")
+    class UNiagaraSystem* DashVFX;
+       
+    // Sonido para el Dash
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Audio")
+    class USoundBase* DashSound;
+
+
 FVector Direction;
 FRotator CurrentRotation,TargetRotation;
 

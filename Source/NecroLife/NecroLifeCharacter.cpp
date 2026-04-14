@@ -2,15 +2,20 @@
 
 
 #include "NecroLifeCharacter.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
+#include "NiagaraComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "GameFramework/RootMotionSource.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "Kismet/GameplayStatics.h"
 #include "NecroLife.h"
 #include "Public/Components/AttributeComponent.h"
 #include "Public/Components/RPGHelper.h"
@@ -243,55 +248,61 @@ void ANecroLifeCharacter::AplyAction()
     }
 }
 
-void ANecroLifeCharacter::ExecuteAttackHit()
-{
-    TArray<FOverlapResult> Overlaps;
-    FVector Origin = GetActorLocation();
-    FCollisionShape CollisionShape = FCollisionShape::MakeBox(FVector(100, 100, 100));
-
-    bool bHit = GetWorld()->OverlapMultiByChannel(
-        Overlaps,
-        Origin,
-        FQuat::Identity,
-        ECC_Pawn,          // Canal de colisión 
-        CollisionShape);
-
-    if (!bHit) return;
-    FVector Forward = GetActorForwardVector();
-    DrawDebugCone(GetWorld(), GetActorLocation(), Forward, 100.0f, 0.5, 0.5, 12, FColor::Red, false, 0.5f);
-
-
-    for (auto& Result : Overlaps)
+    void ANecroLifeCharacter::ExecuteAttackHit()
     {
-        AActor* Other = Result.GetActor();
-        ANecroLifeEnemyBasic* EnemyBasic = Cast<ANecroLifeEnemyBasic>(Other);
-        if (!EnemyBasic || Other == this) continue;
+        TArray<FOverlapResult> Overlaps;
+        FVector Origin = GetActorLocation();
+        FCollisionShape CollisionShape = FCollisionShape::MakeBox(FVector(100, 100, 100));
 
-        // 🔹 Vector hacia el otro actor
-        FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
+        bool bHit = GetWorld()->OverlapMultiByChannel(
+            Overlaps,
+            Origin,
+            FQuat::Identity,
+            ECC_Pawn,          // Canal de colisión 
+            CollisionShape);
 
-        // 🔹 Calculamos el ángulo con el forward vector
-        float Dot = FVector::DotProduct(Forward, ToTarget);
-        float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
-        float AttackAngle = 45.f;
+        if (!bHit) return;
+        FVector Forward = GetActorForwardVector();
+        DrawDebugCone(GetWorld(), GetActorLocation(), Forward, 100.0f, 0.5, 0.5, 12, FColor::Red, false, 0.5f);
 
-        // 🔹 Si está dentro del cono, aplicamos daño
-        if (AngleToTarget <= AttackAngle)
+
+        for (auto& Result : Overlaps)
         {
-            //UGameplayStatics::ApplyDamage(Other, 20.f, GetController(), this, UDamageType::StaticClass());
+            AActor* Other = Result.GetActor();
+            ANecroLifeEnemyBasic* EnemyBasic = Cast<ANecroLifeEnemyBasic>(Other);
+            if (!EnemyBasic || Other == this) continue;
 
-            URPGHelper::ApplyDamage(Other, 10);
-            if (!EnemyBasic->IsAlive())
+            // 🔹 Vector hacia el otro actor
+            FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
+
+            // 🔹 Calculamos el ángulo con el forward vector
+            float Dot = FVector::DotProduct(Forward, ToTarget);
+            float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
+            float AttackAngle = 45.f;
+
+            // 🔹 Si está dentro del cono, aplicamos daño
+            if (AngleToTarget <= AttackAngle)
             {
-                ShowMsg(FString::Printf(TEXT("Aca Sumaria experiencia")));
-                URPGHelper::TakeXP(this, 10);
+                //UGameplayStatics::ApplyDamage(Other, 20.f, GetController(), this, UDamageType::StaticClass());
+
+                URPGHelper::ApplyDamage(Other, 10);
+                // Asegurate de tener una variable UPROPERTY para el sistema Niagara si no querés hardcodearlo
+                if (HitVFX)
+                {
+                    UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, Other->GetActorLocation());
+                }
+
+                if (!EnemyBasic->IsAlive())
+                {
+                    ShowMsg(FString::Printf(TEXT("Aca Sumaria experiencia")));
+                    URPGHelper::TakeXP(this, 10);
+                }
+                // 🔹 (Opcional) debug line
+                DrawDebugLine(GetWorld(), Origin, Other->GetActorLocation(), FColor::Red, false, 1.f, 0, 1.f);
+                //Ability->AbilityAply();
             }
-            // 🔹 (Opcional) debug line
-            DrawDebugLine(GetWorld(), Origin, Other->GetActorLocation(), FColor::Red, false, 1.f, 0, 1.f);
-            //Ability->AbilityAply();
         }
-    }
-    //ShowMsg(FString::Printf(TEXT("Se ejecuta Ataque Melee")));
+        //ShowMsg(FString::Printf(TEXT("Se ejecuta Ataque Melee")));
 }
     
 void ANecroLifeCharacter::ExecuteAbilityHit()
@@ -532,7 +543,7 @@ void ANecroLifeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
       EnhancedInputComponent->BindAction(OpenInventory, ETriggerEvent::Started, this, &ANecroLifeCharacter::InventoryInput);
       ///Dash//////////////////
       EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Dash);
-//interactuar
+      //interactuar
       EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Interact);
       //correr////////////
       EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::RunActivated);
@@ -785,27 +796,165 @@ void ANecroLifeCharacter::LookToCastAbility()
 }
 
 
+//DASH//
+
 void ANecroLifeCharacter::Dash()
 {
-   if (!bCanDash || bIsDashing || !Attribute) return;
-   bIsDashing = true;
-   bCanDash = false;
-   FVector DashDirection = GetActorForwardVector();
-   LaunchCharacter(DashDirection * Attribute->DashStrength, true, true);
+    if (!bCanDash || bIsDashing || !Attribute) return;
 
+    // 1. Obtenemos la dirección localmente
+    FVector DashDirection = GetActorForwardVector();
 
-   GetWorldTimerManager().SetTimer(DashTimerHandle, this, &ANecroLifeCharacter::StopDash, Attribute->DashDuration, false,0.5f);
+    // 2. Ejecutamos la lógica local inmediatamente (Client Prediction)
+    PerformDashLogic(DashDirection);
+
+    // 3. Ejecutamos los efectos visuales locales
+    Multicast_DashFX_Implementation();
+
+    // 4. Si no somos el Servidor, le avisamos a la autoridad
+    if (!HasAuthority())
+    {
+        Server_Dash(DashDirection);
+    }
 }
 
+void ANecroLifeCharacter::Server_Dash_Implementation(FVector DashDir) // Esta función corre SOLO en el servidor
+{
+    // El servidor ejecuta la física para mantenerse sincronizado
+    PerformDashLogic(DashDir);
+
+    // El servidor le avisa a todos los demás clientes que reproduzcan los efectos
+    Multicast_DashFX();
+}
+
+void ANecroLifeCharacter::PerformDashLogic(FVector DashDir) // Esta es la lógica core del empuje
+{
+    bIsDashing = true;
+    bCanDash = false;
+
+    // 1. Limpiamos cualquier root motion anterior por seguridad
+    if (DashRootMotionID != 0)
+    {
+        GetCharacterMovement()->RemoveRootMotionSourceByID(DashRootMotionID);
+    }
+
+    // 2. Creamos la fuerza constante (Root Motion Source)
+    TSharedPtr<FRootMotionSource_ConstantForce> DashForce = MakeShared<FRootMotionSource_ConstantForce>();
+    DashForce->InstanceName = FName("DashForce");
+    DashForce->AccumulateMode = ERootMotionAccumulateMode::Override; // Ignora la velocidad actual del jugador
+    DashForce->Priority = 5;
+
+    // ATENCIÓN: RootMotion usa Velocidad (cm/s). 
+    // Es probable que tengas que subir el valor de DashStrength en tu Blueprint.
+    DashForce->Force = DashDir * Attribute->DashStrength;
+    DashForce->Duration = Attribute->DashDuration;
+
+    // Frena en seco al terminar para que no resbale
+    DashForce->FinishVelocityParams.Mode = ERootMotionFinishVelocityMode::SetVelocity;
+    DashForce->FinishVelocityParams.SetVelocity = FVector::ZeroVector;
+
+    // 3. Aplicamos la fuerza al Character Movement
+    DashRootMotionID = GetCharacterMovement()->ApplyRootMotionSource(DashForce);
+
+    // 4. El timer sigue igual para la duración del Dash
+    GetWorldTimerManager().SetTimer(DashTimerHandle, this, &ANecroLifeCharacter::StopDash, Attribute->DashDuration, false);
+
+}
+
+
+void ANecroLifeCharacter::Multicast_DashFX_Implementation() // Esta función corre en las pantallas de todos los jugadores
+{
+    // 1. Spawneamos el sistema y lo guardamos en un puntero (UNiagaraComponent)
+    if (DashVFX)
+    {
+        // Usamos SpawnSystemAttached para que el emisor viaje con el personaje
+        UNiagaraComponent* NiagaraComp = UNiagaraFunctionLibrary::SpawnSystemAttached(
+            DashVFX,
+            GetMesh(),                           // A qué componente lo atachamos
+            NAME_None,                           // No necesitamos un hueso específico
+            FVector::ZeroVector, 
+            FRotator::ZeroRotator, 
+            EAttachLocation::SnapToTarget, 
+            true                                 // Se destruye solo al terminar
+        );
+
+        if (NiagaraComp)
+        {
+            NiagaraComp->SetVariableObject(FName("User.SourceMesh"), GetMesh());
+        }
+    }
+
+    // 3. Hacemos invisible al personaje temporalmente
+    OriginalMaterials.Empty(); // Vaciamos la lista por si quedó algo de un dash anterior
+    // Recorremos todos los materiales del personaje (piel, ropa, espada, etc.)
+    if (TransparentMaterial)
+    {
+        for (int32 i = 0; i < GetMesh()->GetNumMaterials(); ++i)
+        {
+            // Guardamos el original
+            OriginalMaterials.Add(GetMesh()->GetMaterial(i));
+
+            // Le ponemos el invisible
+            GetMesh()->SetMaterial(i, TransparentMaterial);
+        }
+    }
+    
+
+    // 4.  Sonido (A elegir)
+    if (DashSound)
+    {
+        UGameplayStatics::PlaySoundAtLocation(this, DashSound, GetActorLocation());
+    }
+
+    OriginalWeaponMaterials.Empty();
+    if (TransparentMaterial && WeaponMesh)
+    {
+        for (int32 i = 0; i < WeaponMesh->GetNumMaterials(); ++i)
+        {
+            OriginalWeaponMaterials.Add(WeaponMesh->GetMaterial(i));
+            WeaponMesh->SetMaterial(i, TransparentMaterial);
+        }
+    }
+}
 
 void ANecroLifeCharacter::StopDash()
 {
-   bIsDashing = false;
-   GetWorldTimerManager().SetTimer(CooldownTimerHandle, [this]()
-   {
-      bCanDash = true;
-   }, Attribute->DashCooldown, false);
+    bIsDashing = false;
+
+    // Por seguridad, removemos la fuerza al terminar
+    if (DashRootMotionID != 0)
+    {
+        GetCharacterMovement()->RemoveRootMotionSourceByID(DashRootMotionID);
+        DashRootMotionID = 0;
+    }
+
+    // Cuando termina el dash, el personaje vuelve a ser visible
+    for (int32 i = 0; i < OriginalMaterials.Num(); ++i) // Le devolvemos todos los materiales originales en su orden exacto
+    {
+        if (OriginalMaterials[i])
+        {
+            GetMesh()->SetMaterial(i, OriginalMaterials[i]);
+        }
+    }
+
+    GetWorldTimerManager().SetTimer(CooldownTimerHandle, [this]()
+        {
+            bCanDash = true;
+        }, Attribute->DashCooldown, false);
+
+    if (WeaponMesh)
+    {
+        for (int32 i = 0; i < OriginalWeaponMaterials.Num(); ++i)
+        {
+            if (OriginalWeaponMaterials[i])
+            {
+                WeaponMesh->SetMaterial(i, OriginalWeaponMaterials[i]);
+            }
+        }
+    }
 }
+
+
 void ANecroLifeCharacter::SetUIState(bool bIsTalking)
 {
    APlayerController* PC = Cast<APlayerController>(GetController());
