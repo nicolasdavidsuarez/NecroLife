@@ -180,6 +180,9 @@ protected:
    // Guarda el ID del Root Motion para el Dash
    uint16 DashRootMotionID;
 
+   UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|State")
+   bool bIsInvincible;
+
 //Net
 public:
    // Esta es la función que va a llamar el objeto cuando interactúes con él.
