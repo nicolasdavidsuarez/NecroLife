@@ -55,6 +55,7 @@ struct FDatosGema
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPosionChange, int, CantPosiones);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnShowItem, const TArray<UItemData*>&, ItemsToShow);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGemsItems, const TArray<FDatosGema>&, GemsToShow);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGemsItemsInSlots, const TArray<FDatosGema>&, GemsToShowInSlots);
 
 
 
@@ -86,6 +87,17 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category="Inventory")
 	FGemsItems GemsToShow;
+
+	UPROPERTY(BlueprintAssignable, Category="Inventory")
+	FGemsItemsInSlots GemsToShowInSlots;
+
+	// Esta es la función que llamarás desde el Widget
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void RequestAddGemToSlot(FDatosGema gema);
+
+	// Este es el RPC que se ejecutará en el servidor
+	UFUNCTION(Server, Reliable)
+	void Server_AddGemToSlot(FDatosGema gema);
 
 	UFUNCTION(BlueprintCallable, Category="Inventory")
 	void PickUp(UItemData* Aitem);

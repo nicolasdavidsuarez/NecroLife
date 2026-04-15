@@ -27,7 +27,7 @@ class UInventoryComponent;
 class UAbilityComponent;
 class UQuestComponent;
 class ANecroLifePlayerState;
-//class INecroLifeInterface;
+class INecroLifeInterface;
 struct FInputActionValue;
 
 

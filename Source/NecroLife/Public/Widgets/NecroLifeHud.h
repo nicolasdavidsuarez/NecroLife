@@ -61,7 +61,9 @@ private:
 
 	UFUNCTION()
 	void HandleOnPotionChange(int CantPosiones);
-	
+
+	UFUNCTION()
+	void ActualizarGemasInSlots(const TArray<FDatosGema>& DatosGemas);
 	UFUNCTION()
 	void BindDelegate();
 

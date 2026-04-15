@@ -76,6 +76,11 @@ void UNecroLifeHud::HandleOnPotionChange(int CantPosiones)
 	}
 }
 
+void UNecroLifeHud::ActualizarGemasInSlots(const TArray<FDatosGema>& DatosGemas)
+{
+	
+}
+
 void UNecroLifeHud::BindDelegate()
 {
 	if (!bBindeo)
@@ -87,6 +92,7 @@ void UNecroLifeHud::BindDelegate()
 			if (Inventory)
 			{
 				Inventory->GemsToShow.AddDynamic(this, &UNecroLifeHud::ActualizarInventario);
+				Inventory->GemsToShowInSlots.AddDynamic(this,&UNecroLifeHud::ActualizarGemasInSlots);
 				Inventory->OnPotionChange.AddDynamic(this,&UNecroLifeHud::HandleOnPotionChange);
 				bBindeo = true;
 			}

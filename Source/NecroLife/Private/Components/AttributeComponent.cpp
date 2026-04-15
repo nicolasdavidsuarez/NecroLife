@@ -14,6 +14,8 @@
 #include "Public/Components/AttributeComponent.h"
 
 #include "Components/InventoryComponent.h"
+#include "Net/UnrealNetwork.h"
+
 
 
 // Sets default values for this component's properties
@@ -22,7 +24,7 @@ UAttributeComponent::UAttributeComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-	
+	SetIsReplicatedByDefault(true);
 }
 	// ...
 
@@ -91,22 +93,22 @@ void UAttributeComponent::RecalcularEstadisticas(const TArray<FDatosGema>& Gemas
 
 		case ETipoEstadisticaGema::VidaMaximaPorcentaje:
 			// Sumamos el porcentaje (ej: si tiene dos gemas de 10%, esto acumula 20%)
-			BonoVidaPorcentaje += Gema.ValorMejora;
+			BonoVidaPorcentaje += (Gema.ValorMejora-1.0f);
 			break;
 
 		case ETipoEstadisticaGema::AtaqueFisicoPorcentaje:
-			BonoAtaquePorcentaje += Gema.ValorMejora;
+			BonoAtaquePorcentaje += (Gema.ValorMejora-1.0f);
 			break;
 
 		case ETipoEstadisticaGema::VelocidadAtaquePorcentaje:
-			BonoVelocidadAttack+=Gema.ValorMejora;
+			BonoVelocidadAttack+=(Gema.ValorMejora-1.0f);
 			break;
 
 		case ETipoEstadisticaGema::Defensa:
 			Defense+=Gema.ValorMejora;
 			break;
         case ETipoEstadisticaGema::DefensaPorcentaje:
-			BonoDefense+=Gema.ValorMejora;
+			BonoDefense+=(Gema.ValorMejora-1.0f);
 			break;
 		
 		default:
@@ -121,7 +123,7 @@ void UAttributeComponent::RecalcularEstadisticas(const TArray<FDatosGema>& Gemas
 	//lo dejo mal para tener las dos opciones
 	if (BonoVidaPorcentaje > 0.0f)
 	{
-		LifeMax += LifeMax * BonoVidaPorcentaje;
+		LifeMax += LifeMax * (1+BonoVidaPorcentaje);
 	}
 	if (BonoVelocidadAttack>0.0f)
 	{
@@ -129,7 +131,7 @@ void UAttributeComponent::RecalcularEstadisticas(const TArray<FDatosGema>& Gemas
 	}
 	if(BonoAtaquePorcentaje>0.0f)
 	{
-	Attack=Attack*BonoAtaquePorcentaje;	
+	Attack=Attack*(1+BonoAtaquePorcentaje);	
 	}
 
 	// Opcional: Asegurarse de que la Vida actual no supere la nueva Vida Máxima
@@ -139,16 +141,29 @@ void UAttributeComponent::RecalcularEstadisticas(const TArray<FDatosGema>& Gemas
 	}
 
 	// Al final de la función, armamos el struct para la UI
-	FEstadisticasPersonaje StatsParaUI;
-	StatsParaUI.VidaMaxima = LifeMax;
-	StatsParaUI.Ataque = Attack;
-	StatsParaUI.Velocidad = Velocity;
-	StatsParaUI.Nivel = Level;
-	StatsParaUI.EnergiaMaxima=EnergyMax;
-	StatsParaUI.VelocidadRegeneracion=velocidadEnergyReg;
-	StatsParaUI.Defensa=Defense;
+
+	StatsSincronizadas.VidaMaxima = LifeMax;
+	StatsSincronizadas.Ataque = Attack;
+	StatsSincronizadas.Velocidad = Velocity;
+	StatsSincronizadas.Nivel = Level;
+	StatsSincronizadas.EnergiaMaxima=EnergyMax;
+	StatsSincronizadas.VelocidadRegeneracion=velocidadEnergyReg;
+	StatsSincronizadas.Defensa=Defense;
 
 	// Disparamos el único delegado
-	OnAtributosActualizados.Broadcast(StatsParaUI);
+	OnRep_StatsActualizadas();
+	OnAtributosActualizados.Broadcast(StatsSincronizadas);
 }
 
+void UAttributeComponent::OnRep_StatsActualizadas()
+{
+	
+	OnAtributosActualizados.Broadcast(StatsSincronizadas);
+
+}
+
+void UAttributeComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UAttributeComponent, StatsSincronizadas);
+}

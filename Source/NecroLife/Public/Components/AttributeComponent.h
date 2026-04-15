@@ -60,6 +60,14 @@ class NECROLIFE_API UAttributeComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
+	
+	UPROPERTY(ReplicatedUsing = OnRep_StatsActualizadas)
+	FEstadisticasPersonaje StatsSincronizadas;
+
+	
+	UFUNCTION()
+	void OnRep_StatsActualizadas();
+	
 	// Sets default values for this component's properties
 	UAttributeComponent();
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dash")

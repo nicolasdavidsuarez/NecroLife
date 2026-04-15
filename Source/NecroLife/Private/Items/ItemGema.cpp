@@ -3,6 +3,8 @@
 
 #include "Items\ItemGema.h"
 
+#include "NecroLifePlayerState.h"
+
 
 // Sets default values
 AItemGema::AItemGema()
@@ -27,10 +29,16 @@ void AItemGema::NotifyActorBeginOverlap(AActor* OtherActor)
 	{
 		return;
 	}
-	UInventoryComponent* Inventory= OtherActor->FindComponentByClass<UInventoryComponent>();
-	
-	Inventory->AddGems(GemaData);
+	APawn* Pawn=Cast<APawn>(OtherActor);
+	APlayerState* PS = Pawn->GetPlayerState();
+if (PS)
+{
+		UInventoryComponent* Inventory= PS->FindComponentByClass<UInventoryComponent>();
+Inventory->AddGems(GemaData);
 	Destroy();
+}
+	
+	
 }
 
 // Called every frame

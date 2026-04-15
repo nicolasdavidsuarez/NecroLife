@@ -20,7 +20,7 @@ void UInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	
+	DOREPLIFETIME(UInventoryComponent, GemsInSlots);
 	DOREPLIFETIME(UInventoryComponent, GemsItems);
 }
 
@@ -57,21 +57,18 @@ void UInventoryComponent::PickUp(UItemData* Aitem)
 
 void UInventoryComponent::OnRep_GemsItems()
 {
-	if (GemsToShow.IsBound())
-	{
+	
 		GemsToShow.Broadcast(GemsItems);
 		GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Yellow,"Broadcasted");
-	}
+	
 	
 }
 
 void UInventoryComponent::OnRep_GemsInSlots()
 {
-	if (GemsToShow.IsBound())
-	{
-		GemsToShow.Broadcast(GemsItems);
-		GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Yellow,"Broadcasted");
-	}
+	GemsToShowInSlots.Broadcast(GemsInSlots);
+		GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Yellow,"Broadcasted GemsInSlots");
+	
 }
 
 // Called when the game starts
@@ -93,6 +90,23 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	// ...
 }
 
+void UInventoryComponent::RequestAddGemToSlot(FDatosGema gema)
+{
+	// Le pedimos al servidor que lo haga
+	Server_AddGemToSlot(gema);
+}
+
+// 2. Esto es lo que REALMENTE hace el trabajo (se ejecuta en el servidor)
+void UInventoryComponent::Server_AddGemToSlot_Implementation(FDatosGema gema)
+{
+	// AQUÍ va toda tu lógica original de AddGemToSlot
+	// (Borrar de la lista, agregar al slot y RecalcularEstadisticas)
+    
+	// Al ejecutarse aquí, el servidor modifica los arrays,
+	// y gracias al DOREPLIFETIME, los cambios viajarán a TODOS los clientes.
+	AddGemToSlot(gema); 
+}
+
 void UInventoryComponent::AddGems(FDatosGema gema)
 {
 	    GemsItems.Add(gema);
@@ -111,6 +125,8 @@ void UInventoryComponent::AddGemToSlot(FDatosGema gema)
 	}
 	GemsInSlots.Add(gema);
 	GemsToShow.Broadcast(GemsItems);
+	GemsToShowInSlots.Broadcast(GemsInSlots);
+	
 	if (UAttributeComponent* Atributos = GetOwner()->FindComponentByClass<UAttributeComponent>())
 	{
 		Atributos->RecalcularEstadisticas(GemsInSlots);
