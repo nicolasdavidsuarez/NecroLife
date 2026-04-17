@@ -59,7 +59,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
 	FVector PreviewScale = FVector(1.f);
 	
-	// EL CASILLERO PARA LA ANIMACIÓN DE QUATERNIUS
+	// EL NUEVO CASILLERO PARA LA ANIMACIÓN
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
 	UAnimMontage* AbilityMontage;
 	

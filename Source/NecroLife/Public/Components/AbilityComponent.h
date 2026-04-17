@@ -58,6 +58,9 @@ public:
 	UFUNCTION(BLueprintCallable, Category="Abilities")
 	TArray<UAbilityData*> getAbilitySlots();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animación")
+	UAnimMontage* AbilityMontage;
+
 protected:
 	// Mapa para almacenar en qué segundo del juego termina el cooldown de cada habilidad
 	UPROPERTY(BlueprintReadOnly, Category="Abilities")
