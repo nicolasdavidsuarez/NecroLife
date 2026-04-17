@@ -384,6 +384,8 @@ void ANecroLifeCharacter::InventoryInput()
    {
       bShowInventory=true;
       SetUIState(true);
+      // Actualizamos los stats antes de mostrar el inventario para que la UI tenga los valores correctos
+      Attribute->RecalcularEstadisticas(Inventory->GemsInSlots);
       ShowInventory.Broadcast();
    }else
    {
@@ -642,6 +644,10 @@ void ANecroLifeCharacter::BeginPlay()
    if (Attribute)
    {
       Attribute->OnAtributosActualizados.AddDynamic(this, &ANecroLifeCharacter::OnAtributosActualizados);
+
+      // Forzamos un recálculo inicial para que la UI muestre los valores base correctos
+      // desde el primer frame, sin necesidad de equipar ninguna gema
+      Attribute->RecalcularEstadisticas(Inventory->GemsInSlots);
    }
 }
 

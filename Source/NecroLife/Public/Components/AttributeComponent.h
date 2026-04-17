@@ -33,7 +33,7 @@ struct FEstadisticasPersonaje
 
 	UPROPERTY(BlueprintReadOnly, Category="Estadisticas")
 	int32 Defensa;
-	
+
 	UPROPERTY(BlueprintReadOnly, Category="Estadisticas")
 	float Velocidad;
 
@@ -66,11 +66,110 @@ class NECROLIFE_API UAttributeComponent : public UActorComponent
 public:
 	// Sets default values for this component's properties
 	UAttributeComponent();
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dash")
-	float DashStrength = 1500.f;
 
 	UPROPERTY(BlueprintAssignable, Category="Atributos|Eventos")
 	FOnAtributosActualizados OnAtributosActualizados;
+
+	//////Level
+
+	UFUNCTION(BlueprintCallable, Category="Level")
+	void TakeXP(float Amount);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Level")
+	float XP=0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Level")
+	float XPtoNextLevel=100.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Level")
+	int32 Level=0;
+
+	//////Life
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Life")
+	int32 Life=100;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Life")
+	int32 BaseLife=100;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Life")
+	int32 LifeMax=100;
+
+	//////Energy
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Energy")
+	int32 Energy=100;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Energy")
+	int32 BaseEnergy=100;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Energy")
+	int32 EnergyMax=100;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Energy")
+	int32 EnergyReg=1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Energy")
+	float velocidadEnergyReg=1;
+
+	//////Velocity
+
+	// Valor final calculado (base + gemas). Solo lectura.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Velocity")
+	float Velocity=10;
+
+	// Velocidad base sin gemas. Modificable desde el Editor.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Velocity")
+	float BaseVelocity=10;
+
+	//////Attack
+
+	// Valor final calculado (base + gemas). Solo lectura.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Attack")
+	int32 Attack=10;
+
+	// Ataque base sin gemas. Modificable desde el Editor.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
+	int32 BaseAttack=40;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Attack")
+	float VelocityAttackBase=1;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Attack")
+	float VelocityAttack=1;
+
+	//////Defense
+
+	// Defensa base sin gemas. Modificable desde el Editor.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Defense")
+	int32 DefenseBase=40;
+
+	// Valor final calculado (base + gemas). Solo lectura.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Defense")
+	int32 Defense=0;
+
+	//////Regen
+
+	// Regen de vida base sin gemas. Modificable desde el Editor (ej: 1 = 1% por segundo).
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Regen")
+	float BaseRegenVida = 0.0f;
+
+	// Valor final calculado (base + gemas). Solo lectura.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Regen")
+	float RegenVida = 0.0f;
+
+	// Regen de energía base sin gemas. Modificable desde el Editor.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Regen")
+	float BaseRegenEnergia = 0.0f;
+
+	// Valor final calculado (base + gemas). Solo lectura.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Regen")
+	float RegenEnergia = 0.0f;
+
+	//////Dash
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dash")
+	float DashStrength = 1500.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dash")
 	float DashDuration = 0.2f;
@@ -78,83 +177,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dash")
 	float DashCooldown = 1.0f;
 
-	//////Level
-
-	UFUNCTION(BlueprintCallable, Category="Level")
-	void TakeXP(float Amount);
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Level")
-	float XP=0.f;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Level")
-	float XPtoNextLevel=100.f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Level")
-	int32 Level=0;
-    
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Life")
-	int32 Life=100;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Life")
-	int32 BaseLife=100;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Life")
-	int32 LifeMax=100;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Energy")
-	int32 Energy=100;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Energy")
-	int32 BaseEnergy=100;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Energy")
-	int32 EnergyMax=100;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Energy")
-	int32 EnergyReg=1;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Energy")
-	float velocidadEnergyReg=1;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Velocity")
-	float Velocity=10;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Velocity")
-	float BaseVelocity=10;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Attack")
-	int32 Attack=10;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Attack")
-	int32 BaseAttack=10;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Attack")
-	float VelocityAttackBase=1;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Attack")
-	float VelocityAttack=1;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Defense")
-	int32 DefenseBase=0;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Defense")
-	int32 Defense=0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Regen")
-	float BaseRegenVida = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Regen")
-	float RegenVida = 0.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Regen")
-	float BaseRegenEnergia = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Regen")
-	float RegenEnergia = 0.0f;
-
 	UPROPERTY(BlueprintAssignable, Category="XP_Level")
 	FOnXPChanged OnXPChanged;
-	
+
 
 protected:
 	// Called when the game starts
@@ -167,5 +192,5 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Atributos|Calculos")
 	void RecalcularEstadisticas(const TArray<FDatosGema>& GemasEquipadas);
-	
+
 };

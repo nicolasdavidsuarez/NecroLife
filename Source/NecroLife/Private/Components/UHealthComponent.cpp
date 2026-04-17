@@ -46,12 +46,19 @@ void UUHealthComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 void UUHealthComponent::TakeDamage(float Amount)
 {
+	// Reducimos el daño según la defensa del AttributeComponent
+	// Fórmula: DañoFinal = Daño * (100 / (100 + Defensa))
+	// Con Defensa=40: 40 * (100/140) = ~28. Con Defensa=0: daño completo.
+	if (UAttributeComponent* Atributos = GetOwner()->FindComponentByClass<UAttributeComponent>())
+	{
+		Amount = Amount * (100.0f / (100.0f + Atributos->Defense));
+	}
+
 	CurrentHealth -= Amount;
 	if (CurrentHealth <= 0.f)
 	{
 		CurrentHealth = 0.f;
 		//disparar evento para cuando muere
-		
 	}
 	OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
 }
