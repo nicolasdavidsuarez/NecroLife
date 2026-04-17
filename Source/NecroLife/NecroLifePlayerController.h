@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/InventoryComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "NecroLifePlayerController.generated.h"
 
