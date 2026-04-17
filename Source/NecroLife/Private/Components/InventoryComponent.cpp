@@ -4,6 +4,7 @@
 #include "Public/Components/InventoryComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Components/AttributeComponent.h"
+#include "Public/Components/UHealthComponent.h"
 
 
 // Sets default values for this component's properties
@@ -110,6 +111,15 @@ void UInventoryComponent::AddGemToSlot(FDatosGema gema)
 	if (UAttributeComponent* Atributos = GetOwner()->FindComponentByClass<UAttributeComponent>())
 	{
 		Atributos->RecalcularEstadisticas(GemsInSlots);
+
+		// Después de recalcular, actualizamos el timer de regen de vida en el HealthComponent
+		if (UUHealthComponent* Health = GetOwner()->FindComponentByClass<UUHealthComponent>())
+		{
+			if (Atributos->RegenVida > 0.f)
+				Health->SetRegenVida(Atributos->RegenVida);
+			else
+				Health->StopRegenVida();
+		}
 	}
 }
 

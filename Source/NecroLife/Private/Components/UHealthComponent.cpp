@@ -11,7 +11,7 @@ UUHealthComponent::UUHealthComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 
 	// ...
 }
@@ -21,9 +21,17 @@ UUHealthComponent::UUHealthComponent()
 void UUHealthComponent::BeginPlay()
 {
 	Super::BeginPlay();
-CurrentHealth = MaxHealth;
-	// ...
-	
+	CurrentHealth = MaxHealth;
+
+	// Iniciamos la regen base leyendo el AttributeComponent
+	// Si BaseRegenVida = 0 no hace nada, si tiene valor arranca el timer
+	if (UAttributeComponent* Atributos = GetOwner()->FindComponentByClass<UAttributeComponent>())
+	{
+		if (Atributos->BaseRegenVida > 0.f)
+		{
+			SetRegenVida(Atributos->BaseRegenVida);
+		}
+	}
 }
 
 
@@ -33,23 +41,7 @@ void UUHealthComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// Regeneración de vida: lee RegenVida del AttributeComponent (seteado por gemas)
-	// Solo regenera si hay vida para recuperar y si la gema de regen está equipada
-	if (CurrentHealth < MaxHealth)
-	{
-		if (UAttributeComponent* Atributos = GetOwner()->FindComponentByClass<UAttributeComponent>())
-		{
-			if (Atributos->RegenVida > 0.f)
-			{
-				RegenAcumulado += DeltaTime;
-				if (RegenAcumulado >= 1.0f) // aplica una vez por segundo
-				{
-					ApplyHealing(MaxHealth * Atributos->RegenVida);
-					RegenAcumulado = 0.f;
-				}
-			}
-		}
-	}
+	// ...
 }
 
 void UUHealthComponent::TakeDamage(float Amount)
@@ -88,5 +80,31 @@ void UUHealthComponent::ApplyDamageOverTimer()
 {
 	TakeDamage(DamageOverTime);
 	OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
+}
+
+void UUHealthComponent::SetRegenVida(float PorcentajePorSegundo, float Intervalo)
+{
+	// Si ya había un timer corriendo, lo cancelamos antes de crear uno nuevo
+	StopRegenVida();
+
+	if (PorcentajePorSegundo <= 0.f) return;
+
+	RegenPorcentaje = PorcentajePorSegundo;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle_Regen, this, &UUHealthComponent::AplicarRegenVida, Intervalo, true);
+}
+
+void UUHealthComponent::StopRegenVida()
+{
+	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_Regen);
+	RegenPorcentaje = 0.f;
+}
+
+void UUHealthComponent::AplicarRegenVida()
+{
+	// Solo regenera si no está llena la vida
+	if (CurrentHealth < MaxHealth)
+	{
+		ApplyHealing(MaxHealth * RegenPorcentaje);
+	}
 }
 
