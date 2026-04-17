@@ -64,6 +64,8 @@ public:
 	FTimerHandle TimerHandle_DOT;
 	float AmountToDamage_DOT;
 	float AmountTime;
-    float DamageOverTime;	
+    float DamageOverTime;
+	// Acumula el tiempo transcurrido para aplicar la regen de vida cada segundo
+	float RegenAcumulado = 0.f;
 	void ApplyDamageOverTimer();
 };

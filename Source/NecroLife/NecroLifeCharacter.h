@@ -330,6 +330,10 @@ FRotator CurrentRotation,TargetRotation;
    UFUNCTION(BlueprintCallable)
    void SetUIState(bool bIsTalking);
 
+   // Se llama automáticamente cuando RecalcularEstadisticas termina
+   UFUNCTION()
+   void OnAtributosActualizados(const FEstadisticasPersonaje& NuevosAtributos);
+
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
    class UInputMappingContext* InputMapping;
 

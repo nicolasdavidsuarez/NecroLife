@@ -33,7 +33,7 @@ struct FEstadisticasPersonaje
 
 	UPROPERTY(BlueprintReadOnly, Category="Estadisticas")
 	int32 Defensa;
-
+	
 	UPROPERTY(BlueprintReadOnly, Category="Estadisticas")
 	float Velocidad;
 
@@ -45,6 +45,12 @@ struct FEstadisticasPersonaje
 
 	UPROPERTY(BlueprintReadOnly, Category="Estadisticas")
 	int32 Nivel;
+
+	UPROPERTY(BlueprintReadOnly, Category="Estadisticas")
+	float RegenVida;
+
+	UPROPERTY(BlueprintReadOnly, Category="Estadisticas")
+	float RegenEnergia;
 
 	// Agregá acá todos los atributos que quieras mostrar en pantalla
 };
@@ -111,10 +117,10 @@ public:
 	float velocidadEnergyReg=1;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Velocity")
-	float Velocity=1;
+	float Velocity=10;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Velocity")
-	float BaseVelocity=1;
+	float BaseVelocity=10;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Attack")
 	int32 Attack=10;
@@ -134,8 +140,18 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Defense")
 	int32 Defense=0;
 
-	
-	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Regen")
+	float BaseRegenVida = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Regen")
+	float RegenVida = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Regen")
+	float BaseRegenEnergia = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Regen")
+	float RegenEnergia = 0.0f;
+
 	UPROPERTY(BlueprintAssignable, Category="XP_Level")
 	FOnXPChanged OnXPChanged;
 	

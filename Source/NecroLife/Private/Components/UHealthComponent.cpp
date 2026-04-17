@@ -2,6 +2,7 @@
 
 
 #include "Public/Components/UHealthComponent.h"
+#include "Public/Components/AttributeComponent.h"
 
 
 
@@ -32,7 +33,23 @@ void UUHealthComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ...
+	// Regeneración de vida: lee RegenVida del AttributeComponent (seteado por gemas)
+	// Solo regenera si hay vida para recuperar y si la gema de regen está equipada
+	if (CurrentHealth < MaxHealth)
+	{
+		if (UAttributeComponent* Atributos = GetOwner()->FindComponentByClass<UAttributeComponent>())
+		{
+			if (Atributos->RegenVida > 0.f)
+			{
+				RegenAcumulado += DeltaTime;
+				if (RegenAcumulado >= 1.0f) // aplica una vez por segundo
+				{
+					ApplyHealing(MaxHealth * Atributos->RegenVida);
+					RegenAcumulado = 0.f;
+				}
+			}
+		}
+	}
 }
 
 void UUHealthComponent::TakeDamage(float Amount)

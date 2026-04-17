@@ -230,7 +230,7 @@ void ANecroLifeCharacter::AplyAction()
          {
             //UGameplayStatics::ApplyDamage(Other, 20.f, GetController(), this, UDamageType::StaticClass());
             
-            URPGHelper::ApplyDamage(Other,100);
+            URPGHelper::ApplyDamage(Other, Attribute->Attack);
             if (!EnemyBasic->IsAlive())
             {
              //  ShowMsg(FString::Printf(TEXT("Aca Sumaria experiencia")));
@@ -285,7 +285,7 @@ void ANecroLifeCharacter::AplyAction()
          {
             //UGameplayStatics::ApplyDamage(Other, 20.f, GetController(), this, UDamageType::StaticClass());
             
-            URPGHelper::ApplyDamage(Other,10);
+            URPGHelper::ApplyDamage(Other, Attribute->Attack);
             if (!EnemyBasic->IsAlive())
             {
                ShowMsg(FString::Printf(TEXT("Aca Sumaria experiencia")));
@@ -327,7 +327,8 @@ void ANecroLifeCharacter::RunActivated(const FInputActionValue& Value)
    {
       //ShowMsg(TEXT("se cambia de estado de correr a trotar"));
       bIsRunning =!bIsRunning;
-      GetCharacterMovement()->MaxWalkSpeed = bIsRunning? 2000.0f:500.0f;
+      // Velocidad es stat de juego (base 10). Se convierte a UU multiplicando x50.
+      GetCharacterMovement()->MaxWalkSpeed = bIsRunning ? Attribute->Velocity * 200.0f : Attribute->Velocity * 50.0f;
    }
    /*  if (bIsRunning)
      {
@@ -635,6 +636,13 @@ void ANecroLifeCharacter::BeginPlay()
          }
       }
    }
+
+   // Nos suscribimos al delegado para que cada vez que se equipe una gema
+   // y se recalculen los stats, el personaje actualice su velocidad de movimiento
+   if (Attribute)
+   {
+      Attribute->OnAtributosActualizados.AddDynamic(this, &ANecroLifeCharacter::OnAtributosActualizados);
+   }
 }
 
 
@@ -734,6 +742,13 @@ void ANecroLifeCharacter::StopDash()
       bCanDash = true;
    }, Attribute->DashCooldown, false);
 }
+void ANecroLifeCharacter::OnAtributosActualizados(const FEstadisticasPersonaje& NuevosAtributos)
+{
+   // Velocidad es stat de juego (base 10). Se convierte a UU multiplicando x50.
+   // 10 * 50 = 500 UU/s caminando. Correr mantiene ratio 4x (10 * 200 = 2000 UU/s).
+   GetCharacterMovement()->MaxWalkSpeed = bIsRunning ? NuevosAtributos.Velocidad * 200.0f : NuevosAtributos.Velocidad * 50.0f;
+}
+
 void ANecroLifeCharacter::SetUIState(bool bIsTalking)
 {
    APlayerController* PC = Cast<APlayerController>(GetController());
