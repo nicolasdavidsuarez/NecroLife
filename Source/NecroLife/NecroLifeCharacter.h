@@ -1,8 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-
 #pragma once
-
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
@@ -27,31 +25,19 @@ class UInventoryComponent;
 class UAbilityComponent;
 class UQuestComponent;
 class ANecroLifePlayerState;
-//class INecroLifeInterface;
 struct FInputActionValue;
 
-
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMostrarInventario);
-/**
-*  A simple player-controllable third person character
-*  Implements a controllable orbiting camera
-*/
+
 UCLASS(abstract)
 class ANecroLifeCharacter : public ACharacter, public INecroLifeInterface
 {
    GENERATED_BODY()
 
-
-
-
-
-
    /** Camera boom positioning the camera behind the character */
    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
    USpringArmComponent* CameraBoom;
-
 
    /** Follow camera */
    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
@@ -67,87 +53,51 @@ public:
   
 protected:
 
-   //habilitar correr con el bloqueo de mayusculas
+   // Inputs
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* RunAction;
-
-   /** Jump Input Action */
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* JumpAction;
-
-
-   /** Move Input Action */
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* MoveAction;
-
-
-   /** Look Input Action */
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* CameraBoomAction;
-
-
-   /** dash Input Action */
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* DashAction;
-
-   //Interactuar
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* InteractAction;
-
-
-
-   /** Mouse Look Input Action */
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* MouseLookAction;
-
-   
-
-
-   /** Ability Action */
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* AbilityAction;
-   /** Ability Action */
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* AbilityCancelAction;
-   // Action
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* Action;
-   //curar si tiene pocion de cura
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* ApplyPosion;
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* OpenInventory;
-   
-   //distancia del puntero
-   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability")
-   float AbilityPointerMaxDistance = 300.f;
-///////el puntero para usarlo en niagara
-   UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Ability")
-   FVector CachedAbilityPointer; // posición calculada cada frame
-  
-   /** Look Input Action */
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* LookAction;
-
-   //MOUSE DERECHO
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* MouseRightDown;
-   //MOuse rigth up
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* MouseRightUp;
-
-   //MOUSE medio
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* MouseMiddleDown;
-   //MOuse rigth up
    UPROPERTY(EditAnywhere, Category="Input")
    UInputAction* MouseMiddleUp;
 
-   //Valores para la camara
-   /*UPROPERTY(EditAnywhere, Category="Camera in game")
-   float MaxDistanceToCursor=1200;
-   UPROPERTY(EditAnywhere, Category="Camera in game")
-   float MinDistanceToCursor=200;*/
+   // Distancia del puntero
+   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability")
+   float AbilityPointerMaxDistance = 300.f;
+   
+   // El puntero para usarlo en niagara
+   UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Ability")
+   FVector CachedAbilityPointer; 
+  
+   // Valores para la camara
    UPROPERTY(EditAnywhere, Category="Camera in game")
    float MaxPitch=-45;
    UPROPERTY(EditAnywhere, Category="Camera in game")
@@ -157,10 +107,51 @@ protected:
    UPROPERTY(EditAnywhere, Category="Camera in game")
    float MinArmLenght=200;
 
+   // --- SISTEMA DE COMBATE Y ANIMACIONES (Tests_VFX) ---
+
+   // Referencia al arma para poder modificarla desde C++
+   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Equipment")
+   class UMeshComponent* WeaponMesh;
+
+   // Efecto visual (Niagara) que spawnea al impactar a un enemigo
+   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|VFX")
+   class UNiagaraSystem* HitVFX;
+
+   // Guarda el ID del Root Motion para el Dash
+   uint16 DashRootMotionID;
+
+   // --- MONTAGES DE ANIMACIÓN DASH ---
+   UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combate|Animaciones")
+   UAnimMontage* DashMontage;
+
+   UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combate|Animaciones")
+   UAnimMontage* DashAttackMontage;
+
+   // --- SISTEMA DE COMBOS ---
+   UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|State")
+   bool bIsAttacking;
+
+   UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|State")
+   int32 AttackCount;
+
+   // Lista ordenada de animaciones (Golpe 1, Golpe 2, Golpe 3, etc.)
+   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Animations")
+   TArray<UAnimMontage*> ComboMontages;
+
+   // Controla el tiempo que tiene el jugador antes de que el combo vuelva a cero
+   FTimerHandle ComboResetTimer;
+
+   // Reinicia todo el estado a 0
+   void ResetCombo();
+
+   // --- MATERIALES ORIGINALES PARA INVISIBILIDAD DEL DASH ---
+   UPROPERTY()
+   TArray<class UMaterialInterface*> OriginalMaterials;
+
+   UPROPERTY()
+   TArray<class UMaterialInterface*> OriginalWeaponMaterials;
 
 public:
-
-
    /** Constructor */
    ANecroLifeCharacter();
 
@@ -178,49 +169,41 @@ protected:
    void TakePosion();
    void Interact();
    void InventoryInput();
-   /** Initialize input action bindings */
    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-
-protected:
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UAttributeComponent* CachedAttributeComponent;
 
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UInventoryComponent* CachedInventoryComponent;
 
-   /** Called for movement input */
    void Move(const FInputActionValue& Value);
- 
-
-   /** Called for looking input */
    void Look(const FInputActionValue& Value);
 
+   // --- FUNCIONES DE RED PARA EL DASH (Tests_VFX) ---
+   UFUNCTION(Server, Reliable)
+   void Server_Dash(FVector DashDir);
+
+   UFUNCTION(NetMulticast, Unreliable)
+   void Multicast_DashFX();
+
+   // Lógica física central del Dash
+   void PerformDashLogic(FVector DashDir);
 
 public:
-   //componente de salud
+   // Componentes
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UUHealthComponent* HealthComponent;
-   //componente atributos
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UAttributeComponent* Attribute;
-    //componente inventario
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UInventoryComponent* Inventory;
-    //COmponente Habilidades
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UAbilityComponent* Ability;
-
-
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UQuestComponent* QuestComponent;
-
-   
-
-   
    UPROPERTY(BlueprintReadOnly, Category = "Components")
    TObjectPtr<UQuestComponent> CachedQuestComponent;
-   
    UPROPERTY(BlueprintReadOnly, Category = "Player State")
    TObjectPtr<ANecroLifePlayerState> MyPlayerState;
 
@@ -233,58 +216,67 @@ public:
    UFUNCTION(BlueprintCallable)
    FVector GetAbilityPointer() const {return CachedAbilityPointer;}
    
-   /** Handles move inputs from either controls or UI interfaces */
    UFUNCTION(BlueprintCallable, Category="Input")
    virtual void DoMove(float Right, float Forward);
-
-
-   /** Handles look inputs from either controls or UI interfaces */
    UFUNCTION(BlueprintCallable, Category="Input")
    virtual void DoLook(float Yaw, float Pitch);
-
    UFUNCTION(BlueprintCallable, Category="Input")
    virtual void LookAt(FVector TargetLocation);
-
-
-   /** Handles jump pressed inputs from either controls or UI interfaces */
    UFUNCTION(BlueprintCallable, Category="Input")
    virtual void DoJumpStart();
-
-
-   /** Handles jump pressed inputs from either controls or UI interfaces */
    UFUNCTION(BlueprintCallable, Category="Input")
    virtual void DoJumpEnd();
 
    UPROPERTY()
    AActor* CurrentInteractable; 
+
 public:
    virtual void PossessedBy (AController* NewController) override;
-   // El objeto llama a estas funciones desde su Overlap
-   UFUNCTION(BLueprintCallable, Category="Interact")
-   void SetCurrentInteractable(AActor* NewInteractable) { CurrentInteractable = NewInteractable; }
-   UFUNCTION(BLueprintCallable, Category="Interact")
-   void ClearCurrentInteractable() { CurrentInteractable = nullptr; }
-
-   UFUNCTION(BLueprintCallable, Category="Interact")
-  AActor *getCurrentInteractable() { return CurrentInteractable; }
-
-   UFUNCTION(BLueprintCallable, Category="Interact")
-   void AddCurrentQuest();
-
-   UFUNCTION(BLueprintCallable, Category="Interact")
-   void CancelCurrentQuest();
    
-   UFUNCTION(BLueprintCallable, Category="Interact")
+   UFUNCTION(BlueprintCallable, Category="Interact")
+   void SetCurrentInteractable(AActor* NewInteractable) { CurrentInteractable = NewInteractable; }
+   UFUNCTION(BlueprintCallable, Category="Interact")
+   void ClearCurrentInteractable() { CurrentInteractable = nullptr; }
+   UFUNCTION(BlueprintCallable, Category="Interact")
+   AActor *getCurrentInteractable() { return CurrentInteractable; }
+   UFUNCTION(BlueprintCallable, Category="Interact")
+   void AddCurrentQuest();
+   UFUNCTION(BlueprintCallable, Category="Interact")
+   void CancelCurrentQuest();
+   UFUNCTION(BlueprintCallable, Category="Interact")
    bool ShowDialogue(FDialogLine CurrentLine);
 
-   
-   
-FVector Direction;
-FRotator CurrentRotation,TargetRotation;
+   // --- FUNCIONES DE ATAQUE (Tests_VFX) ---
+   UFUNCTION(BlueprintCallable, Category = "Combat")
+   void ExecuteAttackHit();
 
+   UFUNCTION(BlueprintCallable, Category = "Combat")
+   void ExecuteAbilityHit();
 
-   //variables necesarias para dash
+   UFUNCTION(BlueprintCallable, Category = "Combat|State")
+   void ResetAttackState();
+
+   // Efecto visual para el Dash
+   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|VFX")
+   class UNiagaraSystem* DashVFX;
+       
+   // Sonido para el Dash
+   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Audio")
+   class USoundBase* DashSound;
+
+   // Material transparente para el efecto de invisibilidad
+   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|VFX")
+   class UMaterialInterface* TransparentMaterial;
+
+   FVector Direction;
+   FRotator CurrentRotation,TargetRotation;
+
+   // Estados
+   UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|State")
+   bool bIsInvincible;
+   UPROPERTY(BlueprintReadWrite, Category = "Combate|Estados") 
    bool bIsDashing = false;
+
    bool bShowInventory=false;
    bool bCanDash = true;
    bool bMouseRightDown = false;
@@ -292,52 +284,34 @@ FRotator CurrentRotation,TargetRotation;
    bool bIsRunning = false;
    FTimerHandle DashTimerHandle;
    FTimerHandle CooldownTimerHandle;
-   //
   
    FVector GetAbilityPointerPosition() const { return CachedAbilityPointer; }
    bool bEnabledAbility = false;
    bool bLookAt = false;
   
-   /** Returns CameraBoom subobject **/
    FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-
-
-   /** Returns FollowCamera subobject **/
    FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
-
-   /** Gameplay initialization */
    virtual void BeginPlay() override;
-
-
    virtual void Tick(float DeltaTime) override;
+   
+   // Sobreescribimos la función nativa de Unreal para la invencibilidad (Tests_VFX)
+   virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
-
-  
    void ShowMsg(FString Msg);
-   ///////////////////////
-   ///Puntero que esta frente a la direccion del character
    void UpdateAbilityPointer();
-   ////////////////////////////////////////////
-   ///Mirar al puntero cuando se castea habilidad
    void LookToCastAbility();
 
-
-   //dash
    void Dash();
    void StopDash();
 
    UFUNCTION(BlueprintCallable)
    void SetUIState(bool bIsTalking);
 
-   // Se llama automáticamente cuando RecalcularEstadisticas termina
+   // Se llama automáticamente cuando RecalcularEstadisticas termina (M1-Base)
    UFUNCTION()
    void OnAtributosActualizados(const FEstadisticasPersonaje& NuevosAtributos);
 
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
    class UInputMappingContext* InputMapping;
-
-
-   
-  
 };

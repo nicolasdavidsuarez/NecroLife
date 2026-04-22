@@ -1,16 +1,20 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-
 #include "NecroLifeCharacter.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
+#include "NiagaraComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "GameFramework/RootMotionSource.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "Kismet/GameplayStatics.h"
 #include "NecroLife.h"
 #include "Public/Components/AttributeComponent.h"
 #include "Public/Components/RPGHelper.h"
@@ -27,33 +31,23 @@
 #include "NPC/NecroLifeNpcBasic.h"
 
 
+/////////////////// CHARACTER ///////////////////
 ANecroLifeCharacter::ANecroLifeCharacter()
 {
-   // crear y atachar el UHealthComponent
    HealthComponent = CreateDefaultSubobject<UUHealthComponent>(TEXT("HealthComponent"));
-   //crear y atachar Inventario
    Inventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
-//crear el UAbilityComponent
    Ability = CreateDefaultSubobject<UAbilityComponent>(TEXT("AbilityComponent"));
-   //crear y atachar el quest component
-   QuestComponent= CreateDefaultSubobject<UQuestComponent>(TEXT("QuestComponent"));
+   QuestComponent = CreateDefaultSubobject<UQuestComponent>(TEXT("QuestComponent"));
+   Attribute = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributesComponent"));
    
-   // Set size for collision capsule
    GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
      
-   // Don't rotate when the controller rotates. Let that just affect the camera.
    bUseControllerRotationPitch = false;
    bUseControllerRotationYaw = false;
    bUseControllerRotationRoll = false;
 
-
-   // Configure character movement
    GetCharacterMovement()->bOrientRotationToMovement = true;
    GetCharacterMovement()->RotationRate = FRotator(0.0f, 400.0f, 0.0f);
-
-
-   // Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
-   // instead of recompiling to adjust them
    GetCharacterMovement()->JumpZVelocity = 500.f;
    GetCharacterMovement()->AirControl = 0.35f;
    GetCharacterMovement()->MaxWalkSpeed = 500.f;
@@ -61,697 +55,581 @@ ANecroLifeCharacter::ANecroLifeCharacter()
    GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
    GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 
-
-   // Create a camera boom (pulls in towards the player if there is a collision)
    CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
    CameraBoom->SetupAttachment(RootComponent);
-   
    CameraBoom->TargetArmLength = 800.0f;
-   CameraBoom->bDoCollisionTest=true;
-   
-   CameraBoom->CameraLagSpeed=2.0f;
+   CameraBoom->bDoCollisionTest = true;
+   CameraBoom->CameraLagSpeed = 2.0f;
    CameraBoom->bUsePawnControlRotation = true;
    CameraBoom->bInheritPitch = true;
-   CameraBoom->bInheritYaw=true;
+   CameraBoom->bInheritYaw = true;
 
-
-   // Create a follow camera
    FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
    FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
    FollowCamera->bUsePawnControlRotation = false;
 
+   BoxCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCol"));
+   BoxCollision->SetBoxExtent(FVector(100,100,100), true);
 
-   Attribute = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributesComponent"));
-
-   BoxCollision=CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCol"));
-   BoxCollision->SetBoxExtent(FVector(100,100,100),true);
-
-
-   //Network
-   bReplicates=true;
+   bReplicates = true;
    SetReplicatingMovement(true);
    GetMesh()->SetIsReplicated(true);
 }
-///////////////////////////////////////////////////////////////////////////////////////////
+
+/////////////////// CÁMARA & MOVIMIENTO ///////////////////
 void ANecroLifeCharacter::SetBoomLength(const FInputActionValue& Value)
 {
    FVector2D InputVector = Value.Get<FVector2D>();
    float armLength = CameraBoom->TargetArmLength;
   
-   if (InputVector.X>0&&armLength<MaxArmLenght)
+   if (InputVector.X > 0 && armLength < MaxArmLenght)
    {
-      armLength += CameraBoom->TargetArmLength*0.05f;
+      armLength += CameraBoom->TargetArmLength * 0.05f;
       CameraBoom->TargetArmLength = armLength;
-      //FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-45,-10),armLength)
-      //CameraBoom->add
-      //CameraBoom->SetRelativeRotation(FRotator(FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-10,-45),armLength), 0.0f, 0.0f));
    }
    else
    {     
-      armLength -= CameraBoom->TargetArmLength*0.05f;
-      if (armLength>MinArmLenght)
+      armLength -= CameraBoom->TargetArmLength * 0.05f;
+      if (armLength > MinArmLenght)
       {
          CameraBoom->TargetArmLength = armLength;
-         //  CameraBoom->SetRelativeRotation(FRotator(FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-10,-45),armLength), 0.0f, 0.0f));
       }
    }
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ANecroLifeCharacter::Move(const FInputActionValue& Value)
+{
+   if (bShowInventory) return;
+   FVector2D MovementVector = Value.Get<FVector2D>();
+   DoMove(MovementVector.X, MovementVector.Y);
+}
+
+void ANecroLifeCharacter::Look(const FInputActionValue& Value)
+{
+   FVector2D LookAxisVector = Value.Get<FVector2D>();
+   DoLook(LookAxisVector.X, LookAxisVector.Y);
+}
+
+void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
+{
+   if (GetController() != nullptr && bMouseRightDown)
+   {
+      AddControllerYawInput(Yaw);
+      if(CameraBoom->GetRelativeRotation().Pitch + Pitch >= MaxPitch && CameraBoom->GetRelativeRotation().Pitch + Pitch <= MinPitch)
+      {
+         CameraBoom->AddRelativeRotation(FRotator(Pitch, 0.0f, 0.0f));
+      }
+      else
+      {
+         if (Pitch != 0)
+         {
+            Pitch *= -1.0f;
+            CameraBoom->AddRelativeRotation(FRotator(Pitch, 0.0f, 0.0f));
+         }
+      }
+   }
+}
+
+void ANecroLifeCharacter::LookAt(FVector TargetLocation)
+{
+   FVector StartLocation = GetPawnViewLocation(); 
+   FVector LookDirection = TargetLocation - StartLocation;
+   FRotator LookAtRot = LookDirection.Rotation();
+   DoLook(LookAtRot.Yaw, LookAtRot.Pitch);
+   GetController()->SetControlRotation(LookAtRot);
+}
+
+void ANecroLifeCharacter::DoMove(float Right, float Forward)
+{
+   if (GetController() != nullptr)
+   {
+      const FRotator Rotation = GetController()->GetControlRotation();
+      const FRotator YawRotation(0, Rotation.Yaw, 0);
+      const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+      const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+      AddMovementInput(ForwardDirection, Forward);
+      AddMovementInput(RightDirection, Right);
+   }
+}
+
+void ANecroLifeCharacter::DoJumpStart() { Jump(); }
+void ANecroLifeCharacter::DoJumpEnd() { StopJumping(); }
+
+void ANecroLifeCharacter::OnRightMouseDown() { bMouseRightDown = true; }
+void ANecroLifeCharacter::OnRightMouseUp() { bMouseRightDown = false; }
+void ANecroLifeCharacter::OnMiddleMouseDown() { bMouseMiddleDown = true; }
+void ANecroLifeCharacter::OnMiddleMouseUp() { bMouseMiddleDown = false; }
+
+void ANecroLifeCharacter::RunActivated(const FInputActionValue& Value)
+{
+   if (Value.Get<bool>())
+   {
+      bIsRunning = !bIsRunning;
+      GetCharacterMovement()->MaxWalkSpeed = bIsRunning ? Attribute->Velocity * 200.0f : Attribute->Velocity * 50.0f;
+   }     
+}
+
+/////////////////// COMBATE Y HABILIDADES ///////////////////
 void ANecroLifeCharacter::AbilityEnabled(const FInputActionValue& InputActionValue)
 {
-
-   int32 pressedKeys = static_cast<int32>(InputActionValue.Get<float>())-1;
-   FString AbilityName =FString("se entra en modo combate " + FString::FromInt(pressedKeys));
-   ShowMsg(AbilityName);
+   int32 pressedKeys = static_cast<int32>(InputActionValue.Get<float>()) - 1;
    Ability->SelectAbility(pressedKeys);
-     
-   
    
    if (!Ability->isCoolDownAply(Ability->CurrentAbility))
-      {
-         GetCharacterMovement()->bOrientRotationToMovement = false;
+   {
+      GetCharacterMovement()->bOrientRotationToMovement = false;
       bUseControllerRotationYaw = true;
       FHitResult HitResult;
   
       APlayerController* PC = Cast<APlayerController>(GetController());
       if (PC && PC->GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
       {
-     
          FVector TargetLocation = HitResult.Location;
          Direction = TargetLocation - GetActorLocation();
          Direction.Z = 0;
          CurrentRotation = GetActorRotation();
          TargetRotation = Direction.Rotation();
-         //Controller->SetControlRotation(NewRotation);
-         //  DrawDebugLine(GetWorld(),GetActorLocation(),TargetLocation,FColor::Emerald,
-         //   false,3.0f,1,10);
-         //Ability->SelectAbility(pressedKeys);
          if (Ability && Ability->CurrentAbility)
          {
             Ability->UpdateIndicator(HitResult.Location);
          }
       }
-  
       bEnabledAbility = true;      
-     Ability->InitPreview();
-
-}else
-{
-   //aca iria si la habilidad esta en cool down, por ahora no hace nada. no se si hacer que se vea distinta
-   //o que reproduzca sonido de eeee!
-   
-}
-   
+      Ability->InitPreview();
+   }
 }
 
 void ANecroLifeCharacter::AbilityDisambled(const FInputActionValue& InputActionValue)
 {
    if (bEnabledAbility)
    {
-   //   ShowMsg(FString::Printf(TEXT("Se Cancela Habilidad")));
       GetCharacterMovement()->bOrientRotationToMovement = true;
       bUseControllerRotationYaw = false;
       bEnabledAbility = false;
       Ability->ClearIndicator();
    }
-  
-      bLookAt=true;
-  
+   bLookAt = true;
 }
 
-
-void ANecroLifeCharacter::AplyAction()
+void ANecroLifeCharacter::UpdateAbilityPointer()
 {
-   if (bEnabledAbility)
-   {
-       //FOverlapResult result;
-      // 🔹 Parámetros del cono
-      float AttackRadius = 300.f;        // Distancia del ataque
-      float AttackAngle = 45.f;          // Mitad del ángulo del cono (en grados)
+    APlayerController* PC = Cast<APlayerController>(GetController());
+    if (!PC) return;
+
+    FHitResult HitResult;
+    if (PC->GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
+    {
+        FVector PlayerPos = GetActorLocation();
+        FVector ToMouse = HitResult.Location - PlayerPos;
+        ToMouse.Z = 0;
+
+        if (ToMouse.Size() > AbilityPointerMaxDistance)
+        {
+            ToMouse = ToMouse.GetSafeNormal() * AbilityPointerMaxDistance;
+        }
+        CachedAbilityPointer = PlayerPos + ToMouse;
+        CachedAbilityPointer.Z = PlayerPos.Z;
+
+        if (bEnabledAbility)
+        {
+            Ability->UpdatePreview(CachedAbilityPointer);
+        }
+    }
+}
+
+void ANecroLifeCharacter::LookToCastAbility()
+{
+    if (bEnabledAbility)
+    {
+        FVector PlayerPos = GetActorLocation();
+        FVector ToMouse = CachedAbilityPointer - PlayerPos;
+        ToMouse.Z = 0;
+        SetActorRotation(ToMouse.Rotation());
+    }
+}
+
+void ANecroLifeCharacter::AplyAction()   
+{
+    if (bShowInventory || CurrentInteractable) return;
+
+    if (bEnabledAbility)
+    {
+        GetCharacterMovement()->bOrientRotationToMovement = true;
+        bUseControllerRotationYaw = false;
+        bEnabledAbility = false;
+        Ability->ClearIndicator();
+
+        if (Ability->CurrentAbility && Ability->CurrentAbility->AbilityMontage)
+        {
+            PlayAnimMontage(Ability->CurrentAbility->AbilityMontage);
+        }
+    }
+    else if (bIsDashing)
+    {
+        if (DashAttackMontage)
+        {
+            StopDash();
+            bIsAttacking = true;
+            PlayAnimMontage(DashAttackMontage);
+            AttackCount = 0;
+        }
+    }
+    else
+    {
+        if (bIsAttacking || ComboMontages.Num() == 0) return;
+
+        bIsAttacking = true;
+        UAnimMontage* MontageToPlay = ComboMontages[AttackCount];
+        if (MontageToPlay)
+        {
+            PlayAnimMontage(MontageToPlay);
+        }
+
+        AttackCount++;
+        if (AttackCount >= ComboMontages.Num())
+        {
+            AttackCount = 0;
+        }
+
+        GetWorldTimerManager().SetTimer(ComboResetTimer, this, &ANecroLifeCharacter::ResetCombo, 2.5f, false);
+    }
+}
+
+void ANecroLifeCharacter::ResetCombo()
+{
+    AttackCount = 0;
+    bIsAttacking = false;
+}
+
+void ANecroLifeCharacter::ResetAttackState()
+{
+    bIsAttacking = false;
+}
+
+void ANecroLifeCharacter::ExecuteAbilityHit()
+{
+    float AttackRadius = 300.f;
+    float AttackAngle = 45.f;
+
+    FVector Origin = GetActorLocation();
+    FVector Forward = GetActorForwardVector();
+    TArray<FOverlapResult> Overlaps;
+    FCollisionShape CollisionShape = FCollisionShape::MakeSphere(AttackRadius);
+
+    bool bHit = GetWorld()->OverlapMultiByChannel(Overlaps, Origin, FQuat::Identity, ECC_Pawn, CollisionShape);
+    Ability->AbilityAply();
+
+    if (!bHit) return;
+
+    for (auto& Result : Overlaps)
+    {
+        AActor* Other = Result.GetActor();
+        ANecroLifeEnemyBasic* EnemyBasic = Cast<ANecroLifeEnemyBasic>(Other);
+        if (!EnemyBasic || Other == this) continue;
+
+        FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
+        float Dot = FVector::DotProduct(Forward, ToTarget);
+        float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
+
+        if (AngleToTarget <= AttackAngle)
+        {
+            URPGHelper::ApplyDamage(Other, Attribute->Attack);
+            if (!EnemyBasic->IsAlive())
+            {
+                URPGHelper::TakeXP(this, 10);
+            	QuestComponent->UpdateQuestProgress(EnemyBasic->GetTag(), 1);
+            }
+        }
+    }
+}
+
+void ANecroLifeCharacter::ExecuteAttackHit()
+{
+    TArray<FOverlapResult> Overlaps;
+    FVector Origin = GetActorLocation();
+    FCollisionShape CollisionShape = FCollisionShape::MakeBox(FVector(100, 100, 100));
+
+    bool bHit = GetWorld()->OverlapMultiByChannel(Overlaps, Origin, FQuat::Identity, ECC_Pawn, CollisionShape);
+
+    if (!bHit) return;
+    FVector Forward = GetActorForwardVector();
+
+    for (auto& Result : Overlaps)
+    {
+        AActor* Other = Result.GetActor();
+        ANecroLifeEnemyBasic* EnemyBasic = Cast<ANecroLifeEnemyBasic>(Other);
+        if (!EnemyBasic || Other == this) continue;
+
+        FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
+        float Dot = FVector::DotProduct(Forward, ToTarget);
+        float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
+        float AttackAngle = 45.f;
+
+        if (AngleToTarget <= AttackAngle)
+        {
+            URPGHelper::ApplyDamage(Other, Attribute->Attack);
+            if (HitVFX)
+            {
+                UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, Other->GetActorLocation());
+            }
+
+            if (!EnemyBasic->IsAlive())
+            {
+                URPGHelper::TakeXP(this, 10);
+            	QuestComponent->UpdateQuestProgress(EnemyBasic->GetTag(), 1);
+            }
+        }
+    }
+}
+
+float ANecroLifeCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+    if (bIsInvincible)
+    {
+        return 0.0f;
+    }
+    return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+}
+
+/////////////////// DASH ///////////////////
+void ANecroLifeCharacter::Dash()
+{
+    if (!bCanDash || bIsDashing || bIsAttacking || !Attribute) return;
+
+    ResetCombo();
+    StopAnimMontage();
+
+    FVector DashDirection = GetActorForwardVector();
+    PerformDashLogic(DashDirection);
+    Multicast_DashFX_Implementation();
+
+    if (!HasAuthority())
+    {
+        Server_Dash(DashDirection);
+    }
+}
+
+void ANecroLifeCharacter::Server_Dash_Implementation(FVector DashDir)
+{
+    PerformDashLogic(DashDir);
+    Multicast_DashFX();
+}
+
+void ANecroLifeCharacter::PerformDashLogic(FVector DashDir)
+{
+    bIsDashing = true;
+    bCanDash = false;
+    bIsInvincible = true;
+
+    if (DashRootMotionID != 0)
+    {
+        GetCharacterMovement()->RemoveRootMotionSourceByID(DashRootMotionID);
+    }
+
+    TSharedPtr<FRootMotionSource_ConstantForce> DashForce = MakeShared<FRootMotionSource_ConstantForce>();
+    DashForce->InstanceName = FName("DashForce");
+    DashForce->AccumulateMode = ERootMotionAccumulateMode::Override;
+    DashForce->Priority = 5;
+    DashForce->Force = DashDir * Attribute->DashStrength;
+    DashForce->Duration = Attribute->DashDuration;
+    DashForce->FinishVelocityParams.Mode = ERootMotionFinishVelocityMode::SetVelocity;
+    DashForce->FinishVelocityParams.SetVelocity = FVector::ZeroVector;
+
+    DashRootMotionID = GetCharacterMovement()->ApplyRootMotionSource(DashForce);
+
+    GetWorldTimerManager().SetTimer(DashTimerHandle, this, &ANecroLifeCharacter::StopDash, Attribute->DashDuration, false);
+}
+
+void ANecroLifeCharacter::Multicast_DashFX_Implementation()
+{
+    if (DashMontage)
+    {
+        PlayAnimMontage(DashMontage);
+    }
     
-      FVector Origin = GetActorLocation();
-      FVector Forward = GetActorForwardVector();
+    if (DashVFX)
+    {
+        UNiagaraComponent* NiagaraComp = UNiagaraFunctionLibrary::SpawnSystemAttached(
+            DashVFX, GetMesh(), NAME_None, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, true);
 
-      // 🔹 Buscamos actores cercanos con una esfera
-      TArray<FOverlapResult> Overlaps;
-      FCollisionShape CollisionShape = FCollisionShape::MakeSphere(AttackRadius);
+        if (NiagaraComp) NiagaraComp->SetVariableObject(FName("User.SourceMesh"), GetMesh());
+    }
 
-      bool bHit = GetWorld()->OverlapMultiByChannel(
-             Overlaps,
-             Origin,
-             FQuat::Identity,
-             ECC_Pawn,          // Canal de colisión 
-             CollisionShape
-         );
+    OriginalMaterials.Empty();
+    if (TransparentMaterial)
+    {
+        for (int32 i = 0; i < GetMesh()->GetNumMaterials(); ++i)
+        {
+            OriginalMaterials.Add(GetMesh()->GetMaterial(i));
+            GetMesh()->SetMaterial(i, TransparentMaterial);
+        }
+    }
 
-      GetCharacterMovement()->bOrientRotationToMovement = true;
-      bUseControllerRotationYaw = false;
-      bEnabledAbility = false;
-      Ability->AbilityAply();
-      Ability->ClearIndicator();
+    if (DashSound) UGameplayStatics::PlaySoundAtLocation(this, DashSound, GetActorLocation());
 
-      if (!bHit) return;
+    OriginalWeaponMaterials.Empty();
+    if (TransparentMaterial && WeaponMesh)
+    {
+        for (int32 i = 0; i < WeaponMesh->GetNumMaterials(); ++i)
+        {
+            OriginalWeaponMaterials.Add(WeaponMesh->GetMaterial(i));
+            WeaponMesh->SetMaterial(i, TransparentMaterial);
+        }
+    }
+}
 
-      for (auto& Result : Overlaps)
-      {
-         AActor* Other = Result.GetActor();
-         ANecroLifeEnemyBasic* EnemyBasic=Cast<ANecroLifeEnemyBasic>(Other);
-         if (!EnemyBasic || Other == this) continue;
+void ANecroLifeCharacter::StopDash()
+{
+    bIsDashing = false;
+    bIsInvincible = false;
 
-         // 🔹 Vector hacia el otro actor
-         FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
+    if (DashRootMotionID != 0)
+    {
+        GetCharacterMovement()->RemoveRootMotionSourceByID(DashRootMotionID);
+        DashRootMotionID = 0;
+    }
 
-         // 🔹 Calculamos el ángulo con el forward vector
-         float Dot = FVector::DotProduct(Forward, ToTarget);
-         float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
+    for (int32 i = 0; i < OriginalMaterials.Num(); ++i)
+    {
+        if (OriginalMaterials[i]) GetMesh()->SetMaterial(i, OriginalMaterials[i]);
+    }
 
-         // 🔹 Si está dentro del cono, aplicamos daño
-         if (AngleToTarget <= AttackAngle)
-         {
-            //UGameplayStatics::ApplyDamage(Other, 20.f, GetController(), this, UDamageType::StaticClass());
-            
-            URPGHelper::ApplyDamage(Other, Attribute->Attack);
-            if (!EnemyBasic->IsAlive())
-            {
-             //  ShowMsg(FString::Printf(TEXT("Aca Sumaria experiencia")));
-               URPGHelper::TakeXP(this,10);
-               QuestComponent->UpdateQuestProgress(EnemyBasic->GetTag(),1);
-            }
-            // 🔹 (Opcional) debug line
-            DrawDebugLine(GetWorld(), Origin, Other->GetActorLocation(), FColor::Red, false, 1.f, 0, 1.f);
-            
-         }
-      }
+    GetWorldTimerManager().SetTimer(CooldownTimerHandle, [this]()
+        {
+            bCanDash = true;
+        }, Attribute->DashCooldown, false);
 
-      // 🔹 Debug del área del ataque
-      
-      //ShowMsg(FString::Printf(TEXT("Ability Ejecuted")));
-      
-     
-   }else
+    if (WeaponMesh)
+    {
+        for (int32 i = 0; i < OriginalWeaponMaterials.Num(); ++i)
+        {
+            if (OriginalWeaponMaterials[i]) WeaponMesh->SetMaterial(i, OriginalWeaponMaterials[i]);
+        }
+    }
+}
+
+/////////////////// INTERACCIÓN E INVENTARIO ///////////////////
+void ANecroLifeCharacter::Interact()
+{
+   if (CurrentInteractable && CurrentInteractable->Implements<UNecroLifeInterface>())
    {
-      TArray<FOverlapResult> Overlaps;
-      FVector Origin = GetActorLocation();
-      FCollisionShape CollisionShape = FCollisionShape::MakeBox(FVector(100,100,100));
-
-      bool bHit = GetWorld()->OverlapMultiByChannel(
-                   Overlaps,
-                   Origin,
-                   FQuat::Identity,
-                   ECC_Pawn,          // Canal de colisión 
-                   CollisionShape
-               );
-      if (!bHit) return;
-      FVector Forward = GetActorForwardVector();
-      DrawDebugCone(GetWorld(),GetActorLocation(),Forward,100.0f,0.5,0.5,12,FColor::Red,false,0.5f);
-
-      
-      for (auto& Result : Overlaps)
-      {
-         AActor* Other = Result.GetActor();
-         ANecroLifeEnemyBasic* EnemyBasic=Cast<ANecroLifeEnemyBasic>(Other);
-         if (!EnemyBasic || Other == this) continue;
-
-         // 🔹 Vector hacia el otro actor
-         FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
-
-         // 🔹 Calculamos el ángulo con el forward vector
-         float Dot = FVector::DotProduct(Forward, ToTarget);
-         float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
-         float AttackAngle = 45.f;  
-
-         // 🔹 Si está dentro del cono, aplicamos daño
-         if (AngleToTarget <= AttackAngle)
-         {
-            //UGameplayStatics::ApplyDamage(Other, 20.f, GetController(), this, UDamageType::StaticClass());
-            
-            URPGHelper::ApplyDamage(Other, Attribute->Attack);
-            if (!EnemyBasic->IsAlive())
-            {
-               ShowMsg(FString::Printf(TEXT("Aca Sumaria experiencia")));
-               URPGHelper::TakeXP(this,10);
-            }
-            // 🔹 (Opcional) debug line
-            DrawDebugLine(GetWorld(), Origin, Other->GetActorLocation(), FColor::Red, false, 1.f, 0, 1.f);
-            //Ability->AbilityAply();
-         }
-      }
-      //ShowMsg(FString::Printf(TEXT("Se ejecuta Ataque Melee")));
+      INecroLifeInterface::Execute_OnInteract(CurrentInteractable, this);
    }
-     
 }
 
-void ANecroLifeCharacter::OnRightMouseDown()
+void ANecroLifeCharacter::InventoryInput()
 {
-   bMouseRightDown = true;
-}
+   if (!IsLocallyControlled()) return;
 
-void ANecroLifeCharacter::OnRightMouseUp()
-{
-   bMouseRightDown = false;
-}
-
-void ANecroLifeCharacter::OnMiddleMouseUp()
-{
-   bMouseMiddleDown = false;
-}
-
-void ANecroLifeCharacter::OnMiddleMouseDown()
-{
-   bMouseMiddleDown = true;
-}
-
-void ANecroLifeCharacter::RunActivated(const FInputActionValue& Value)
-{
-   if (Value.Get<bool>())
+   if (!bShowInventory)
    {
-      //ShowMsg(TEXT("se cambia de estado de correr a trotar"));
-      bIsRunning =!bIsRunning;
-      // Velocidad es stat de juego (base 10). Se convierte a UU multiplicando x50.
-      GetCharacterMovement()->MaxWalkSpeed = bIsRunning ? Attribute->Velocity * 200.0f : Attribute->Velocity * 50.0f;
+      bShowInventory = true;
+      SetUIState(true);
+      Attribute->RecalcularEstadisticas(Inventory->GemsInSlots);
+      ShowInventory.Broadcast();
    }
-   /*  if (bIsRunning)
-     {
-        GetCharacterMovement()->MaxWalkSpeed = 500.f;
-        bIsRunning = false;
-     }else{
-        GetCharacterMovement()->MaxWalkSpeed = 1500.f;
-        bIsRunning = true;
-     }*/      
+   else
+   {
+      SetUIState(false);
+      bShowInventory = false;
+      ShowInventory.Broadcast();
+   }
 }
 
 void ANecroLifeCharacter::TakePosion()
 {
    if (MyPlayerState)
    {
-   if (CachedInventoryComponent->UseHealtPosion())
-   {
-      HealthComponent->ApplyHealing(30.0f);
-   }else
-   {
-         ShowMsg(FString::Printf(TEXT("don´t have poison")));
-   }
-}
-}
-///////////Para cuando apreta boton de interactuar, "t" de talk
-void ANecroLifeCharacter::Interact()
-{
-   // Si tenemos un objeto guardado y ese objeto usa nuestra interfaz
-   if (CurrentInteractable&&CurrentInteractable->Implements<UNecroLifeInterface>())
-   {
-      // Ejecutamos la función (esto hará que el objeto lance su lógica y el PJ lo mire)
-      UE_LOG(LogTemp, Warning, TEXT("implementa on interact"));
-   INecroLifeInterface::Execute_OnInteract(CurrentInteractable,this);
-      
-
-   }else
-   {
-      UE_LOG(LogTemp, Warning, TEXT("no hay nadie con quien interactuar, y se presiono la t "));
-   }
-    
-}
-
-
-
-void ANecroLifeCharacter::InventoryInput()
-{
-
-   if (!IsLocallyControlled())
-   {
-      return;
-   }
-   if (!bShowInventory)
-   {
-      bShowInventory=true;
-      SetUIState(true);
-      // Actualizamos los stats antes de mostrar el inventario para que la UI tenga los valores correctos
-      Attribute->RecalcularEstadisticas(Inventory->GemsInSlots);
-      ShowInventory.Broadcast();
-   }else
-   {
-      SetUIState(false);
-      bShowInventory=false;
-      ShowInventory.Broadcast();
+      if (CachedInventoryComponent->UseHealtPosion())
+      {
+         HealthComponent->ApplyHealing(30.0f);
+      }
    }
 }
 
 void ANecroLifeCharacter::AddCurrentQuest()
 {
-   ANecroLifeNpcBasic* NpcBasic=Cast<ANecroLifeNpcBasic>(CurrentInteractable);
-   QuestComponent->AddQuest(NpcBasic->QuestActual);
-   NpcBasic->NextAddQuest();
+	if (ANecroLifeNpcBasic* NpcBasic = Cast<ANecroLifeNpcBasic>(CurrentInteractable))
+	{
+		QuestComponent->AddQuest(NpcBasic->QuestActual);
+		NpcBasic->NextAddQuest();
+	}
 }
 
 void ANecroLifeCharacter::CancelCurrentQuest()
 {
-   ANecroLifeNpcBasic* NpcBasic=Cast<ANecroLifeNpcBasic>(CurrentInteractable);
-   NpcBasic->CancelAddQuest();
+   if (ANecroLifeNpcBasic* NpcBasic = Cast<ANecroLifeNpcBasic>(CurrentInteractable))
+   {
+      NpcBasic->CancelAddQuest();
+   }
 }
 
 bool ANecroLifeCharacter::ShowDialogue(FDialogLine CurrentLine)
 {
-   
    if (HubWidget)
    {
       UFunction* Func = HubWidget->FindFunction(FName("ShowDialogueLine"));
       if (Func)
       {
          HubWidget->ProcessEvent(Func, &CurrentLine);
-         // Esto te dirá en el log si el nombre está mal escrito o no se encuentra
-         UE_LOG(LogTemp, Warning, TEXT("se encontró la función ShowDialogueLine en el Hub"));
          return CurrentLine.bIsMissionChoice;
       }
-      else 
-      {
-         // Esto te dirá en el log si el nombre está mal escrito o no se encuentra
-         UE_LOG(LogTemp, Warning, TEXT("No se encontró la función ShowDialogueLine en el Hub"));
-      }
    }
-   else 
-   {
-      UE_LOG(LogTemp, Error, TEXT("HubWidget es NULO en el Character"));
-   }
-   
    return false;
 }
 
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-void ANecroLifeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-   // Set up action bindings
-   if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
-     
-      // Jumping
-      EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-      EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
-      // Moving
-      EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Move);
-      EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Look);
-      // Looking
-      // EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Look);
-
-      EnhancedInputComponent->BindAction(MouseRightDown,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnRightMouseDown);
-      EnhancedInputComponent->BindAction(MouseRightUp,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnRightMouseUp);
-
-      EnhancedInputComponent->BindAction(MouseMiddleDown,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnMiddleMouseDown);
-      EnhancedInputComponent->BindAction(MouseMiddleUp,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnMiddleMouseUp);
-
-      EnhancedInputComponent->BindAction(CameraBoomAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::SetBoomLength);
-      EnhancedInputComponent->BindAction(AbilityAction, ETriggerEvent::Started, this, &ANecroLifeCharacter::AbilityEnabled);
-      EnhancedInputComponent->BindAction(AbilityCancelAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::AbilityDisambled);
-      EnhancedInputComponent->BindAction(OpenInventory, ETriggerEvent::Started, this, &ANecroLifeCharacter::InventoryInput);
-      ///Dash//////////////////
-      EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Dash);
-//interactuar
-      EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Interact);
-      //correr////////////
-      EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::RunActivated);
-      ///CUrar si tiene pociones//////////////////
-      EnhancedInputComponent->BindAction(ApplyPosion, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::TakePosion);
-      //ACTION!!!
-      EnhancedInputComponent->BindAction(Action, ETriggerEvent::Started, this, &ANecroLifeCharacter::AplyAction);
-   }
-   else
-   {
-      UE_LOG(LogNecroLife, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
-   }
-}
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void ANecroLifeCharacter::Move(const FInputActionValue& Value)
-{
-   if (bShowInventory)
-   {
-      return;  //esto es porque se movia el player 1 cuando habria el inventario
-   }
-   // input is a Vector2D
-   FVector2D MovementVector = Value.Get<FVector2D>();
-   // route the input
-   DoMove(MovementVector.X, MovementVector.Y);
-}
-
-
-void ANecroLifeCharacter::Look(const FInputActionValue& Value)
-{
-   // input is a Vector2D
-   FVector2D LookAxisVector = Value.Get<FVector2D>();
-   // route the input
-   DoLook(LookAxisVector.X, LookAxisVector.Y);
-}
-
-
-void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
-{
-   if (GetController() != nullptr&&bMouseRightDown)
-   {
-      // add yaw and pitch input to controller
-      AddControllerYawInput(Yaw);
-     //AddControllerPitchInput(Pitch);
-      //bLookAt=false;
-   
- //  if (GetController() != nullptr&&bMouseMiddleDown)
-   //{
-      //ShowMsg(FString::Printf(TEXT("middle button activa el pitch")));
-      // AddControllerPitchInput(Pitch);
-      //CameraBoom->SetRelativeRotation(FRotator(FMath::GetMappedRangeValueClamped(FVector2D(100,1200),FVector2D(-10,-45),armLength), 0.0f, 0.0f));
-      //  CameraBoom->GetRelativeRotation().Pitch;
-      
-      if(CameraBoom->GetRelativeRotation().Pitch+Pitch>=MaxPitch&&CameraBoom->GetRelativeRotation().Pitch+Pitch<=MinPitch)
-      {
-         CameraBoom->AddRelativeRotation(FRotator(Pitch,0.0f,0.0f));
-         //ShowMsg(FString::Printf(TEXT("Pitch: %f"),CameraBoom->GetRelativeRotation().Pitch));
-      
-      }else
-         {
-         if (Pitch!=0)
-         {
-            Pitch*=-1.0f;
-            CameraBoom->AddRelativeRotation(FRotator(Pitch,0.0f,0.0f));
-         }
-         //ShowMsg(FString::Printf(TEXT("Pitch: %f"),Pitch));
-      }
-   }
-  // AddControllerPitchInput(Pitch);
-}
-
-void ANecroLifeCharacter::LookAt(FVector TargetLocation)
-{
-   // 1. Obtenemos el punto de origen (generalmente los ojos o la cámara)
-   FVector StartLocation = GetPawnViewLocation(); 
-
-   // 2. Calculamos el vector dirección y lo convertimos en rotación
-   FVector LookDirection = TargetLocation - StartLocation;
-   FRotator LookAtRot = LookDirection.Rotation();
-
-   // 3. Pasamos los valores resultantes a tu función original DoLook
-   // Nota: Dependiendo de tu eje, podrías necesitar ajustar estos valores
-   DoLook(LookAtRot.Yaw, LookAtRot.Pitch);
-   GetController()->SetControlRotation(LookAtRot);
-}
-
-
-void ANecroLifeCharacter::DoMove(float Right, float Forward)
-{
-   if (GetController() != nullptr)
-   {
-      // find out which way is forward
-      const FRotator Rotation = GetController()->GetControlRotation();
-      const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-
-      // get forward vector
-      const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-
-
-      // get right vector
-      const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-
-      // add movement
-      AddMovementInput(ForwardDirection, Forward);
-      AddMovementInput(RightDirection, Right);
-     
-   // AddMovementInput(GetActorForwardVector(), Forward);
-   // AddMovementInput(GetActorForwardVector(), Right);
-   }
-}
-
-
-
-
-void ANecroLifeCharacter::DoJumpStart()
-{
-   // signal the character to jump
-   Jump();
-}
-
-
-void ANecroLifeCharacter::DoJumpEnd()
-{
-   // signal the character to stop jumping
-   StopJumping();
-}
-
+/////////////////// GENERAL ///////////////////
 void ANecroLifeCharacter::PossessedBy(AController* NewController)
 {
    Super::PossessedBy(NewController);
-   // 1. Cacheamos el PlayerState como antes
    MyPlayerState = GetPlayerState<ANecroLifePlayerState>();
    if (MyPlayerState)
    {
-      // 2. AHORA, usamos MyPlayerState para cachear sus componentes
       CachedAttributeComponent = MyPlayerState->GetAttributeComponent();
       CachedInventoryComponent = MyPlayerState->GetInventoryComponent();
       CachedQuestComponent = MyPlayerState->GetQuestComponent();
-
-      // (Opcional pero recomendado) Comprobar que todos los componentes se encontraron
-      if (!CachedAttributeComponent || !CachedInventoryComponent || !CachedQuestComponent)
-      {
-         UE_LOG(LogTemp, Error, TEXT("Character %s failed to cache all components from PlayerState."), *GetName());
-      }
-   }
-   else
-   {
-      UE_LOG(LogTemp, Error, TEXT("Character %s possessed but failed to get PlayerState."), *GetName());
    }
 }
-
 
 void ANecroLifeCharacter::BeginPlay()
 {
    Super::BeginPlay();
-
 
    APlayerController* PC = Cast<APlayerController>(GetController());
    if (PC)
    {
       if (ULocalPlayer* LocalPlayer = PC->GetLocalPlayer())
       {
-         if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
-            ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(LocalPlayer))
+	      if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+	      	ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(LocalPlayer))
          {
-            if (InputMapping) // asegurate de asignarlo en el editor
-            {
-               Subsystem->AddMappingContext(InputMapping, 0);
-            }
+            if (InputMapping) Subsystem->AddMappingContext(InputMapping, 0);
          }
       }
    }
 
-   // Nos suscribimos al delegado para que cada vez que se equipe una gema
-   // y se recalculen los stats, el personaje actualice su velocidad de movimiento
    if (Attribute)
    {
       Attribute->OnAtributosActualizados.AddDynamic(this, &ANecroLifeCharacter::OnAtributosActualizados);
-
-      // Forzamos un recálculo inicial para que la UI muestre los valores base correctos
-      // desde el primer frame, sin necesidad de equipar ninguna gema
       Attribute->RecalcularEstadisticas(Inventory->GemsInSlots);
    }
 }
 
-
 void ANecroLifeCharacter::Tick(float DeltaTime)
 {
    Super::Tick(DeltaTime);
-  
    UpdateAbilityPointer();
    LookToCastAbility();
-  
 }
-
 
 void ANecroLifeCharacter::ShowMsg(FString Msg)
 {
-   if (GEngine)
-   {
-      GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green,
-            Msg);
-   }
+   if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, Msg);
 }
 
-
-void ANecroLifeCharacter::UpdateAbilityPointer()
-{
-   APlayerController* PC = Cast<APlayerController>(GetController());
-   if (!PC) return;
-
-
-   FHitResult HitResult;
-   if (PC->GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
-   {
-      FVector PlayerPos = GetActorLocation();
-      FVector ToMouse = HitResult.Location - PlayerPos;
-      ToMouse.Z = 0;
-
-
-      if (ToMouse.Size() > AbilityPointerMaxDistance)
-      {
-         ToMouse = ToMouse.GetSafeNormal() * AbilityPointerMaxDistance;
-      }
-
-
-      CachedAbilityPointer = PlayerPos + ToMouse;
-
-
-      // Debug para verlo
-      // Aca habria que dibujar lo que quede en el juego mas adelante
-      //DrawDebugLine(GetWorld(), PlayerPos, CachedAbilityPointer, FColor::Green, false, -1.f, 0, 2.f);
-      DrawDebugSphere(GetWorld(), CachedAbilityPointer, 20.f, 12, FColor::Red, false, -1.f);
-      CachedAbilityPointer.Z = PlayerPos.Z;
-      if (bEnabledAbility)
-       {
-          Ability->UpdatePreview(CachedAbilityPointer);
-       }
-   }
-}
-
-
-void ANecroLifeCharacter::LookToCastAbility()
-{
-   // Interpola suavemente hacia la rotación deseada
-   if (bEnabledAbility)
-   {
-      //FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, 100.0f);
-      // el último número es la velocidad de rotación (5.0f es moderado)
-     
-      //SetActorRotation(NewRotation);
-      FVector PlayerPos = GetActorLocation();
-      FVector ToMouse = CachedAbilityPointer - PlayerPos;
-      ToMouse.Z = 0;
-      SetActorRotation(ToMouse.Rotation());
-      //DrawDebugCone(GetWorld(),PlayerPos,ToMouse,450.0f,0.5,0.5,12,FColor::Blue,false,0.1f);
-    
-   }
-}
-
-
-void ANecroLifeCharacter::Dash()
-{
-   if (!bCanDash || bIsDashing || !Attribute) return;
-   bIsDashing = true;
-   bCanDash = false;
-   FVector DashDirection = GetActorForwardVector();
-   LaunchCharacter(DashDirection * Attribute->DashStrength, true, true);
-
-
-   GetWorldTimerManager().SetTimer(DashTimerHandle, this, &ANecroLifeCharacter::StopDash, Attribute->DashDuration, false,0.5f);
-}
-
-
-void ANecroLifeCharacter::StopDash()
-{
-   bIsDashing = false;
-   GetWorldTimerManager().SetTimer(CooldownTimerHandle, [this]()
-   {
-      bCanDash = true;
-   }, Attribute->DashCooldown, false);
-}
 void ANecroLifeCharacter::OnAtributosActualizados(const FEstadisticasPersonaje& NuevosAtributos)
 {
-   // Velocidad es stat de juego (base 10). Se convierte a UU multiplicando x50.
-   // 10 * 50 = 500 UU/s caminando. Correr mantiene ratio 4x (10 * 200 = 2000 UU/s).
    GetCharacterMovement()->MaxWalkSpeed = bIsRunning ? NuevosAtributos.Velocidad * 200.0f : NuevosAtributos.Velocidad * 50.0f;
 }
 
@@ -762,18 +640,39 @@ void ANecroLifeCharacter::SetUIState(bool bIsTalking)
    {
       if (bIsTalking)
       {
-         // Bloqueamos el input de movimiento
          PC->SetInputMode(FInputModeGameAndUI());
          PC->bShowMouseCursor = true;
-        // GetCharacterMovement()->DisableMovement();  desde el bIsTalking desabilitamos el moviemiento
-        // en la funcion move(). cuando es true sale antes de mover. dejo la camara(el look()) prendida por que me parece bien
       }
       else
       {
-         // Devolvemos el control al juego
          PC->SetInputMode(FInputModeGameOnly());
          PC->bShowMouseCursor = false;
-        // GetCharacterMovement()->SetMovementMode(MOVE_Walking);
       }
+   }
+}
+
+void ANecroLifeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+   if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
+     
+      EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
+      EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+      EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Move);
+      EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Look);
+
+      EnhancedInputComponent->BindAction(MouseRightDown,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnRightMouseDown);
+      EnhancedInputComponent->BindAction(MouseRightUp,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnRightMouseUp);
+      EnhancedInputComponent->BindAction(MouseMiddleDown,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnMiddleMouseDown);
+      EnhancedInputComponent->BindAction(MouseMiddleUp,ETriggerEvent::Triggered,this,&ANecroLifeCharacter::OnMiddleMouseUp);
+
+      EnhancedInputComponent->BindAction(CameraBoomAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::SetBoomLength);
+      EnhancedInputComponent->BindAction(AbilityAction, ETriggerEvent::Started, this, &ANecroLifeCharacter::AbilityEnabled);
+      EnhancedInputComponent->BindAction(AbilityCancelAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::AbilityDisambled);
+      EnhancedInputComponent->BindAction(OpenInventory, ETriggerEvent::Started, this, &ANecroLifeCharacter::InventoryInput);
+      EnhancedInputComponent->BindAction(DashAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Dash);
+      EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Interact);
+      EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::RunActivated);
+      EnhancedInputComponent->BindAction(ApplyPosion, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::TakePosion);
+      EnhancedInputComponent->BindAction(Action, ETriggerEvent::Started, this, &ANecroLifeCharacter::AplyAction);
    }
 }
