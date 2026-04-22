@@ -19,8 +19,6 @@ public class NecroLife : ModuleRules
 			"GameplayStateTreeModule",
 			"UMG",
 			"Slate", "Niagara",
-			"FMODStudio",
-			"FMODStudioNiagara",
 			"GameplayTags",
 			"GameplayTasks"
 		});
