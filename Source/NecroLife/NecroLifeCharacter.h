@@ -180,15 +180,28 @@ protected:
    void Move(const FInputActionValue& Value);
    void Look(const FInputActionValue& Value);
 
-   // --- FUNCIONES DE RED PARA EL DASH (Tests_VFX) ---
+   // --- RED DASH: Funciones de red para el dash ---
    UFUNCTION(Server, Reliable)
    void Server_Dash(FVector DashDir);
+
+   // --- Red dash - animaciones de comabte ---
+   UFUNCTION(Server, Reliable)
+   void Server_PlayCombatMontage(UAnimMontage* MontageToPlay);
+
+   UFUNCTION(NetMulticast, Unreliable)
+   void Multicast_PlayCombatMontage(UAnimMontage* MontageToPlay);
 
    UFUNCTION(NetMulticast, Unreliable)
    void Multicast_DashFX();
 
+   UFUNCTION(NetMulticast, Reliable)
+   void Multicast_StopDashFX();
+
    // Lógica física central del Dash
    void PerformDashLogic(FVector DashDir);
+   
+   // Lógica puramente visual
+   void Local_DashFX();
 
 public:
    // Componentes

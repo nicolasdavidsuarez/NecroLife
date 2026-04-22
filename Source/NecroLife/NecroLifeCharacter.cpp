@@ -263,6 +263,7 @@ void ANecroLifeCharacter::AplyAction()
         if (Ability->CurrentAbility && Ability->CurrentAbility->AbilityMontage)
         {
             PlayAnimMontage(Ability->CurrentAbility->AbilityMontage);
+        	Server_PlayCombatMontage(Ability->CurrentAbility->AbilityMontage);
         }
     }
     else if (bIsDashing)
@@ -272,6 +273,7 @@ void ANecroLifeCharacter::AplyAction()
             StopDash();
             bIsAttacking = true;
             PlayAnimMontage(DashAttackMontage);
+        	Server_PlayCombatMontage(DashAttackMontage);
             AttackCount = 0;
         }
     }
@@ -284,6 +286,7 @@ void ANecroLifeCharacter::AplyAction()
         if (MontageToPlay)
         {
             PlayAnimMontage(MontageToPlay);
+        	Server_PlayCombatMontage(MontageToPlay); // Le aviso a los demás
         }
 
         AttackCount++;
@@ -395,19 +398,30 @@ float ANecroLifeCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Da
 /////////////////// DASH ///////////////////
 void ANecroLifeCharacter::Dash()
 {
-    if (!bCanDash || bIsDashing || bIsAttacking || !Attribute) return;
+	if (!bCanDash || bIsDashing || bIsAttacking || !Attribute) return;
 
-    ResetCombo();
-    StopAnimMontage();
+	ResetCombo();
+	StopAnimMontage();
 
-    FVector DashDirection = GetActorForwardVector();
-    PerformDashLogic(DashDirection);
-    Multicast_DashFX_Implementation();
+	FVector DashDirection = GetActorForwardVector();
 
-    if (!HasAuthority())
-    {
-        Server_Dash(DashDirection);
-    }
+	// 1. FÍSICA: La aplicamos localmente al instante
+	PerformDashLogic(DashDirection);
+
+	// 2. VISUAL: Lo aplicamos localmente al instante (Predicción del Cliente)
+	Local_DashFX(); 
+
+	// 3. RED: Le avisamos al resto del mundo
+	if (HasAuthority())
+	{
+		// Si soy el Host, yo mismo le aviso a todos los clientes
+		Multicast_DashFX();
+	}
+	else
+	{
+		// Si soy un Cliente, le pido al Host que le avise a todos
+		Server_Dash(DashDirection);
+	}
 }
 
 void ANecroLifeCharacter::Server_Dash_Implementation(FVector DashDir)
@@ -441,7 +455,7 @@ void ANecroLifeCharacter::PerformDashLogic(FVector DashDir)
     GetWorldTimerManager().SetTimer(DashTimerHandle, this, &ANecroLifeCharacter::StopDash, Attribute->DashDuration, false);
 }
 
-void ANecroLifeCharacter::Multicast_DashFX_Implementation()
+void ANecroLifeCharacter::Local_DashFX()
 {
     if (DashMontage)
     {
@@ -479,6 +493,15 @@ void ANecroLifeCharacter::Multicast_DashFX_Implementation()
     }
 }
 
+void ANecroLifeCharacter::Multicast_DashFX_Implementation() 
+{
+	// Si NO soy el dueño de este personaje (soy un espectador en otra PC)
+	if (!IsLocallyControlled())
+	{
+		Local_DashFX();
+	}
+}
+
 void ANecroLifeCharacter::StopDash()
 {
     bIsDashing = false;
@@ -507,6 +530,12 @@ void ANecroLifeCharacter::StopDash()
             if (OriginalWeaponMaterials[i]) WeaponMesh->SetMaterial(i, OriginalWeaponMaterials[i]);
         }
     }
+	
+	// Si somos el servidor, obligamos a los espectadores a devolver los materiales
+	if (HasAuthority())
+	{
+		Multicast_StopDashFX();
+	}
 }
 
 /////////////////// INTERACCIÓN E INVENTARIO ///////////////////
@@ -675,4 +704,40 @@ void ANecroLifeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
       EnhancedInputComponent->BindAction(ApplyPosion, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::TakePosion);
       EnhancedInputComponent->BindAction(Action, ETriggerEvent::Started, this, &ANecroLifeCharacter::AplyAction);
    }
+}
+
+void ANecroLifeCharacter::Server_PlayCombatMontage_Implementation(UAnimMontage* MontageToPlay)
+{
+	// El servidor recibe el aviso y lo retransmite a todos
+	Multicast_PlayCombatMontage(MontageToPlay);
+}
+
+void ANecroLifeCharacter::Multicast_PlayCombatMontage_Implementation(UAnimMontage* MontageToPlay)
+{
+	// Solo reproducimos en las pantallas de los ESPECTADORES.
+	// El dueño original ya lo reprodujo al hacer clic, si no lo filtramos, lo vería doble.
+	if (!IsLocallyControlled() && MontageToPlay)
+	{
+		PlayAnimMontage(MontageToPlay);
+	}
+}
+
+void ANecroLifeCharacter::Multicast_StopDashFX_Implementation()
+{
+	// Los espectadores (Simulated Proxies) reciben el aviso de que el Dash terminó
+	// y te devuelven los materiales originales.
+	if (!IsLocallyControlled() && !HasAuthority())
+	{
+		for (int32 i = 0; i < OriginalMaterials.Num(); ++i)
+		{
+			if (OriginalMaterials[i]) GetMesh()->SetMaterial(i, OriginalMaterials[i]);
+		}
+		if (WeaponMesh)
+		{
+			for (int32 i = 0; i < OriginalWeaponMaterials.Num(); ++i)
+			{
+				if (OriginalWeaponMaterials[i]) WeaponMesh->SetMaterial(i, OriginalWeaponMaterials[i]);
+			}
+		}
+	}
 }
