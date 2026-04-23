@@ -18,12 +18,13 @@ public class NecroLife : ModuleRules
 			"StateTreeModule",
 			"GameplayStateTreeModule",
 			"UMG",
-			"Slate", "Niagara",
+			"Slate", 
+			"Niagara",
 			"FMODStudio",
 			"FMODStudioNiagara",
 			"GameplayTags",
-			"GameplayTasks"
-		});
+			"GameplayTasks",
+        });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 

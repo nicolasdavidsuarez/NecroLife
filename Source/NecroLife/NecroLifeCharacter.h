@@ -44,10 +44,6 @@ class ANecroLifeCharacter : public ACharacter, public INecroLifeInterface
    GENERATED_BODY()
 
 
-
-
-
-
    /** Camera boom positioning the camera behind the character */
    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
    USpringArmComponent* CameraBoom;
@@ -157,6 +153,44 @@ protected:
    UPROPERTY(EditAnywhere, Category="Camera in game")
    float MinArmLenght=200;
 
+   // Referencia al montaje de ataque básico
+   // UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+   // UAnimMontage* MeleeAttackMontage;
+
+   // Referencia al montaje de la habilidad
+   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components")
+   UAbilityComponent* Ability;
+
+   // Referencia al arma para poder modificarla desde C++
+   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Equipment")
+   class UMeshComponent* WeaponMesh;
+
+   // Y asegurate de tener la lista temporal que armamos en el paso anterior
+   UPROPERTY()
+   TArray<class UMaterialInterface*> OriginalWeaponMaterials;
+
+   // Efecto visual (Niagara) que spawnea al impactar a un enemigo
+   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|VFX")
+   class UNiagaraSystem* HitVFX;
+
+   // Guarda el ID del Root Motion para el Dash
+   uint16 DashRootMotionID;
+
+
+
+   // --- MONTAGES DE ANIMACIÓN DASH ---
+      UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combate|Animaciones")
+   UAnimMontage* DashMontage;
+
+   UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combate|Animaciones")
+   UAnimMontage* DashAttackMontage;
+
+   // --- ESTADOS DEL PERSONAJE ---
+      UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|State")
+   bool bIsInvincible;
+
+   UPROPERTY(BlueprintReadWrite, Category = "Combate|Estados") // Bandera para saber si estamos en medio de un dash
+   bool bIsDashing = false;
 
 //Net
 public:
@@ -188,7 +222,6 @@ protected:
    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 
-protected:
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UAttributeComponent* CachedAttributeComponent;
 
@@ -202,6 +235,36 @@ protected:
    /** Called for looking input */
    void Look(const FInputActionValue& Value);
 
+   // Funciones de red para el Dash
+   UFUNCTION(Server, Reliable)
+   void Server_Dash(FVector DashDir);
+
+   UFUNCTION(NetMulticast, Unreliable)
+   void Multicast_DashFX();
+
+   // Lógica física central del Dash
+   void PerformDashLogic(FVector DashDir);
+
+   // Lista para guardar la "ropa" original del personaje
+   UPROPERTY()
+   TArray<class UMaterialInterface*> OriginalMaterials;
+
+   // --- SISTEMA DE COMBOS ---
+   UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|State")
+   bool bIsAttacking;
+
+   UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|State")
+   int32 AttackCount;
+
+   // Lista ordenada de animaciones (Golpe 1, Golpe 2, Golpe 3, etc.)
+   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Animations")
+   TArray<UAnimMontage*> ComboMontages;
+
+   // Controla el tiempo que tiene el jugador antes de que el combo vuelva a cero
+   FTimerHandle ComboResetTimer;
+
+   // Reinicia todo el estado a 0
+   void ResetCombo();
 
 public:
    //componente de salud
@@ -213,10 +276,6 @@ public:
     //componente inventario
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UInventoryComponent* Inventory;
-    //COmponente Habilidades
-   UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
-   UAbilityComponent* Ability;
-
 
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UQuestComponent* QuestComponent;
@@ -262,7 +321,8 @@ public:
    virtual void DoJumpEnd();
 
    UPROPERTY()
-   AActor* CurrentInteractable; 
+   AActor* CurrentInteractable;
+
 public:
    virtual void PossessedBy (AController* NewController) override;
    // El objeto llama a estas funciones desde su Overlap
@@ -272,7 +332,7 @@ public:
    void ClearCurrentInteractable() { CurrentInteractable = nullptr; }
 
    UFUNCTION(BLueprintCallable, Category="Interact")
-  AActor *getCurrentInteractable() { return CurrentInteractable; }
+   AActor *getCurrentInteractable() { return CurrentInteractable; }
 
    UFUNCTION(BLueprintCallable, Category="Interact")
    void AddCurrentQuest();
@@ -283,15 +343,35 @@ public:
    UFUNCTION(BLueprintCallable, Category="Interact")
    bool ShowDialogue(FDialogLine CurrentLine);
 
-   
-   
+   // Esta es la función que vas a llamar desde el AnimBP cuando ocurra el impacto
+    UFUNCTION(BlueprintCallable, Category = "Combat")
+    void ExecuteAttackHit();
+
+    UFUNCTION(BlueprintCallable, Category = "Combat")
+    void ExecuteAbilityHit();
+
+    // Material transparente para el efecto de invisibilidad
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|VFX")
+    class UMaterialInterface* TransparentMaterial;
+
+    // Efecto visual para el Dash
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|VFX")
+    class UNiagaraSystem* DashVFX;
+       
+    // Sonido para el Dash
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Audio")
+    class USoundBase* DashSound;
+
+    // Esta función la vamos a llamar desde los Anim Notifies del Blueprint
+    UFUNCTION(BlueprintCallable, Category = "Combat|State")
+    void ResetAttackState();
+
 FVector Direction;
 FRotator CurrentRotation,TargetRotation;
 
 
    //variables necesarias para dash
-   bool bIsDashing = false;
-   bool bShowInventory=false;
+      bool bShowInventory=false;
    bool bCanDash = true;
    bool bMouseRightDown = false;
    bool bMouseMiddleDown = false;
@@ -339,7 +419,7 @@ FRotator CurrentRotation,TargetRotation;
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
    class UInputMappingContext* InputMapping;
 
+   // Sobreescribimos la función nativa de Unreal que procesa TODO el daño
+   virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
-   
-  
 };
