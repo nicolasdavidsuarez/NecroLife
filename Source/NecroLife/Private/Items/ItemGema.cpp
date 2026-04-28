@@ -10,7 +10,7 @@
 AItemGema::AItemGema()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = true;	
 	bReplicates=true;
 }
 
@@ -25,20 +25,25 @@ void AItemGema::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
 
-	if (!HasAuthority())
+	if (!HasAuthority()) 
 	{
-		return;
+		return; 
 	}
+	
 	APawn* Pawn=Cast<APawn>(OtherActor);
 	APlayerState* PS = Pawn->GetPlayerState();
-if (PS)
-{
-		UInventoryComponent* Inventory= PS->FindComponentByClass<UInventoryComponent>();
-Inventory->AddGems(GemaData);
-	Destroy();
-}
-	
-	
+
+	if (PS)
+	{
+			UInventoryComponent* Inventory= PS->FindComponentByClass<UInventoryComponent>();
+		if (Inventory)
+		{
+			Inventory->AddGems(GemaData);
+			Destroy();   
+		}
+			
+	}
+
 }
 
 // Called every frame

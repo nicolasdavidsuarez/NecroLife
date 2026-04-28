@@ -126,8 +126,7 @@ void UNecroLifeHud::BindDelegate()
 		UAbilityComponent* AbilityComp =Cast<UAbilityComponent>(PlayerPawn->FindComponentByClass<UAbilityComponent>());
 		if (AbilityComp)
 		{
-			AbilityComp->AbilitySlot.AddDynamic(this,&UNecroLifeHud::HandleCoolDown);
-			
+			AbilityComp->AbilitySlot.AddDynamic(this,&UNecroLifeHud::HandleCoolDown);			
 			bBindeoAbility=true;
 		}
 	}
@@ -151,8 +150,6 @@ if (!bBindeoMisiones)
 		GEngine->AddOnScreenDebugMessage(-1,5.0f, FColor::Red, "cLeAr tImEr");			
 
 	}
-	//GEngine->AddOnScreenDebugMessage(-1,5.0f, FColor::Red, "tImEr");
-	
 
 }
 

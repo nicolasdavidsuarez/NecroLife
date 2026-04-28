@@ -116,8 +116,13 @@ public:
 
 	UFUNCTION()
 	void OnRep_GemsInSlots();
-	
 
+	UFUNCTION(Server, Reliable)
+	void Server_addGemas(FDatosGema gema);
+	
+	UFUNCTION(Server, Reliable)
+	void Server_addGemasInSlot(FDatosGema gema);
+	
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;

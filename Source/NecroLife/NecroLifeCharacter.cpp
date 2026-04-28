@@ -132,9 +132,7 @@ ANecroLifeCharacter::ANecroLifeCharacter()
    Inventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 //crear el UAbilityComponent
    Ability = CreateDefaultSubobject<UAbilityComponent>(TEXT("AbilityComponent"));
-   //crear y atachar el quest component
-  // QuestComponent= CreateDefaultSubobject<UQuestComponent>(TEXT("QuestComponent"));
-   //
+      
    Attribute = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributesComponent"));
 
    

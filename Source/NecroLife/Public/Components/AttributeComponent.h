@@ -67,6 +67,8 @@ public:
 	
 	UFUNCTION()
 	void OnRep_StatsActualizadas();
+
+	
 	
 	// Sets default values for this component's properties
 	UAttributeComponent();
@@ -161,5 +163,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Atributos|Calculos")
 	void RecalcularEstadisticas(const TArray<FDatosGema>& GemasEquipadas);
+
+	UFUNCTION(Server,Reliable)
+	void Server_RecalcularEstadisticas(const TArray<FDatosGema>& GemasEquipadas);
+	
 	
 };

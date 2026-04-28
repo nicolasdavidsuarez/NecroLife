@@ -65,7 +65,9 @@ void UAttributeComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 void UAttributeComponent::RecalcularEstadisticas(const TArray<FDatosGema>& GemasEquipadas)
 {
-	// 1. Resetear las estadísticas a los valores "desnudos"
+	if (GetOwner()->HasAuthority())
+	{
+		// 1. Resetear las estadísticas a los valores "desnudos"
 	LifeMax = BaseLife;
 	Attack = BaseAttack;
 	VelocityAttack=VelocityAttackBase;
@@ -152,14 +154,22 @@ void UAttributeComponent::RecalcularEstadisticas(const TArray<FDatosGema>& Gemas
 
 	// Disparamos el único delegado
 	OnRep_StatsActualizadas();
+	
+	}else
+	{
+		Server_RecalcularEstadisticas(GemasEquipadas);
+	}
 	OnAtributosActualizados.Broadcast(StatsSincronizadas);
 }
 
-void UAttributeComponent::OnRep_StatsActualizadas()
+void UAttributeComponent::Server_RecalcularEstadisticas_Implementation(const TArray<FDatosGema>& GemasEquipadas)
 {
-	
-	OnAtributosActualizados.Broadcast(StatsSincronizadas);
+	RecalcularEstadisticas(GemasEquipadas);
+}
 
+void UAttributeComponent::OnRep_StatsActualizadas()
+{	
+	OnAtributosActualizados.Broadcast(StatsSincronizadas);
 }
 
 void UAttributeComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
