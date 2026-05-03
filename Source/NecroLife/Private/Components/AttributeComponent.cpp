@@ -32,7 +32,7 @@ UAttributeComponent::UAttributeComponent()
 
 void UAttributeComponent::TakeXP(float Amount)
 {
-	
+	if (!GetOwner()->HasAuthority()) return;
 	if (XP+Amount>XPtoNextLevel)
 	{
 		Level++;
@@ -123,10 +123,10 @@ void UAttributeComponent::RecalcularEstadisticas(const TArray<FDatosGema>& Gemas
 	// 3. Aplicar los bonos porcentuales al final (para que matemáticamente sea correcto)
 	//aca hay que ponerse de acuerdo, o ponemos 1.1x o 10%
 	//lo dejo mal para tener las dos opciones
-	if (BonoVidaPorcentaje > 0.0f)
-	{
-		LifeMax += LifeMax * (1+BonoVidaPorcentaje);
-	}
+		if (BonoVidaPorcentaje > 0.0f)
+		{
+			LifeMax *= (1.0f + BonoVidaPorcentaje);
+		}
 	if (BonoVelocidadAttack>0.0f)
 	{
 		VelocityAttack=FMath::RoundToInt(VelocityAttack*BonoVelocidadAttack);
@@ -152,19 +152,25 @@ void UAttributeComponent::RecalcularEstadisticas(const TArray<FDatosGema>& Gemas
 	StatsSincronizadas.VelocidadRegeneracion=velocidadEnergyReg;
 	StatsSincronizadas.Defensa=Defense;
 
-	// Disparamos el único delegado
-	OnRep_StatsActualizadas();
 	
 	}else
 	{
-		Server_RecalcularEstadisticas(GemasEquipadas);
+		Server_RecalcularEstadisticas(GemasEquipadas);		
+		
 	}
-	OnAtributosActualizados.Broadcast(StatsSincronizadas);
+	//OnAtributosActualizados.Broadcast(StatsSincronizadas);
+	OnRep_StatsActualizadas();
+}
+
+void UAttributeComponent::OnRep_XPChanged()
+{
+	OnXPChanged.Broadcast(XP, XPtoNextLevel, Level);
 }
 
 void UAttributeComponent::Server_RecalcularEstadisticas_Implementation(const TArray<FDatosGema>& GemasEquipadas)
 {
 	RecalcularEstadisticas(GemasEquipadas);
+	OnRep_StatsActualizadas();
 }
 
 void UAttributeComponent::OnRep_StatsActualizadas()
@@ -176,4 +182,7 @@ void UAttributeComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(UAttributeComponent, StatsSincronizadas);
+	DOREPLIFETIME(UAttributeComponent, XP);
+	DOREPLIFETIME(UAttributeComponent, Level);
+	//DOREPLIFETIME(UAttributeComponent, XPtoNextLevel);
 }

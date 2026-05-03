@@ -177,6 +177,7 @@ public:
 
    UFUNCTION(BlueprintImplementableEvent)
    void SetCoolDownAbility(int32 slot);
+   void Server_AgregarMision_Implementation(UQuestData* QuestData);
    /** Constructor */
    ANecroLifeCharacter();
 
@@ -197,7 +198,8 @@ protected:
    /** Initialize input action bindings */
    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-
+   UFUNCTION(Server, Reliable)
+   void Server_TakePosion();
 protected:
    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
    UAttributeComponent* CachedAttributeComponent;

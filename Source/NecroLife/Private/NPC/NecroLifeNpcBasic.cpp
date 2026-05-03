@@ -72,7 +72,6 @@ void ANecroLifeNpcBasic::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AAc
 		ANecroLifeCharacter* Character = Cast<ANecroLifeCharacter>(OtherActor);
 		if (Character)
 		{
-			// El personaje entró en el rango, que empiece a mirar
 			Character->LookAt(GetActorLocation());
 		}
 	}
@@ -112,20 +111,14 @@ void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 	ANecroLifeCharacter* MyCharacter = Cast<ANecroLifeCharacter>(Interactor);
 
 
-	// --- 1. NUEVA VALIDACIÓN DE COOLDOWN ---
 	float CurrentTime = GetWorld()->GetTimeSeconds();
 	if (CurrentTime - LastInteractTime < InteractCooldown)
 	{
-		// Si no ha pasado el tiempo suficiente, ignoramos el input
 		return; 
 	}
-	// Actualizamos el tiempo de la última interacción válida
 	LastInteractTime = CurrentTime;
 	
-	// 1. Verificamos si tenemos datos asignados
 	if (!DialogueData || DialogueData->DialogLines.Num() == 0) return;
-//CurrentDialogIndex=LastDialogIndex;
-	// 2. Comprobamos si todavía quedan líneas por leer
 	if (CurrentDialogIndex < DialogueData->DialogLines.Num())
 	{
 		//la linea siguienete updatea el Hablar con npc, pero tiene que hacerlo solo cuando sea ese tipo de mision
@@ -134,15 +127,6 @@ void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 		// Obtenemos la línea actual
 		FDialogLine CurrentLine = DialogueData->DialogLines[CurrentDialogIndex];
 
-		
-		//la linea siguienete updatea el Hablar con npc, pero tiene que hacerlo solo cuando sea ese tipo de mision
-		/*if (MyCharacter->QuestComponent->UpdateQuestProgress(NpcTag,1))
-		{
-			CurrentDialogIndex++;	
-		}*/
-		// --- AQUÍ VA LA COMUNICACIÓN CON LA UI ---
-		// Por ahora, lo mostramos en pantalla para debuguear
-		
 		FString DialogMsg = FString::Printf(TEXT("%s: %s Aca si o ni tiene linea de dialogos!!!"), 
 			*CurrentLine.SpeakerName.ToString(), 
 			*CurrentLine.DialogueText.ToString());
@@ -153,9 +137,8 @@ void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 
 			if (GS && GS->QuestComponent)
 			{
-				// 2. Le pasamos la pelota al Quest Manager que ahora vive ahí
+//GS Game State
 				GS->QuestComponent->UpdateQuestProgress(NpcTag, 1);
-				// Avanzamos el índice al diálogo de "¡Gracias por ayudarme!"
 				CurrentDialogIndex++;
 				CurrentLine = DialogueData->DialogLines[CurrentDialogIndex];
 			
@@ -163,11 +146,6 @@ void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("El Servidor recibió la interacción y actualizó el GameState"));
 			}
 			
-				
-			// Si UpdateQuestProgress dio false, CurrentDialogIndex no avanza, 
-			// y CurrentLine sigue siendo la de "Aún no terminaste, ve a buscar eso".
-
-			// Ahora sí, mandamos a la UI la línea (ya sea la nueva o la vieja)
 			MyCharacter->ShowDialogue(CurrentLine);
 		
 		}

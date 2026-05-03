@@ -34,7 +34,7 @@ bool UInventoryComponent::UseHealtPosion()
 	}else{
 		return false;
 	}
-	
+
 }
 
 
@@ -104,8 +104,9 @@ void UInventoryComponent::AddGems(FDatosGema gema)
 {
 	if (GetOwner()->HasAuthority())
 	{
-		GemsItems.Add(gema);	
-  		GemsToShow.Broadcast(GemsItems);	
+		GemsItems.Add(gema);
+		GemsNotDuplicates(GemsItems, GemsItemsInInventory);
+		GemsToShow.Broadcast(GemsItemsInInventory);	
    }else
    {
 	   Server_addGemas(gema);
@@ -122,12 +123,15 @@ void UInventoryComponent::AddGemToSlot(FDatosGema gema)
         	{
         		if (GemsItems[i].ID_Gema == gema.ID_Gema)
         		{
-        			GemsItems.RemoveAt(i);            
-        			break; 
+        			FName id=GemsItems[i].ID_Gema;
+        			GemsItems.RemoveAt(i);
+        			GemsNotDuplicates(GemsItems, GemsItemsInInventory);
+        			GemsItemsInInventory.RemoveAll([id](const FDatosGema& Gema){	return Gema.ID_Gema == id;});
+        			GemsToShow.Broadcast(GemsItemsInInventory);
+        			//break; 
         		}
         	}
         	GemsInSlots.Add(gema);
-        	GemsToShow.Broadcast(GemsItems);
         	GemsToShowInSlots.Broadcast(GemsInSlots);
 	}else
 	{
@@ -138,6 +142,21 @@ void UInventoryComponent::AddGemToSlot(FDatosGema gema)
 	if (UAttributeComponent* Atributos = GetOwner()->FindComponentByClass<UAttributeComponent>())
 	{
 		Atributos->RecalcularEstadisticas(GemsInSlots);
+	}
+}
+
+void UInventoryComponent::GemsNotDuplicates(const TArray<FDatosGema>& SourceArray, TArray<FDatosGema>& TargetArray)
+{
+	TargetArray.Empty();
+	
+	TSet<FName> FnameGema;
+	for (const FDatosGema& Gema : SourceArray)
+	{
+		if (!FnameGema.Contains(Gema.ID_Gema))
+		{
+			FnameGema.Add(Gema.ID_Gema);
+			TargetArray.Add(Gema);
+		}
 	}
 }
 

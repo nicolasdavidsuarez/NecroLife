@@ -44,8 +44,7 @@ void UNecroLifeHud::HandleXPChanged(float CurrentXP, float XPToNextLevel, int32 
 	if (LevelText)
 	{
 		FString LevelString = FString::Printf(TEXT("Nivel: %d"), CurrentLevel);
-		LevelText->SetText(FText::FromString(LevelString));
-		
+		LevelText->SetText(FText::FromString(LevelString));		
 	}
 }
 
@@ -68,17 +67,23 @@ void UNecroLifeHud::HandleOnPotionChange(int CantPosiones)
 {
 	if (TxtPosiones)
 	{
-		// Esto hace el equivalente al "Append" y al "To Text" todo en una línea
-		FString TextoFormateado = FString::Printf(TEXT("Posions: %d"), CantPosiones);
-        
-		// Seteamos el texto en la UI (el nodo "SET Text")
+		GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Red,"Potion: "+FString::FromInt(CantPosiones));
+		FString TextoFormateado = FString::Printf(TEXT("Posions: %d"), CantPosiones);        
 		TxtPosiones->SetText(FText::FromString(TextoFormateado));
 	}
 }
 
 void UNecroLifeHud::ActualizarGemasInSlots(const TArray<FDatosGema>& DatosGemas)
 {
-	
+	ANecroLifePlayerState* MyPS = Cast<ANecroLifePlayerState>(GetOwningPlayerState());
+	if (MyPS )
+	{
+		UAttributeComponent* AttributeComponent=MyPS->GetAttributeComponent();
+		if (AttributeComponent)
+		{
+			AttributeComponent->RecalcularEstadisticas(DatosGemas);
+		}
+	}
 }
 
 void UNecroLifeHud::BindDelegate()
@@ -113,10 +118,12 @@ void UNecroLifeHud::BindDelegate()
 	}
 	if (!bBindeoAtribute)
 	{
-		UAttributeComponent* Attributes = PlayerPawn->FindComponentByClass<UAttributeComponent>();
+		ANecroLifePlayerState* MyPS = Cast<ANecroLifePlayerState>(GetOwningPlayerState());
+		UAttributeComponent* Attributes = MyPS->FindComponentByClass<UAttributeComponent>();
 		if (Attributes)
 		{
 			Attributes->OnXPChanged.AddDynamic(this, &UNecroLifeHud::HandleXPChanged);
+			Attributes->OnAtributosActualizados.AddDynamic(this, &UNecroLifeHud::ActualizarStats);
 			bBindeoAtribute=true;
 		}
 	}
@@ -151,6 +158,11 @@ if (!bBindeoMisiones)
 
 	}
 
+}
+
+void UNecroLifeHud::ActualizarStats(const FEstadisticasPersonaje& EstadisticasPersonaje)
+{
+	BP_UpdateEstadisticas(EstadisticasPersonaje);
 }
 
 void UNecroLifeHud::ActualizarQuestList(const TArray<FQuestUIData>& QuestUi)

@@ -50,7 +50,7 @@ struct FEstadisticasPersonaje
 };
 
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnXPChanged, float, XP, float, XPtoNextLevel);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAtributosActualizados, const FEstadisticasPersonaje&, NuevosAtributos);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAtributosActualizados,const FEstadisticasPersonaje&, NuevosAtributos);
 // Arriba del UCLASS
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnXPChanged, float, CurrentXP, float, XPToNextLevel, int32, CurrentLevel);
 
@@ -89,13 +89,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Level")
 	void TakeXP(float Amount);
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Level")
+	UPROPERTY(ReplicatedUsing = OnRep_XPChanged)
 	float XP=0.f;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Level")
 	float XPtoNextLevel=100.f;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Level")
+	UPROPERTY(ReplicatedUsing = OnRep_XPChanged)
 	int32 Level=0;
     
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Life")
@@ -145,8 +145,6 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Defense")
 	int32 Defense=0;
-
-	
 	
 
 	UPROPERTY(BlueprintAssignable, Category = "NecroLife | Attributes")
@@ -167,5 +165,6 @@ public:
 	UFUNCTION(Server,Reliable)
 	void Server_RecalcularEstadisticas(const TArray<FDatosGema>& GemasEquipadas);
 	
-	
+	UFUNCTION()
+	void OnRep_XPChanged();
 };

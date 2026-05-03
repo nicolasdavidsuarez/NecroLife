@@ -49,6 +49,14 @@ struct FDatosGema
 	// Cuánto suma (ej: +10 de Daño, o +50 de Vida)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gemas")
 	float ValorMejora;
+
+	//id de la gema que se puede evolucionar
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gemas")
+	FName ID_NextGema;
+
+	//cantida necesaria para mejora
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gemas")
+	int32 NeedNextGema;
 };
 
 
@@ -108,6 +116,9 @@ public:
 	UPROPERTY(ReplicatedUsing= OnRep_GemsItems, EditAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TArray<FDatosGema> GemsItems;
 
+	UPROPERTY(ReplicatedUsing= OnRep_GemsItems, EditAnywhere, BlueprintReadOnly, Category = "Inventory")
+	TArray<FDatosGema> GemsItemsInInventory;
+
 	UPROPERTY(ReplicatedUsing= OnRep_GemsInSlots, EditAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TArray<FDatosGema> GemsInSlots;
 
@@ -140,5 +151,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void AddGemToSlot(FDatosGema gema);
+
+	void GemsNotDuplicates(const TArray<FDatosGema>& SourceArray, TArray<FDatosGema>& TargetArray);
 	
 };

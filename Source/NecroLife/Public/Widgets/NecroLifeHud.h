@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/AttributeComponent.h"
 #include "Components/InventoryComponent.h"
 #include "Data/QuestData.h"
 #include "Types/NecroLifeTypes.h"
@@ -67,6 +68,9 @@ private:
 	UFUNCTION()
 	void BindDelegate();
 
+	UFUNCTION()
+	void ActualizarStats(const FEstadisticasPersonaje& EstadisticasPersonaje);
+
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Inventory")
 	void BP_UpdateInventoryUI(const TArray<FDatosGema>& GemsToShow);
@@ -78,6 +82,9 @@ private:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Quest")
 	void BP_UpdateMisionesUI(const TArray<FQuestUIData>& QuestUi);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Attribute")
+	void BP_UpdateEstadisticas(const FEstadisticasPersonaje& EstadisticasPersonaje);
 
 	
 };

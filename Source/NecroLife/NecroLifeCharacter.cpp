@@ -464,16 +464,7 @@ void ANecroLifeCharacter::RunActivated(const FInputActionValue& Value)
 
 void ANecroLifeCharacter::TakePosion()
 {
-   if (MyPlayerState)
-   {
-   if (CachedInventoryComponent->UseHealtPosion())
-   {
-      HealthComponent->ApplyHealing(30.0f);
-   }else
-   {
-         ShowMsg(FString::Printf(TEXT("don´t have poison")));
-   }
-}
+  Server_TakePosion();
 }
 ///////////Para cuando apreta boton de interactuar, "t" de talk
 void ANecroLifeCharacter::Interact()
@@ -610,6 +601,29 @@ void ANecroLifeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
       UE_LOG(LogNecroLife, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
    }
 }
+
+void ANecroLifeCharacter::Server_TakePosion_Implementation()
+{
+   // ESTO CORRE EN EL SERVIDOR
+   if (CachedInventoryComponent)
+   {
+      // El servidor verifica si hay pociones
+      if (CachedInventoryComponent->UseHealtPosion())
+      {
+         // El servidor aplica la curación
+         if (HealthComponent)
+         {
+            HealthComponent->ApplyHealing(30.0f);
+         }
+      }
+      else
+      {
+         // Opcional: Cliente recibe mensaje de que no hay pociones
+         // (Tendrías que hacer una Client RPC para esto si quieres ser estricto)
+      }
+   }
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ANecroLifeCharacter::Move(const FInputActionValue& Value)
 {
@@ -729,12 +743,10 @@ void ANecroLifeCharacter::DoJumpEnd()
 void ANecroLifeCharacter::PossessedBy(AController* NewController)
 {
    Super::PossessedBy(NewController);
-   // 1. Cacheamos el PlayerState como antes
    MyPlayerState = GetPlayerState<ANecroLifePlayerState>();
    if (MyPlayerState)
    {
-      // 2. AHORA, usamos MyPlayerState para cachear sus componentes
-      CachedAttributeComponent = MyPlayerState->GetAttributeComponent();
+       CachedAttributeComponent = MyPlayerState->GetAttributeComponent();
       CachedInventoryComponent = MyPlayerState->GetInventoryComponent();
       //CachedQuestComponent = MyPlayerState->GetQuestComponent();  lo saque porque esta en el game state ahora
 
