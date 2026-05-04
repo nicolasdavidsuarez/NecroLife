@@ -20,7 +20,8 @@ EBTNodeResult::Type UBTTask_CombateRanged::ExecuteTask(UBehaviorTreeComponent& O
 
 	ANecroLifeEnemyRanged* Enemy = Cast<ANecroLifeEnemyRanged>(AIController->GetPawn());
 	AActor* PlayerTarget = Cast<AActor>(BB->GetValueAsObject(FName("PlayerTarget")));
-	if (!Enemy || !PlayerTarget) return EBTNodeResult::Failed;
+	APawn* TargetPawn = Cast<APawn>(PlayerTarget);
+	if (!Enemy || !PlayerTarget || !TargetPawn || !TargetPawn->IsPlayerControlled()) return EBTNodeResult::Failed;
 
 	// Control manual de rotacion — el movimiento no debe girar al enemigo
 	if (UCharacterMovementComponent* MovComp = Enemy->GetCharacterMovement())
@@ -48,8 +49,11 @@ void UBTTask_CombateRanged::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* N
 
 	ANecroLifeEnemyRanged* Enemy = Cast<ANecroLifeEnemyRanged>(AIController->GetPawn());
 	AActor* PlayerTarget = Cast<AActor>(BB->GetValueAsObject(FName("PlayerTarget")));
-	if (!Enemy || !PlayerTarget)
+	APawn* TargetPawn = Cast<APawn>(PlayerTarget);
+	if (!Enemy || !PlayerTarget || !TargetPawn || !TargetPawn->IsPlayerControlled())
 	{
+		if (PlayerTarget && (!TargetPawn || !TargetPawn->IsPlayerControlled()))
+			BB->ClearValue(FName("PlayerTarget"));
 		FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
 		return;
 	}
