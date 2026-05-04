@@ -20,7 +20,8 @@ public class NecroLife : ModuleRules
 			"UMG",
 			"Slate", "Niagara",
 			"GameplayTags",
-			"GameplayTasks"
+			"GameplayTasks",
+			"NavigationSystem"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });

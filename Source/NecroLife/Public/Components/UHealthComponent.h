@@ -38,8 +38,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Health")
 	float MaxHealth = 100.f;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Health")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Health", ReplicatedUsing=OnRep_CurrentHealth)
 	float CurrentHealth;
+
+	UFUNCTION()
+	void OnRep_CurrentHealth();
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UFUNCTION(BlueprintCallable, Category="Health")
 	void TakeDamage(float Amount);

@@ -3,17 +3,15 @@
 
 #include "Public/Components/UHealthComponent.h"
 #include "Public/Components/AttributeComponent.h"
+#include "Net/UnrealNetwork.h"
 
 
 
 // Sets default values for this component's properties
 UUHealthComponent::UUHealthComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
-
-	// ...
+	SetIsReplicatedByDefault(true);
 }
 
 
@@ -113,5 +111,16 @@ void UUHealthComponent::AplicarRegenVida()
 	{
 		ApplyHealing(MaxHealth * RegenPorcentaje);
 	}
+}
+
+void UUHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UUHealthComponent, CurrentHealth);
+}
+
+void UUHealthComponent::OnRep_CurrentHealth()
+{
+	OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
 }
 
