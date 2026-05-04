@@ -50,7 +50,7 @@ ANecroLifeCharacter::ANecroLifeCharacter()
    GetCharacterMovement()->RotationRate = FRotator(0.0f, 400.0f, 0.0f);
    GetCharacterMovement()->JumpZVelocity = 500.f;
    GetCharacterMovement()->AirControl = 0.35f;
-   GetCharacterMovement()->MaxWalkSpeed = 500.f;
+   GetCharacterMovement()->MaxWalkSpeed = 50.f;
    GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
    GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
    GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
