@@ -26,7 +26,7 @@ enum class ETipoEstadisticaGema : uint8
 };
 
 USTRUCT(BlueprintType)
-struct FDatosGema
+struct FDatosGema : public FTableRowBase
 {
 	GENERATED_BODY()
 

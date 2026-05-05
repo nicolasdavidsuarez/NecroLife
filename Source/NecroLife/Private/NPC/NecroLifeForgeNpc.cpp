@@ -35,7 +35,11 @@ void ANecroLifeForgeNpc::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 void ANecroLifeForgeNpc::OnInteract_Implementation(AActor* Interactor)
 {
 	Super::OnInteract_Implementation(Interactor);
-	ANecroLifeCharacter myCharacter = Cast<ANecroLifeCharacter>() Interactor;
+	ANecroLifeCharacter* myCharacter = Cast<ANecroLifeCharacter>(Interactor);
+	if (myCharacter)
+	{
+		myCharacter->ShowForgeInventoryAction();
+	}
 }
 
 TMap<FName, int32> ANecroLifeForgeNpc::GetPossibleUpgrades(const TArray<FDatosGema>& GemsItems)

@@ -34,6 +34,7 @@ struct FInputActionValue;
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMostrarInventario);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnShowForgeInventory, const TArray<FDatosGema>&, GemasDisponibles);
 /**
 *  A simple player-controllable third person character
 *  Implements a controllable orbiting camera
@@ -65,6 +66,10 @@ public:
    UPROPERTY(BlueprintAssignable, Category = "Mostrar Inventario|UI")
    FMostrarInventario ShowInventory;
   
+   UPROPERTY(BlueprintAssignable, Category = "Mostrar Inventario|UI")
+   FOnShowForgeInventory OnShowForgeInventory;
+  
+   
 protected:
 
    //habilitar correr con el bloqueo de mayusculas
@@ -195,6 +200,7 @@ protected:
    void TakePosion();
    void Interact();
    void InventoryInput();
+  
    /** Initialize input action bindings */
    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
@@ -232,7 +238,7 @@ public:
 
    //UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
   // UQuestComponent* QuestComponent;
-
+   void ShowForgeInventoryAction();
    
 
    
@@ -307,6 +313,7 @@ FRotator CurrentRotation,TargetRotation;
    //variables necesarias para dash
    bool bIsDashing = false;
    bool bShowInventory=false;
+   bool bShowForgeInventory=false;
    bool bCanDash = true;
    bool bMouseRightDown = false;
    bool bMouseMiddleDown = false;

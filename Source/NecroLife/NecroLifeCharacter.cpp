@@ -302,126 +302,7 @@ void ANecroLifeCharacter::AplyAction()
       // --- 2. EL DAÑO (SERVIDOR) ---
       Server_AplyAction();
    }
-   /*
-   if (bEnabledAbility)
-   {
-       //FOverlapResult result;
-      // 🔹 Parámetros del cono
-      float AttackRadius = 300.f;        // Distancia del ataque
-      float AttackAngle = 45.f;          // Mitad del ángulo del cono (en grados)
-    
-      FVector Origin = GetActorLocation();
-      FVector Forward = GetActorForwardVector();
-
-      // 🔹 Buscamos actores cercanos con una esfera
-      TArray<FOverlapResult> Overlaps;
-      FCollisionShape CollisionShape = FCollisionShape::MakeSphere(AttackRadius);
-
-      bool bHit = GetWorld()->OverlapMultiByChannel(
-             Overlaps,
-             Origin,
-             FQuat::Identity,
-             ECC_Pawn,          // Canal de colisión 
-             CollisionShape
-         );
-
-      GetCharacterMovement()->bOrientRotationToMovement = true;
-      bUseControllerRotationYaw = false;
-      bEnabledAbility = false;
-      Ability->AbilityAply();
-      Ability->ClearIndicator();
-
-      if (!bHit) return;
-
-      for (auto& Result : Overlaps)
-      {
-         AActor* Other = Result.GetActor();
-         ANecroLifeEnemyBasic* EnemyBasic=Cast<ANecroLifeEnemyBasic>(Other);
-         if (!EnemyBasic || Other == this) continue;
-
-         // 🔹 Vector hacia el otro actor
-         FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
-
-         // 🔹 Calculamos el ángulo con el forward vector
-         float Dot = FVector::DotProduct(Forward, ToTarget);
-         float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
-
-         // 🔹 Si está dentro del cono, aplicamos daño
-         if (AngleToTarget <= AttackAngle)
-         {
-            //UGameplayStatics::ApplyDamage(Other, 20.f, GetController(), this, UDamageType::StaticClass());
-            
-            URPGHelper::ApplyDamage(Other,100);
-            if (!EnemyBasic->IsAlive())
-            {
-             //  ShowMsg(FString::Printf(TEXT("Aca Sumaria experiencia")));
-               URPGHelper::TakeXP(this,10);
-               //QuestComponent->UpdateQuestProgress(EnemyBasic->GetTag(),1);
-               Server_ActualizarProgresoMision(EnemyBasic->GetTag(),1);
-            }
-            // 🔹 (Opcional) debug line
-            DrawDebugLine(GetWorld(), Origin, Other->GetActorLocation(), FColor::Red, false, 1.f, 0, 1.f);
-            
-         }
-      }
-
-      // 🔹 Debug del área del ataque
-      
-      //ShowMsg(FString::Printf(TEXT("Ability Ejecuted")));
-      
-     
-   }else
-   {
-      TArray<FOverlapResult> Overlaps;
-      FVector Origin = GetActorLocation();
-      FCollisionShape CollisionShape = FCollisionShape::MakeBox(FVector(100,100,100));
-
-      bool bHit = GetWorld()->OverlapMultiByChannel(
-                   Overlaps,
-                   Origin,
-                   FQuat::Identity,
-                   ECC_Pawn,          // Canal de colisión 
-                   CollisionShape
-               );
-      if (!bHit) return;
-      FVector Forward = GetActorForwardVector();
-      DrawDebugCone(GetWorld(),GetActorLocation(),Forward,100.0f,0.5,0.5,12,FColor::Red,false,0.5f);
-
-      
-      for (auto& Result : Overlaps)
-      {
-         AActor* Other = Result.GetActor();
-         ANecroLifeEnemyBasic* EnemyBasic=Cast<ANecroLifeEnemyBasic>(Other);
-         if (!EnemyBasic || Other == this) continue;
-
-         // 🔹 Vector hacia el otro actor
-         FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
-
-         // 🔹 Calculamos el ángulo con el forward vector
-         float Dot = FVector::DotProduct(Forward, ToTarget);
-         float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
-         float AttackAngle = 45.f;  
-
-         // 🔹 Si está dentro del cono, aplicamos daño
-         if (AngleToTarget <= AttackAngle)
-         {
-            //UGameplayStatics::ApplyDamage(Other, 20.f, GetController(), this, UDamageType::StaticClass());
-            
-            URPGHelper::ApplyDamage(Other,10);
-            if (!EnemyBasic->IsAlive())
-            {
-               ShowMsg(FString::Printf(TEXT("Aca Sumaria experiencia")));
-               URPGHelper::TakeXP(this,10);
-               Server_ActualizarProgresoMision(EnemyBasic->GetTag(), 1);
-            }
-            // 🔹 (Opcional) debug line
-            DrawDebugLine(GetWorld(), Origin, Other->GetActorLocation(), FColor::Red, false, 1.f, 0, 1.f);
-            //Ability->AbilityAply();
-         }
-      }
-      //ShowMsg(FString::Printf(TEXT("Se ejecuta Ataque Melee")));
-   }*/
-     
+       
 }
 
 void ANecroLifeCharacter::OnRightMouseDown()
@@ -475,6 +356,7 @@ void ANecroLifeCharacter::Interact()
       // Ejecutamos la función (esto hará que el objeto lance su lógica y el PJ lo mire)
       UE_LOG(LogTemp, Warning, TEXT("implementa on interact"));
    INecroLifeInterface::Execute_OnInteract(CurrentInteractable,this);
+      GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Green,TEXT("Interact con current interactable"));
       
 
    }else
@@ -493,6 +375,7 @@ void ANecroLifeCharacter::InventoryInput()
    {
       return;
    }
+   if (bShowForgeInventory) return;
    if (!bShowInventory)
    {
       bShowInventory=true;
@@ -503,6 +386,27 @@ void ANecroLifeCharacter::InventoryInput()
       SetUIState(false);
       bShowInventory=false;
       ShowInventory.Broadcast();
+   }
+}
+
+void ANecroLifeCharacter::ShowForgeInventoryAction()
+{
+   if (!IsLocallyControlled())
+   {
+      return;
+   }
+    ANecroLifePlayerState* PS = Cast<ANecroLifePlayerState>(GetPlayerState());
+         PS->GetInventoryComponent()->GemsItems;
+   if (!bShowForgeInventory)
+   {
+      bShowForgeInventory = true;
+      SetUIState(true);     
+      OnShowForgeInventory.Broadcast(PS->GetInventoryComponent()->GemsItems);
+   }else
+   {
+      SetUIState(false);
+      bShowForgeInventory=false;
+      OnShowForgeInventory.Broadcast(PS->GetInventoryComponent()->GemsItems);
    }
 }
 
@@ -627,7 +531,7 @@ void ANecroLifeCharacter::Server_TakePosion_Implementation()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void ANecroLifeCharacter::Move(const FInputActionValue& Value)
 {
-   if (bShowInventory)
+   if (bShowInventory||bShowForgeInventory)
    {
       return;  //esto es porque se movia el player 1 cuando habria el inventario
    }

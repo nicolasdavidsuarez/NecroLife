@@ -70,10 +70,16 @@ private:
 
 	UFUNCTION()
 	void ActualizarStats(const FEstadisticasPersonaje& EstadisticasPersonaje);
-
+	
+	UFUNCTION()
+	void MostrarForgeInventory(const TArray<FDatosGema>& GemsToShow);
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Inventory")
 	void BP_UpdateInventoryUI(const TArray<FDatosGema>& GemsToShow);
+
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Inventory")
+	void BP_UpdateForgeInventoryUI(const TArray<FDatosGema>& GemsToShow);
 
 
 

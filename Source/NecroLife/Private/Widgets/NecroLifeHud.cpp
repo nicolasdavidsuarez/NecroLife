@@ -105,6 +105,9 @@ void UNecroLifeHud::BindDelegate()
 	}
 	APawn* PlayerPawn = GetOwningPlayerPawn();
 	if (!PlayerPawn) return;
+	ANecroLifeCharacter* character = Cast <ANecroLifeCharacter>(PlayerPawn->GetController()->GetCharacter());
+	character->OnShowForgeInventory.AddDynamic(this, &UNecroLifeHud::MostrarForgeInventory);
+	
 	if (!bBindeoHealth)
 	{
 		
@@ -163,6 +166,11 @@ if (!bBindeoMisiones)
 void UNecroLifeHud::ActualizarStats(const FEstadisticasPersonaje& EstadisticasPersonaje)
 {
 	BP_UpdateEstadisticas(EstadisticasPersonaje);
+}
+
+void UNecroLifeHud::MostrarForgeInventory(const TArray<FDatosGema>& GemsToShow)
+{
+	BP_UpdateForgeInventoryUI(GemsToShow);
 }
 
 void UNecroLifeHud::ActualizarQuestList(const TArray<FQuestUIData>& QuestUi)
