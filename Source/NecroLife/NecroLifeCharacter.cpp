@@ -408,29 +408,43 @@ float ANecroLifeCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Da
 /////////////////// DASH ///////////////////
 void ANecroLifeCharacter::Dash()
 {
-	if (!bCanDash || bIsDashing || bIsAttacking || !Attribute) return;
+	if (!bCanDash || bIsDashing || bIsAttacking || !Attribute) return; //
 
-	ResetCombo();
-	StopAnimMontage();
+	ResetCombo(); //
+	StopAnimMontage(); //
 
-	FVector DashDirection = GetActorForwardVector();
+	FVector DashDirection = FVector::ZeroVector;
 
-	// 1. FÍSICA: La aplicamos localmente al instante
-	PerformDashLogic(DashDirection);
+	// Obtenemos hacia dónde está queriendo moverse el jugador
+	FVector LastInput = GetCharacterMovement()->GetLastInputVector();
 
-	// 2. VISUAL: Lo aplicamos localmente al instante (Predicción del Cliente)
-	Local_DashFX(); 
-
-	// 3. RED: Le avisamos al resto del mundo
-	if (HasAuthority())
+	if (LastInput.IsNearlyZero())
 	{
-		// Si soy el Host, yo mismo le aviso a todos los clientes
-		Multicast_DashFX();
+		// No hay input (está quieto). Hacemos un backstep (hacia atrás).
+		DashDirection = -GetActorForwardVector();
 	}
 	else
 	{
-		// Si soy un Cliente, le pido al Host que le avise a todos
-		Server_Dash(DashDirection);
+		// Hay input. Dasheamos hacia donde el jugador está presionando.
+		DashDirection = LastInput.GetSafeNormal();
+	}
+
+	// 1. FÍSICA: La aplicamos localmente al instante
+	PerformDashLogic(DashDirection); //
+
+	// 2. VISUAL: Lo aplicamos localmente al instante (Predicción del Cliente)
+	Local_DashFX();  //
+
+	// 3. RED: Le avisamos al resto del mundo
+	if (HasAuthority()) //
+	{
+		// Si soy el Host, yo mismo le aviso a todos los clientes
+		Multicast_DashFX(); //[cite: 2]
+	}
+	else
+	{
+		// Si soy un Cliente, le pido al Host que le avise a todos y le paso la dirección
+		Server_Dash(DashDirection); //[cite: 2]
 	}
 }
 
