@@ -15,6 +15,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "NecroLife.h"
 #include "Public/Components/AttributeComponent.h"
 #include "Public/Components/RPGHelper.h"
@@ -34,35 +35,39 @@
 /////////////////// CHARACTER ///////////////////
 ANecroLifeCharacter::ANecroLifeCharacter()
 {
-   HealthComponent = CreateDefaultSubobject<UUHealthComponent>(TEXT("HealthComponent"));
-   Inventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
-   Ability = CreateDefaultSubobject<UAbilityComponent>(TEXT("AbilityComponent"));
-   QuestComponent = CreateDefaultSubobject<UQuestComponent>(TEXT("QuestComponent"));
-   Attribute = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributesComponent"));
-   
-   GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
+	HealthComponent = CreateDefaultSubobject<UUHealthComponent>(TEXT("HealthComponent"));
+	Inventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
+	Ability = CreateDefaultSubobject<UAbilityComponent>(TEXT("AbilityComponent"));
+	QuestComponent = CreateDefaultSubobject<UQuestComponent>(TEXT("QuestComponent"));
+	Attribute = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributesComponent"));
+	
+	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
      
-   bUseControllerRotationPitch = false;
-   bUseControllerRotationYaw = false;
-   bUseControllerRotationRoll = false;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationRoll = false;
 
-   GetCharacterMovement()->bOrientRotationToMovement = true;
-   GetCharacterMovement()->RotationRate = FRotator(0.0f, 400.0f, 0.0f);
-   GetCharacterMovement()->JumpZVelocity = 500.f;
-   GetCharacterMovement()->AirControl = 0.35f;
-   GetCharacterMovement()->MaxWalkSpeed = 50.f;
-   GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
-   GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
-   GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 400.0f, 0.0f);
+	GetCharacterMovement()->JumpZVelocity = 500.f;
+	GetCharacterMovement()->AirControl = 0.35f;
+	GetCharacterMovement()->MaxWalkSpeed = 50.f;
+	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
+	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
+	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 
-   CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-   CameraBoom->SetupAttachment(RootComponent);
-   CameraBoom->TargetArmLength = 800.0f;
-   CameraBoom->bDoCollisionTest = true;
-   CameraBoom->CameraLagSpeed = 2.0f;
-   CameraBoom->bUsePawnControlRotation = true;
-   CameraBoom->bInheritPitch = true;
-   CameraBoom->bInheritYaw = true;
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+	CameraBoom->SetupAttachment(RootComponent);
+	CameraBoom->TargetArmLength = 800.0f;
+	CameraBoom->bDoCollisionTest = true;
+	CameraBoom->bUsePawnControlRotation = true;
+	CameraBoom->bInheritPitch = true;
+	CameraBoom->bInheritYaw = true;
+	// Parámetros para que la cámara siga el movimento del jugador suavemente (con cierto lag)
+	CameraBoom->bEnableCameraRotationLag = true; // Activa el delay rotacional
+	CameraBoom->CameraRotationLagSpeed = 5.0f;   // Cuanto menor el número, más tarda en alcanzar al jugador (más "suave")
+	CameraBoom->bEnableCameraLag = true;
+	CameraBoom->CameraLagSpeed = 5.0f;
 
    FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
    FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
@@ -112,22 +117,25 @@ void ANecroLifeCharacter::Look(const FInputActionValue& Value)
 
 void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
 {
-   if (GetController() != nullptr && bMouseRightDown)
-   {
-      AddControllerYawInput(Yaw);
-      if(CameraBoom->GetRelativeRotation().Pitch + Pitch >= MaxPitch && CameraBoom->GetRelativeRotation().Pitch + Pitch <= MinPitch)
-      {
-         CameraBoom->AddRelativeRotation(FRotator(Pitch, 0.0f, 0.0f));
-      }
-      else
-      {
-         if (Pitch != 0)
-         {
-            Pitch *= -1.0f;
-            CameraBoom->AddRelativeRotation(FRotator(Pitch, 0.0f, 0.0f));
-         }
-      }
-   }
+	// ¡Reiniciamos el temporizador porque el jugador tocó la cámara
+	TimeSinceLastCameraInput = 0.0f;
+	
+	if (GetController() != nullptr && bMouseRightDown)
+	{
+	  AddControllerYawInput(Yaw);
+	  if(CameraBoom->GetRelativeRotation().Pitch + Pitch >= MaxPitch && CameraBoom->GetRelativeRotation().Pitch + Pitch <= MinPitch)
+	  {
+	     CameraBoom->AddRelativeRotation(FRotator(Pitch, 0.0f, 0.0f));
+	  }
+	  else
+	  {
+	     if (Pitch != 0)
+	     {
+	        Pitch *= -1.0f;
+	        CameraBoom->AddRelativeRotation(FRotator(Pitch, 0.0f, 0.0f));
+	     }
+	  }
+	}
 }
 
 void ANecroLifeCharacter::LookAt(FVector TargetLocation)
@@ -647,9 +655,44 @@ void ANecroLifeCharacter::BeginPlay()
 
 void ANecroLifeCharacter::Tick(float DeltaTime)
 {
-   Super::Tick(DeltaTime);
-   UpdateAbilityPointer();
-   LookToCastAbility();
+	Super::Tick(DeltaTime);
+
+	UpdateAbilityPointer();
+	LookToCastAbility();
+
+	TimeSinceLastCameraInput += DeltaTime;
+
+	// --- LÓGICA DE TARGETING ---
+	if (bIsTargeting && CurrentTarget)
+	{
+		ANecroLifeEnemyBasic* Enemy = Cast<ANecroLifeEnemyBasic>(CurrentTarget);
+        
+		// Si el enemigo se murió o lo destruyeron, soltamos el target automáticamente
+		if (!Enemy || !Enemy->IsAlive())
+		{
+			ToggleTargeting(); 
+		}
+		else
+		{
+			// Apuntamos la cámara hacia el enemigo
+			FVector StartLoc = FollowCamera->GetComponentLocation();
+			FVector TargetLoc = CurrentTarget->GetActorLocation();
+            
+			// Le bajamos un poco la Z para mirar al pecho del enemigo, no a los pies ni por encima de la cabeza
+			TargetLoc.Z -= 50.0f; 
+
+			FRotator TargetRot = UKismetMathLibrary::FindLookAtRotation(StartLoc, TargetLoc);
+            
+			// Interpolamos la rotación (Pitch y Yaw)
+			FRotator NewRot = FMath::RInterpTo(GetControlRotation(), TargetRot, DeltaTime, 10.0f);
+			GetController()->SetControlRotation(NewRot);
+		}
+	}
+	else
+	{
+		// Solo ejecutamos la auto-alineación libre si NO estamos fijando un objetivo
+		HandleCameraAutoAlignment(DeltaTime);
+	}
 }
 
 void ANecroLifeCharacter::ShowMsg(FString Msg)
@@ -739,5 +782,238 @@ void ANecroLifeCharacter::Multicast_StopDashFX_Implementation()
 				if (OriginalWeaponMaterials[i]) WeaponMesh->SetMaterial(i, OriginalWeaponMaterials[i]);
 			}
 		}
+	}
+}
+
+void ANecroLifeCharacter::HandleCameraAutoAlignment(float DeltaTime)
+{
+	// 1. Si estamos usando una habilidad o apuntando, cancelamos la auto-alineación
+	if (bEnabledAbility) return;
+
+	// 2. Obtenemos la velocidad actual del personaje
+	FVector Velocity = GetVelocity();
+
+	// 3. Solo queremos que la cámara se alinee si el personaje se ESTÁ MOVIENDO
+	if (Velocity.SizeSquared2D() < 10.0f) return;
+
+	// --- PREVENCIÓN DEL BUCLE INFINITO ---
+	FVector CameraForward = FollowCamera->GetForwardVector();
+	CameraForward.Z = 0.0f;
+	CameraForward.Normalize();
+
+	FVector VelocityDir = Velocity.GetSafeNormal();
+
+	// Cambiamos el límite a -0.8f. 
+	// Ahora permite costados (0) y diagonales traseras (-0.7), 
+	// pero bloquea el "hacia atrás exacto" (-1.0).
+	if (FVector::DotProduct(CameraForward, VelocityDir) < 0.1f)
+	{
+		return; 
+	}
+	// -------------------------------------
+
+	// 4. Chequeamos si ya pasó el tiempo de espera desde que soltamos la cámara
+	if (TimeSinceLastCameraInput >= AutoAlignDelay)
+	{
+		FRotator CurrentControlRot = GetControlRotation();
+		FRotator TargetRot = Velocity.Rotation();
+
+		// Interpolamos suavemente (RInterpTo) SOLO en el eje Z (Yaw)
+		FRotator NewControlRot = CurrentControlRot;
+		NewControlRot.Yaw = FMath::RInterpTo(CurrentControlRot, TargetRot, DeltaTime, AutoAlignSpeed).Yaw;
+
+		if (AController* CharController = GetController())
+		{
+			CharController->SetControlRotation(NewControlRot);
+		}
+	}
+}
+
+void ANecroLifeCharacter::ToggleTargeting()
+{
+    // Si ya estamos fijando a alguien, lo soltamos
+    if (bIsTargeting)
+    {
+    	
+    	// Le avisamos al enemigo que ya no es el objetivo
+    	if (CurrentTarget)
+    	{
+    		if (ANecroLifeEnemyBasic* OldEnemy = Cast<ANecroLifeEnemyBasic>(CurrentTarget))
+    		{
+    			OldEnemy->OnTargetStatusChanged(false);
+    		}
+    	}
+    	
+        bIsTargeting = false;
+        CurrentTarget = nullptr;
+        
+        // Devolvemos el movimiento libre al personaje
+        GetCharacterMovement()->bOrientRotationToMovement = true;
+        bUseControllerRotationYaw = false;
+        return;
+    }
+
+    // Si NO estamos fijando, escaneamos buscando enemigos
+    FVector StartLoc = GetActorLocation();
+    TArray<FOverlapResult> Overlaps;
+    FCollisionShape Sphere = FCollisionShape::MakeSphere(TargetingRadius);
+
+    bool bHit = GetWorld()->OverlapMultiByChannel(Overlaps, StartLoc, FQuat::Identity, ECC_Pawn, Sphere);
+
+    if (bHit)
+    {
+    	ANecroLifeEnemyBasic* BestTarget = nullptr;
+        float HighestDot = -1.0f; // Buscamos el que esté más alineado con el centro de la cámara
+        
+        FVector CamForward = FollowCamera->GetForwardVector();
+        FVector CamLoc = FollowCamera->GetComponentLocation();
+
+    	for (auto& Result : Overlaps)
+    	{
+    		AActor* OtherActor = Result.GetActor();
+
+    		// 1. Primero chequeamos que el actor no seamos nosotros mismos
+    		if (OtherActor == this) continue;
+
+    		// 2. Ahora sí hacemos el Cast
+    		ANecroLifeEnemyBasic* Enemy = Cast<ANecroLifeEnemyBasic>(OtherActor);
+
+    		// 3. Validamos que sea un enemigo y esté vivo
+    		if (Enemy && Enemy->IsAlive())
+    		{
+    			FVector DirToEnemy = (Enemy->GetActorLocation() - CamLoc).GetSafeNormal();
+    			float Dot = FVector::DotProduct(CamForward, DirToEnemy);
+
+    			if (Dot > 0.0f && Dot > HighestDot) 
+    			{
+    				HighestDot = Dot;
+    				BestTarget = Enemy;
+    			}
+    		}
+    	}
+
+        // Si encontramos uno válido, lo fijamos
+        if (BestTarget)
+        {
+            CurrentTarget = BestTarget;
+            bIsTargeting = true;
+            
+        	// Activamos su Widget de target ---
+        	BestTarget->OnTargetStatusChanged(true);
+        	
+            // Hacemos que el personaje siempre mire hacia adelante (al enemigo) para poder caminar hacia atrás o a los costados
+            GetCharacterMovement()->bOrientRotationToMovement = false;
+            bUseControllerRotationYaw = true;
+        }
+    }
+}
+
+
+void ANecroLifeCharacter::SwitchTargetRight()
+{
+	if (!bIsTargeting || !CurrentTarget) return;
+
+	FVector StartLoc = GetActorLocation();
+	TArray<FOverlapResult> Overlaps;
+	FCollisionShape Sphere = FCollisionShape::MakeSphere(TargetingRadius);
+
+	GetWorld()->OverlapMultiByChannel(Overlaps, StartLoc, FQuat::Identity, ECC_Pawn, Sphere);
+
+	ANecroLifeEnemyBasic* BestTarget = nullptr;
+	float HighestForwardDot = -1.0f; 
+    
+	FVector CamRight = FollowCamera->GetRightVector();
+	FVector CamForward = FollowCamera->GetForwardVector();
+	FVector CamLoc = FollowCamera->GetComponentLocation();
+
+	for (auto& Result : Overlaps)
+	{
+		AActor* OtherActor = Result.GetActor();
+
+		if (OtherActor == this || OtherActor == CurrentTarget) continue;
+
+		// CAST A TU CLASE REAL
+		ANecroLifeEnemyBasic* Enemy = Cast<ANecroLifeEnemyBasic>(OtherActor);
+
+		if (Enemy && Enemy->IsAlive())
+		{
+			FVector DirToEnemy = (Enemy->GetActorLocation() - CamLoc).GetSafeNormal();
+            
+			float RightDot = FVector::DotProduct(CamRight, DirToEnemy);
+			float ForwardDot = FVector::DotProduct(CamForward, DirToEnemy);
+
+			if (RightDot > 0.1f && ForwardDot > HighestForwardDot)
+			{
+				HighestForwardDot = ForwardDot;
+				BestTarget = Enemy;
+			}
+		}
+	}
+
+	// PROTECCIÓN BLINDADA
+	if (BestTarget != nullptr) 
+	{
+		if (ANecroLifeEnemyBasic* OldEnemy = Cast<ANecroLifeEnemyBasic>(CurrentTarget))
+		{
+			OldEnemy->OnTargetStatusChanged(false);
+		}
+        
+		CurrentTarget = BestTarget;
+		BestTarget->OnTargetStatusChanged(true);
+	}
+}
+
+
+void ANecroLifeCharacter::SwitchTargetLeft()
+{
+	if (!bIsTargeting || !CurrentTarget) return;
+
+	FVector StartLoc = GetActorLocation();
+	TArray<FOverlapResult> Overlaps;
+	FCollisionShape Sphere = FCollisionShape::MakeSphere(TargetingRadius);
+
+	GetWorld()->OverlapMultiByChannel(Overlaps, StartLoc, FQuat::Identity, ECC_Pawn, Sphere);
+
+	ANecroLifeEnemyBasic* BestTarget = nullptr;
+	float HighestForwardDot = -1.0f; 
+    
+	FVector CamRight = FollowCamera->GetRightVector();
+	FVector CamForward = FollowCamera->GetForwardVector();
+	FVector CamLoc = FollowCamera->GetComponentLocation();
+
+	for (auto& Result : Overlaps)
+	{
+		AActor* OtherActor = Result.GetActor();
+
+		if (OtherActor == this || OtherActor == CurrentTarget) continue;
+
+		// CAST A TU CLASE REAL
+		ANecroLifeEnemyBasic* Enemy = Cast<ANecroLifeEnemyBasic>(OtherActor);
+
+		if (Enemy && Enemy->IsAlive())
+		{
+			FVector DirToEnemy = (Enemy->GetActorLocation() - CamLoc).GetSafeNormal();
+            
+			float RightDot = FVector::DotProduct(CamRight, DirToEnemy);
+			float ForwardDot = FVector::DotProduct(CamForward, DirToEnemy);
+
+			if (RightDot < -0.1f && ForwardDot > HighestForwardDot)
+			{
+				HighestForwardDot = ForwardDot;
+				BestTarget = Enemy;
+			}
+		}
+	}
+
+	// PROTECCIÓN BLINDADA
+	if (BestTarget != nullptr) 
+	{
+		if (ANecroLifeEnemyBasic* OldEnemy = Cast<ANecroLifeEnemyBasic>(CurrentTarget))
+		{
+			OldEnemy->OnTargetStatusChanged(false);
+		}
+        
+		CurrentTarget = BestTarget;
+		BestTarget->OnTargetStatusChanged(true);
 	}
 }

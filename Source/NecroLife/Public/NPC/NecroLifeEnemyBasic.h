@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "GameFramework/Character.h"
 #include "Public/Components/UHealthComponent.h"
+#include "Components/WidgetComponent.h"
 #include "NecroLifeEnemyBasic.generated.h"
 
 
@@ -29,6 +30,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
 	FGameplayTag Tag;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Targeting")
+	class UWidgetComponent* TargetWidget;
+	
 	UFUNCTION(BlueprintCallable)
 	FGameplayTag GetTag()
 	{
@@ -40,6 +44,8 @@ public:
 	{
 		Tag=newTag;
 	}
+	
+	
 
 protected:
 	// Called when the game starts or when spawned
@@ -53,4 +59,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual bool IsAlive();
+	
+	// Evento que se dispara cuando el jugador lo fija o lo suelta
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Targeting")
+	void OnTargetStatusChanged(bool bIsTarget);
 };

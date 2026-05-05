@@ -97,6 +97,7 @@ protected:
    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Ability")
    FVector CachedAbilityPointer; 
   
+   // --- CÁMARA ---
    // Valores para la camara
    UPROPERTY(EditAnywhere, Category="Camera in game")
    float MaxPitch=-45;
@@ -107,7 +108,45 @@ protected:
    UPROPERTY(EditAnywhere, Category="Camera in game")
    float MinArmLenght=200;
 
-   // --- SISTEMA DE COMBATE Y ANIMACIONES (Tests_VFX) ---
+   // Auto-alineación de cámara
+   // Tiempo que debe pasar sin tocar el mouse para que la cámara empiece a seguir la espalda
+   UPROPERTY(EditAnywhere, Category="Camera in game")
+   float AutoAlignDelay = 1.5f;
+   
+   // Velocidad a la que la cámara gira para ponerse detrás
+   UPROPERTY(EditAnywhere, Category="Camera in game")
+   float AutoAlignSpeed = 2.0f;
+
+   // Temporizador interno
+   float TimeSinceLastCameraInput = 0.0f;
+
+   // Función para calcular y aplicar la rotación
+   void HandleCameraAutoAlignment(float DeltaTime);
+   
+   // Sistema de targeting (Lock-on)
+   // El enemigo que tenemos fijado actualmente
+   UPROPERTY(BlueprintReadOnly, Category = "Combat|Targeting")
+   AActor* CurrentTarget;
+   // Booleano para saber si estamos en modo combate fijo
+   UPROPERTY(BlueprintReadWrite, Category = "Combat|Targeting")
+   bool bIsTargeting = false;
+   // Rango máximo para buscar enemigos
+   UPROPERTY(EditAnywhere, Category = "Combat|Targeting")
+   float TargetingRadius = 1500.0f;
+
+   // Funciones que vamos a llamar desde el Input
+   UFUNCTION(BlueprintCallable, Category = "Combat|Targeting")
+   void ToggleTargeting();
+
+   UFUNCTION(BlueprintCallable, Category = "Combat|Targeting")
+   void SwitchTargetLeft();
+
+   UFUNCTION(BlueprintCallable, Category = "Combat|Targeting")
+   void SwitchTargetRight();
+
+   
+   
+   // --- SISTEMA DE COMBATE Y ANIMACIONES ---
 
    // Referencia al arma para poder modificarla desde C++
    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Equipment")

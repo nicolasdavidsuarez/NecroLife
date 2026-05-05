@@ -14,6 +14,12 @@ ANecroLifeEnemyBasic::ANecroLifeEnemyBasic()
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	TargetWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("TargetWidget"));
+	TargetWidget->SetupAttachment(RootComponent);
+	TargetWidget->SetWidgetSpace(EWidgetSpace::Screen);
+	TargetWidget->SetDrawSize(FVector2D(64.0f, 64.0f));
+	TargetWidget->SetVisibility(false); // Arranca invisible
+	
 }
 
 // Called when the game starts or when spawned
