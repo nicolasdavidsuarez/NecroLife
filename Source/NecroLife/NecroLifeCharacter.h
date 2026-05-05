@@ -98,7 +98,7 @@ protected:
    FVector CachedAbilityPointer; 
   
    // --- CÁMARA ---
-   // Valores para la camara
+   // - Valores para la camara
    UPROPERTY(EditAnywhere, Category="Camera in game")
    float MaxPitch=-45;
    UPROPERTY(EditAnywhere, Category="Camera in game")
@@ -108,22 +108,19 @@ protected:
    UPROPERTY(EditAnywhere, Category="Camera in game")
    float MinArmLenght=200;
 
-   // Auto-alineación de cámara
+   // - Auto-alineación de cámara
    // Tiempo que debe pasar sin tocar el mouse para que la cámara empiece a seguir la espalda
    UPROPERTY(EditAnywhere, Category="Camera in game")
    float AutoAlignDelay = 1.5f;
-   
-   // Velocidad a la que la cámara gira para ponerse detrás
+      // Velocidad a la que la cámara gira para ponerse detrás
    UPROPERTY(EditAnywhere, Category="Camera in game")
    float AutoAlignSpeed = 2.0f;
-
    // Temporizador interno
    float TimeSinceLastCameraInput = 0.0f;
-
    // Función para calcular y aplicar la rotación
    void HandleCameraAutoAlignment(float DeltaTime);
    
-   // Sistema de targeting (Lock-on)
+   // - Sistema de targeting (Lock-on)
    // El enemigo que tenemos fijado actualmente
    UPROPERTY(BlueprintReadOnly, Category = "Combat|Targeting")
    AActor* CurrentTarget;
@@ -134,13 +131,20 @@ protected:
    UPROPERTY(EditAnywhere, Category = "Combat|Targeting")
    float TargetingRadius = 1500.0f;
 
-   // Funciones que vamos a llamar desde el Input
+   // - Centrado de cámara (reset)
+   // Indica si la cámara se está acomodando a la espalda del jugador
+   bool bIsCenteringCamera = false;
+   // Guarda la rotación exacta a la que queremos llegar
+   FRotator TargetCenterRotation;
+   // Velocidad a la que la cámara hace el "Swoosh" al centrarse
+   UPROPERTY(EditAnywhere, Category="Camera in game")
+   float CameraCenterSpeed = 25.0f;
+   
+   // -Funciones que vamos a llamar desde el Input
    UFUNCTION(BlueprintCallable, Category = "Combat|Targeting")
    void ToggleTargeting();
-
    UFUNCTION(BlueprintCallable, Category = "Combat|Targeting")
    void SwitchTargetLeft();
-
    UFUNCTION(BlueprintCallable, Category = "Combat|Targeting")
    void SwitchTargetRight();
 

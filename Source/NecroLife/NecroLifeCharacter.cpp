@@ -117,8 +117,10 @@ void ANecroLifeCharacter::Look(const FInputActionValue& Value)
 
 void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
 {
-	// ¡Reiniciamos el temporizador porque el jugador tocó la cámara
+	// Reiniciamos el temporizador porque el jugador tocó la cámara
 	TimeSinceLastCameraInput = 0.0f;
+	// Cancelamos el centrado automático si el jugador mueve el mouse
+	bIsCenteringCamera = false;
 	
 	if (GetController() != nullptr && bMouseRightDown)
 	{
@@ -661,8 +663,9 @@ void ANecroLifeCharacter::Tick(float DeltaTime)
 	LookToCastAbility();
 
 	TimeSinceLastCameraInput += DeltaTime;
-
-	// --- LÓGICA DE TARGETING ---
+	
+	// --- CÁMARA ---
+	// MODO TARGETING
 	if (bIsTargeting && CurrentTarget)
 	{
 		ANecroLifeEnemyBasic* Enemy = Cast<ANecroLifeEnemyBasic>(CurrentTarget);
@@ -677,17 +680,33 @@ void ANecroLifeCharacter::Tick(float DeltaTime)
 			// Apuntamos la cámara hacia el enemigo
 			FVector StartLoc = FollowCamera->GetComponentLocation();
 			FVector TargetLoc = CurrentTarget->GetActorLocation();
-            
-			// Le bajamos un poco la Z para mirar al pecho del enemigo, no a los pies ni por encima de la cabeza
+            // Le bajamos un poco la Z para mirar al pecho del enemigo, no a los pies ni por encima de la cabeza
 			TargetLoc.Z -= 50.0f; 
 
 			FRotator TargetRot = UKismetMathLibrary::FindLookAtRotation(StartLoc, TargetLoc);
-            
-			// Interpolamos la rotación (Pitch y Yaw)
+            // Interpolamos la rotación (Pitch y Yaw)
 			FRotator NewRot = FMath::RInterpTo(GetControlRotation(), TargetRot, DeltaTime, 10.0f);
 			GetController()->SetControlRotation(NewRot);
 		}
 	}
+	
+	// MODO CENTRADO
+	else if (bIsCenteringCamera)
+	{
+		FRotator CurrentRot = GetControlRotation();
+
+		// Interpolamos rapidísimo hacia la "foto" que sacamos (CameraCenterSpeed = 25.0f)
+		FRotator NewRot = FMath::RInterpTo(CurrentRot, TargetCenterRotation, DeltaTime, CameraCenterSpeed);
+		GetController()->SetControlRotation(NewRot);
+
+		// Como TargetCenterRotation ya no se mueve, la cámara lo va a alcanzar fácilmente
+		if (FMath::IsNearlyEqual(NewRot.Yaw, TargetCenterRotation.Yaw, 2.0f))
+		{
+			bIsCenteringCamera = false;
+		}
+	}
+	
+	// MODO LIBRE
 	else
 	{
 		// Solo ejecutamos la auto-alineación libre si NO estamos fijando un objetivo
@@ -803,10 +822,9 @@ void ANecroLifeCharacter::HandleCameraAutoAlignment(float DeltaTime)
 
 	FVector VelocityDir = Velocity.GetSafeNormal();
 
-	// Cambiamos el límite a -0.8f. 
-	// Ahora permite costados (0) y diagonales traseras (-0.7), 
-	// pero bloquea el "hacia atrás exacto" (-1.0).
-	if (FVector::DotProduct(CameraForward, VelocityDir) < 0.1f)
+	// El límite es 0.5f. 
+	// La cámara se mueve cuando el personaje mira hacia adelante o en diagonal hacia adelante 
+	if (FVector::DotProduct(CameraForward, VelocityDir) < 0.5f)
 	{
 		return; 
 	}
@@ -863,7 +881,7 @@ void ANecroLifeCharacter::ToggleTargeting()
     if (bHit)
     {
     	ANecroLifeEnemyBasic* BestTarget = nullptr;
-        float HighestDot = -1.0f; // Buscamos el que esté más alineado con el centro de la cámara
+        float HighestDot = -1.0f; // Buscamos el enemmigo que esté más alineado con el centro de la cámara
         
         FVector CamForward = FollowCamera->GetForwardVector();
         FVector CamLoc = FollowCamera->GetComponentLocation();
@@ -875,7 +893,7 @@ void ANecroLifeCharacter::ToggleTargeting()
     		// 1. Primero chequeamos que el actor no seamos nosotros mismos
     		if (OtherActor == this) continue;
 
-    		// 2. Ahora sí hacemos el Cast
+    		// 2. Hacemos el Cast al enemigo
     		ANecroLifeEnemyBasic* Enemy = Cast<ANecroLifeEnemyBasic>(OtherActor);
 
     		// 3. Validamos que sea un enemigo y esté vivo
@@ -892,18 +910,29 @@ void ANecroLifeCharacter::ToggleTargeting()
     		}
     	}
 
-        // Si encontramos uno válido, lo fijamos
-        if (BestTarget)
+        // Si encontramos un enemigo válido, lo fijamos
+        if (BestTarget != nullptr)
         {
             CurrentTarget = BestTarget;
             bIsTargeting = true;
             
-        	// Activamos su Widget de target ---
+        	// Activamos su Widget de target
         	BestTarget->OnTargetStatusChanged(true);
         	
             // Hacemos que el personaje siempre mire hacia adelante (al enemigo) para poder caminar hacia atrás o a los costados
             GetCharacterMovement()->bOrientRotationToMovement = false;
             bUseControllerRotationYaw = true;
+        }
+    	
+        else
+        {
+        	// Si NO encontramos un enemigo, activamos el centrado a la espalda del personaje
+        	bIsCenteringCamera = true;
+        	// CALCULAMOS LA ROTACIÓN OBJETIVO UNA SOLA VEZ
+        	TargetCenterRotation = GetActorRotation();
+			// Mantenemos la altura y la inclinación actuales de la cámara para no marear
+        	TargetCenterRotation.Pitch = GetControlRotation().Pitch;
+        	TargetCenterRotation.Roll = GetControlRotation().Roll;
         }
     }
 }
