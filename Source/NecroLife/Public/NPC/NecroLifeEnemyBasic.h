@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "GameFramework/Character.h"
 #include "Public/Components/UHealthComponent.h"
+#include "Components/WidgetComponent.h"
 #include "NecroLifeEnemyBasic.generated.h"
 
 
@@ -18,26 +19,9 @@ class NECROLIFE_API ANecroLifeEnemyBasic : public ACharacter
 	GENERATED_BODY()
 
 public:
-	UFUNCTION()
-	void HandleOnHealthChange(float X, float Arg);
 	// Sets default values for this character's properties
 	ANecroLifeEnemyBasic();
 
-	// En NecroLifeEnemyBasic.h
-	UPROPERTY(ReplicatedUsing = OnRep_IsDead)
-	bool bIsDead = false;
-	
-	UFUNCTION()
-	void OnRep_IsDead();
-
-	UFUNCTION()
-	void Die();
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "Event")
-	void BP_SetHealthBar(float Percent);
-	
-	UFUNCTION()
-	void setHealtBar();
 
 	//componente de salud
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
@@ -46,6 +30,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
 	FGameplayTag Tag;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Targeting")
+	class UWidgetComponent* TargetWidget;
+	
 	UFUNCTION(BlueprintCallable)
 	FGameplayTag GetTag()
 	{
@@ -57,6 +44,8 @@ public:
 	{
 		Tag=newTag;
 	}
+	
+	
 
 protected:
 	// Called when the game starts or when spawned
@@ -70,8 +59,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual bool IsAlive();
-
-protected:
-	// Esta función es obligatoria para replicar variables
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	// Evento que se dispara cuando el jugador lo fija o lo suelta
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Targeting")
+	void OnTargetStatusChanged(bool bIsTarget);
 };

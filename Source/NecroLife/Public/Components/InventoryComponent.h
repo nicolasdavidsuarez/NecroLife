@@ -14,15 +14,23 @@ class AItemGema;
 UENUM(BlueprintType)
 enum class ETipoEstadisticaGema : uint8
 {
-	VidaMaxima      UMETA(DisplayName = "Vida Máxima"),
-	AtaqueFisico    UMETA(DisplayName = "Ataque Físico"),
-	Defensa         UMETA(DisplayName = "Defensa"),
-	VelocidadAtaquePorcentaje     UMETA(DisplayName = "Velocidad Ataque Porcentaje"),
-	VidaMaximaPorcentaje      UMETA(DisplayName = "Vida Máxima porcentaje"),
-	AtaqueFisicoPorcentaje    UMETA(DisplayName = "Ataque Físico porcentaje"),
-	DefensaPorcentaje         UMETA(DisplayName = "Defensa porcentaje"),
-	DanioDot     UMETA(DisplayName = "Daño Dot"),  //damage over time
-	Velocidad       UMETA(DisplayName = "Velocidad de Movimiento")
+	// --- VALOR DIRECTO: ValorMejora = puntos que suma ---
+	VidaMaxima          UMETA(DisplayName = "[PUNTOS] Vida Máxima"),
+	AtaqueFisico        UMETA(DisplayName = "[PUNTOS] Ataque Físico"),
+	Defensa             UMETA(DisplayName = "[PUNTOS] Defensa"),
+	EnergiaMaxima       UMETA(DisplayName = "[PUNTOS] Energía Máxima"),
+
+	// --- PORCENTUAL: ValorMejora = número entero (ej: 10 = 10%) ---
+	AtaqueFisicoPorcentaje    UMETA(DisplayName = "[%] Ataque Físico"),
+	DefensaPorcentaje         UMETA(DisplayName = "[%] Defensa"),
+	VidaMaximaPorcentaje      UMETA(DisplayName = "[%] Vida Máxima"),
+	Velocidad                 UMETA(DisplayName = "[%] Velocidad de Movimiento"),
+	RegeneracionVida          UMETA(DisplayName = "[%] Regeneración de Vida"),
+	RegeneracionEnergia       UMETA(DisplayName = "[%] Regeneración de Energía"),
+
+	// --- OTROS ---
+	VelocidadAtaquePorcentaje UMETA(DisplayName = "[%] Velocidad de Ataque"),
+	DanioDot                  UMETA(DisplayName = "[PUNTOS] Daño en el Tiempo")
 };
 
 USTRUCT(BlueprintType)

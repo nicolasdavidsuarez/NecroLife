@@ -35,14 +35,16 @@ public:
 	UPROPERTY(BlueprintAssignable, Category="Health")
 	FOnHealthChanged OnHealthChanged;
 	
-	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Health")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Health")
 	float MaxHealth = 100.f;
 
-    UPROPERTY(ReplicatedUsing = OnRep_CurrentHealth, BlueprintReadOnly, Category = "Health")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Health", ReplicatedUsing=OnRep_CurrentHealth)
 	float CurrentHealth;
 
 	UFUNCTION()
 	void OnRep_CurrentHealth();
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UFUNCTION(BlueprintCallable, Category="Health")
 	void TakeDamage(float Amount);
@@ -61,12 +63,23 @@ public:
 
 	//////////Variables privadas
 
+	// Activa la regeneración de vida con un intervalo en segundos
+	UFUNCTION(BlueprintCallable, Category="Health")
+	void SetRegenVida(float PorcentajePorSegundo, float Intervalo = 1.0f);
+
+	// Detiene la regeneración de vida
+	UFUNCTION(BlueprintCallable, Category="Health")
+	void StopRegenVida();
+
 	///TImer handle es un administrador de tiempo de unreal
     ///Sufijo _DOT lo pongo de DAMAGE OVER TIME se usa en video juegos
 	private:
 	FTimerHandle TimerHandle_DOT;
 	float AmountToDamage_DOT;
 	float AmountTime;
-    float DamageOverTime;	
+    float DamageOverTime;
+	FTimerHandle TimerHandle_Regen;
+	float RegenPorcentaje = 0.f;
+	void AplicarRegenVida();
 	void ApplyDamageOverTimer();
 };
