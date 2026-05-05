@@ -29,7 +29,6 @@ EBTNodeResult::Type UBTTask_CombateRanged::ExecuteTask(UBehaviorTreeComponent& O
 
 	FBTCombateRangedMemory* Memory = reinterpret_cast<FBTCombateRangedMemory*>(NodeMemory);
 	Memory->ShootCooldown  = 0.f;
-	Memory->MoveCooldown   = 0.f;
 	Memory->ShootPause     = 0.f;
 	Memory->TimeOutOfRange = 0.f;
 	Memory->bFleeing       = false;
@@ -66,7 +65,6 @@ void UBTTask_CombateRanged::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* N
 
 	FBTCombateRangedMemory* Memory = reinterpret_cast<FBTCombateRangedMemory*>(NodeMemory);
 	Memory->ShootCooldown -= DeltaSeconds;
-	Memory->MoveCooldown  -= DeltaSeconds;
 
 	// Pausa post-disparo: enemigo quieto mirando al jugador
 	if (Memory->ShootPause > 0.f)
@@ -75,25 +73,16 @@ void UBTTask_CombateRanged::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* N
 		return;
 	}
 
-	// Huida: retroceder si el jugador está demasiado cerca
+	// Huida: retroceder mirando al jugador (kiting)
 	if (Distance < Enemy->FleeDistance)
 	{
-		if (Memory->MoveCooldown <= 0.f)
-		{
-			FVector DirAway = (Enemy->GetActorLocation() - PlayerTarget->GetActorLocation()).GetSafeNormal();
-			FVector RetreatPoint = Enemy->GetActorLocation() + DirAway * 400.f;
-			AIController->MoveToLocation(RetreatPoint, 50.f);
-			Memory->MoveCooldown = 0.3f;
-			Memory->bFleeing = true;
-		}
+		FVector DirAway = (Enemy->GetActorLocation() - PlayerTarget->GetActorLocation()).GetSafeNormal();
+		Enemy->AddMovementInput(DirAway, 1.0f);
+		Memory->bFleeing = true;
 	}
 	else
 	{
-		if (Memory->bFleeing)
-		{
-			AIController->StopMovement();
-			Memory->bFleeing = false;
-		}
+		Memory->bFleeing = false;
 	}
 
 	// Si el jugador está fuera de rango, contar tiempo y volver a patrullar

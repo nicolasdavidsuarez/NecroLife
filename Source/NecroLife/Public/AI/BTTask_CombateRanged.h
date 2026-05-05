@@ -9,7 +9,6 @@
 struct FBTCombateRangedMemory
 {
 	float ShootCooldown;
-	float MoveCooldown;
 	float ShootPause;
 	float TimeOutOfRange;
 	bool  bFleeing;
