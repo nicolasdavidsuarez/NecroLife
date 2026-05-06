@@ -129,7 +129,10 @@ protected:
    bool bIsTargeting = false;
    // Rango máximo para buscar enemigos
    UPROPERTY(EditAnywhere, Category = "Combat|Targeting")
-   float TargetingRadius = 1500.0f;
+   float TargetingRadius = 3000.0f;
+   // DEBUGGING - Permite mostrar las líneas y esferas de debug en pantalla
+   UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Targeting")
+   bool bDebugTargeting = true;
 
    // - Centrado de cámara (reset)
    // Indica si la cámara se está acomodando a la espalda del jugador
