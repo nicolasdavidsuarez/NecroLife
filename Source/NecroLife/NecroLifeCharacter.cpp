@@ -992,12 +992,12 @@ void ANecroLifeCharacter::ShowForgeInventoryAction()
     {
         bShowForgeInventory = true;
         SetUIState(true);     
-        OnShowForgeInventory.Broadcast(PS->GetInventoryComponent()->GemsItems);
+        OnShowForgeInventory.Broadcast(PS->GetInventoryComponent()->GemsItemsInInventory);
     }else
     {
         SetUIState(false);
         bShowForgeInventory=false;
-        OnShowForgeInventory.Broadcast(PS->GetInventoryComponent()->GemsItems);
+        OnShowForgeInventory.Broadcast(PS->GetInventoryComponent()->GemsItemsInInventory);
     }
 }
 

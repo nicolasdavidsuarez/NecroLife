@@ -53,9 +53,9 @@ TMap<FName, int32> ANecroLifeForgeNpc::GetPossibleUpgrades(const TArray<FDatosGe
 	// Llenamos el conteo del inventario actual
 	for (const FDatosGema& Gema : GemsItems)
 	{
-		if (!Gema.ID_Gema.IsNone())
+		if (!Gema.NombreGema.IsNone())
 		{
-			InventarioActual.FindOrAdd(Gema.ID_Gema)++;
+			InventarioActual.FindOrAdd(Gema.NombreGema)++;
 		}
 	}
 
@@ -65,13 +65,13 @@ TMap<FName, int32> ANecroLifeForgeNpc::GetPossibleUpgrades(const TArray<FDatosGe
 	{
 		// Solo verificamos si la gema tiene una evolución (Puede que no se pueda)
 		//
-		if (!Gema.ID_NextGema.IsNone() && !UpgradesDisponibles.Contains(Gema.ID_NextGema))
+		if (!Gema.ID_Row_NextGema.IsNone() && !UpgradesDisponibles.Contains(Gema.ID_Row_NextGema))
 		{
-			int32 CantidadQueTiene = InventarioActual.FindRef(Gema.ID_Gema);
+			int32 CantidadQueTiene = InventarioActual.FindRef(Gema.NombreGema);
 			if (Gema.NeedNextGema > 0 && CantidadQueTiene >= Gema.NeedNextGema)
 			{
 				int32 CantidadACrear = CantidadQueTiene / Gema.NeedNextGema;
-            	UpgradesDisponibles.Add(Gema.ID_NextGema, CantidadACrear);
+            	UpgradesDisponibles.Add(Gema.ID_Row_NextGema, CantidadACrear);
 			}
 		}
 	}

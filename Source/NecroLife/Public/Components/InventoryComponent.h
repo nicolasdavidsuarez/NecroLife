@@ -40,11 +40,11 @@ struct FDatosGema : public FTableRowBase
 
 	// El identificador único para buscarla en la base de datos
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gemas")
-	FName ID_Gema;
+	FName NombreGema;
 
 	// El nombre que el jugador lee en la interfaz
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gemas")
-	FText NombreGema;
+	FText DescripcionGema;
 
 	// La imagen que se va a mostrar en el inventario y en el slot
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gemas")
@@ -60,11 +60,14 @@ struct FDatosGema : public FTableRowBase
 
 	//id de la gema que se puede evolucionar
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gemas")
-	FName ID_NextGema;
+	FName ID_Row_NextGema;
 
 	//cantida necesaria para mejora
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gemas")
 	int32 NeedNextGema;
+	
+	UPROPERTY(BlueprintReadOnly)
+	int32 Cantidad = 1;
 };
 
 
@@ -156,10 +159,40 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void AddGems(FDatosGema gema);
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	const TArray<FDatosGema> GetGemsItemsInInventory();
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	const TArray<FDatosGema> GetGemsItemsInSlots();
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void AddGemToSlot(FDatosGema gema);
 
+	UFUNCTION(Server, Reliable)
+	void Server_QuitGemToSlot(const FDatosGema& Gema);
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	
+	
+	void QuitGemToSlot(FDatosGema gema);
+
 	void GemsNotDuplicates(const TArray<FDatosGema>& SourceArray, TArray<FDatosGema>& TargetArray);
+
+	/**
+	 * Intenta craftear/upgradear una gema en la forja.
+	 * Busca en el inventario si hay suficientes copias de GemaBase (según NeedNextGema),
+	 * las consume y agrega la GemaUpgradeada resultante.
+	 *
+	 * @param GemaBase      La gema que se quiere upgradear (debe tener ID_NextGema y NeedNextGema válidos).
+	 * @param GemaUpgrade   La nueva gema resultante del crafteo (ya cargada desde la DataTable).
+	 * @return true si el crafteo fue exitoso, false si no hay materiales suficientes o la gema no es upgradeable.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Forja")
+	bool CraftGem(FDatosGema GemaBase, FDatosGema GemaUpgrade);
+
+	// RPC servidor para CraftGem
+	UFUNCTION(Server, Reliable)
+	void Server_CraftGem(FDatosGema GemaBase, FDatosGema GemaUpgrade);
 	
 };

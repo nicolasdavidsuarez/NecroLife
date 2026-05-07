@@ -16,16 +16,16 @@ struct FEstadisticasPersonaje
 
     UPROPERTY(BlueprintReadOnly, Category="Estadisticas")
     int32 VidaMaxima;
-
+   
     UPROPERTY(BlueprintReadOnly, Category="Estadisticas")
     int32 Ataque;
-
+    
     UPROPERTY(BlueprintReadOnly, Category="Estadisticas")
     int32 Defensa;
-
+  
     UPROPERTY(BlueprintReadOnly, Category="Estadisticas")
     float Velocidad;
-
+ 
     UPROPERTY(BlueprintReadOnly, Category="Estadisticas")
     int32 EnergiaMaxima;
 

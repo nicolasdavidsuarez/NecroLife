@@ -19,31 +19,64 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6901eeb1-7054-49a3-a1a8-73e803d7cb74" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.NecroLife.dir/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.NecroLife.dir/.idea/indexLayout.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.NecroLife.dir/.idea/projectSettingsUpdater.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.NecroLife.dir/.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.NecroLife.dir/.idea/workspace.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.NecroLife/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Characters/Npc/BP_NPC_Forge.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Characters/Npc/BP_NPC_Forge.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.NecroLife/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.NecroLife/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Arte/Materials/M_TreeBark.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Arte/Materials/M_TreeBark.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Arte/Materials/M_TreeLeaves.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Arte/Materials/M_TreeLeaves.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Assets/DataAssets/DT_Gemas.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Assets/DataAssets/DT_Gemas.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Assets/Items/MyItemGema.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Assets/Items/MyItemGema.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Maps/PlayGround/Blueprints/BP_Character.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Maps/PlayGround/Blueprints/BP_Character.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_Gem_Inventory.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_Gem_Inventory.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_Gem_Inventory_Slot.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_Gem_Inventory_Slot.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_Gems_Stats.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_Gems_Stats.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_Hud.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_Hud.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_Icon.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_Icon.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_InventarioForga.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_InventarioForga.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_InventarioRow.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_InventarioRow.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/1/XH/EVWKDFLDZR5YP5D5DNKMZR.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/1/XH/EVWKDFLDZR5YP5D5DNKMZR.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/7/XJ/SBJ380FUHD29KUAV66O4SX.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/7/XJ/SBJ380FUHD29KUAV66O4SX.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/8/6R/KA5L0GIK4BDT4USU2RHWR3.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/8/6R/KA5L0GIK4BDT4USU2RHWR3.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/A/YJ/63EDK1UDNVL410JL3CO8LK.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/A/YJ/63EDK1UDNVL410JL3CO8LK.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/D/YY/ILN3OV8621DY4RFVQD22WK.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/D/YY/ILN3OV8621DY4RFVQD22WK.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_Inventory.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_Inventory.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/1/XH/EVWKDFLDZR5YP5D5DNKMZR.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/2/2P/O769KCYPG11GRD2IDGMCI5.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/2/6B/IWECLFSMRN3VM3ZVJEC91U.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/3/8I/1V3T0OAVIY6G4NQC9H20T1.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/3/P7/R9YVVBSYSEMTL22RXIMJM0.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/4/B9/Z77TBPF4QBORDHVCBYWRBO.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/4/CE/JBOHI0WC0VQW3LJ7LVC69W.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/4/FT/2OYFRU30AQIWMHQEWW8T5M.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/4/UF/NIYQPAJAK8VO19RAVMCZMJ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/4/WK/UM0CKLEKQ43GHJKBIETZLF.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/5/4I/CW3US0G34MG7IROVG8D0QB.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/5/L1/1WI6H2QJV7C4MDEA7R8VUM.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/5/PD/IRVOZBLOJEBA5D6TLN4S75.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/5/TE/SZ2GBQ10F4LADBSHQKYG5H.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/6/68/CP2KOK1DD8VBM1X2XX8RK7.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/6/HY/RTQI6YPKWZZWY0SUO7SXQL.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/7/2M/MMLTNH0R21UZ1L1HY2LD0P.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/7/MR/W6Z13K4VSWSBC44ZDAVYLE.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/7/TB/WCKZ0639CTQQPWJXCK0Y8N.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/7/XJ/SBJ380FUHD29KUAV66O4SX.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/8/38/0FKJ37Z3MFFPUIY9LRGCL4.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/8/5D/X05B26A04YKL83661WRDHK.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/8/5X/P5GGNQY9MEH37Y384G1LXP.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/8/6R/KA5L0GIK4BDT4USU2RHWR3.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/8/DE/WQLEA0TKTT21HR0IRAEVMA.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/9/MM/7AWMM4X0UIRCYD30CKFM0U.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/A/0L/T1DVKC6TEB7VPCOA7I8W4O.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/A/8P/XHTGGVEEZZ8MSRUH4ROYHE.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/A/9G/EWZ8FQMX0OWE4OJOKG5F73.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/A/YJ/63EDK1UDNVL410JL3CO8LK.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/B/37/VKMDVV3J4Q19VLN46J1FXD.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/B/LJ/KA9XMYWFAXJ05AJY56YRAP.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/B/PK/RTJFD3MU2W0S3H4Y0EX0UQ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/D/YY/ILN3OV8621DY4RFVQD22WK.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Maps/OpenWorld/Lvl_OpenWorld/F/0D/XKFBOXYC68M6S334L3KFQU.uasset" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/NecroLife.sln.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/NecroLife.sln.DotSettings.user" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/NecroLife/NecroLifeCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NecroLife/NecroLifeCharacter.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/NecroLife/NecroLifeCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NecroLife/NecroLifeCharacter.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/NecroLife/Private/Components/AttributeComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NecroLife/Private/Components/AttributeComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/NecroLife/Private/Components/UHealthComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NecroLife/Private/Components/UHealthComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/NecroLife/Private/NPC/NecroLifeEnemyBasic.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NecroLife/Private/NPC/NecroLifeEnemyBasic.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/NecroLife/Private/Components/InventoryComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NecroLife/Private/Components/InventoryComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/NecroLife/Private/NPC/NecroLifeForgeNpc.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NecroLife/Private/NPC/NecroLifeForgeNpc.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/NecroLife/Public/Components/AttributeComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NecroLife/Public/Components/AttributeComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/NecroLife/Public/Components/UHealthComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NecroLife/Public/Components/UHealthComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/NecroLife/Public/NPC/NecroLifeEnemyBasic.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NecroLife/Public/NPC/NecroLifeEnemyBasic.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/NecroLife/Public/Components/InventoryComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NecroLife/Public/Components/InventoryComponent.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,8 +90,10 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="cidr-memory-view://0" root0="FORCE_HIGHLIGHTING" />
-    <setting file="cidr-memory-view://1" root0="FORCE_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://10" root0="FORCE_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://11" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../Program Files/Epic Games/UE_5.6/Engine/Source/Runtime/Core/Public/Containers/Array.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../Program Files/Epic Games/UE_5.6/Engine/Source/Runtime/Core/Public/Templates/RefCounting.h" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="McpProjectServerCommands">
     <commands />
@@ -73,29 +108,29 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;C/C++ Project.NecroLife.executor&quot;: &quot;Debug&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;Rama__Programacion&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "C/C++ Project.NecroLife.executor": "Debug",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "cidr.known.project.marker": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "git-widget-placeholder": "Rama__Programacion",
+    "ignore.virus.scanning.warn.message": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="C/C++ Project.NecroLife">
     <configuration name="NecroLife" type="CppProject" factoryName="C++ Project">
       <configuration_1 setup="1">
@@ -211,6 +246,9 @@
       <updated>1778053993600</updated>
       <workItem from="1778054008835" duration="2888000" />
       <workItem from="1778095609657" duration="2290000" />
+      <workItem from="1778101587873" duration="17435000" />
+      <workItem from="1778181692538" duration="29000" />
+      <workItem from="1778181767440" duration="10328000" />
     </task>
     <servers />
   </component>

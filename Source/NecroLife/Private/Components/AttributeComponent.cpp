@@ -13,6 +13,7 @@ UAttributeComponent::UAttributeComponent()
 void UAttributeComponent::BeginPlay()
 {
     Super::BeginPlay();
+    
 }
 
 void UAttributeComponent::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -145,6 +146,8 @@ void UAttributeComponent::RecalcularEstadisticas(const TArray<FDatosGema>& Gemas
         // Armar struct para replicación y UI
         StatsSincronizadas.VidaMaxima = LifeMax;
         StatsSincronizadas.Ataque = Attack;
+        GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Emerald,
+            FString::Printf(TEXT("Attack: %d"),Attack));
         StatsSincronizadas.Defensa = Defense;
         StatsSincronizadas.Velocidad = Velocity;
         StatsSincronizadas.Nivel = Level;

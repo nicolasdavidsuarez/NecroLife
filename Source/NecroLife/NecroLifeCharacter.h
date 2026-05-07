@@ -267,6 +267,7 @@ protected:
     void Move(const FInputActionValue& Value);
     void Look(const FInputActionValue& Value);
 public:
+    UFUNCTION(BlueprintCallable)
     void ShowForgeInventoryAction();
 
 
