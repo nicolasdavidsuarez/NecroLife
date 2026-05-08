@@ -74,6 +74,9 @@ private:
 	UFUNCTION()
 	void MostrarForgeInventory(const TArray<FDatosGema>& GemsToShow);
 	
+	UFUNCTION()
+	void MostrarNuevaGema(FDatosGema gema);
+	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Inventory")
 	void BP_UpdateInventoryUI(const TArray<FDatosGema>& GemsToShow);
 
@@ -92,5 +95,6 @@ private:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Attribute")
 	void BP_UpdateEstadisticas(const FEstadisticasPersonaje& EstadisticasPersonaje);
 
-	
+	UFUNCTION(BlueprintImplementableEvent)
+	void BP_ShowNewGem(FDatosGema gemToShow);	
 };

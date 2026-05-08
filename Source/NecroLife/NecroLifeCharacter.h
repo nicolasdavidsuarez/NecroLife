@@ -30,6 +30,7 @@ struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMostrarInventario);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMostrarNuevaGema, FDatosGema, DatosGema);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnShowForgeInventory, const TArray<FDatosGema>&, GemasDisponibles);
 
 UCLASS(abstract)
@@ -51,6 +52,9 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category="Mostrar Inventario|UI")
     FMostrarInventario ShowInventory;
+    
+    UPROPERTY(BlueprintAssignable, Category="Mostrar Inventario|UI")
+    FOnMostrarNuevaGema ShowNuevaGema;
 
     // Delegate para abrir el inventario de la forja (networking)
     UPROPERTY(BlueprintAssignable, Category="Mostrar Inventario|UI")
@@ -86,6 +90,9 @@ public:
     UFUNCTION(Server, Reliable)
     void Server_ActualizarProgresoMision(FGameplayTag ObjectiveID, int32 Amount);
     void Server_ActualizarProgresoMision_Implementation(FGameplayTag ObjectiveID, int32 Amount);
+    
+    UFUNCTION()
+    void MostarNuevaGema(FDatosGema gemaData);
 
     UFUNCTION(Server, Reliable)
     void Server_AgregarMision(UQuestData* QuestData);

@@ -3,6 +3,7 @@
 
 #include "Items\ItemGema.h"
 
+#include "NecroLifeCharacter.h"
 #include "NecroLifePlayerState.h"
 
 
@@ -39,6 +40,13 @@ void AItemGema::NotifyActorBeginOverlap(AActor* OtherActor)
 		if (Inventory)
 		{
 			Inventory->AddGems(GemaData);
+			ANecroLifeCharacter* character=Cast<ANecroLifeCharacter>(Pawn);
+			if (character)
+			{
+				character->MostarNuevaGema(GemaData);
+			}
+			
+			
 			Destroy();   
 		}
 			

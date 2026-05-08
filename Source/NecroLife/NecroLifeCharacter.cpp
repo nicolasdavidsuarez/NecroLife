@@ -117,6 +117,11 @@ void ANecroLifeCharacter::Server_ActualizarProgresoMision_Implementation(FGamepl
     }
 }
 
+void ANecroLifeCharacter::MostarNuevaGema(FDatosGema gemaData)
+{
+    ShowNuevaGema.Broadcast(gemaData);
+}
+
 void ANecroLifeCharacter::Server_AgregarMision_Implementation(UQuestData* QuestData)
 {
     ANecroLifeGameState* GS = GetWorld()->GetGameState<ANecroLifeGameState>();
