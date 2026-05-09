@@ -6,12 +6,10 @@
 #include "GameplayTagContainer.h"
 #include "GameFramework/Character.h"
 #include "Public/Components/UHealthComponent.h"
-#include "Components/WidgetComponent.h"
+#include "Components/WidgetComponent.h" // Agregado por compañeros
 #include "NecroLifeEnemyBasic.generated.h"
 
-
 class UUHealthComponent;
-
 
 UCLASS()
 class NECROLIFE_API ANecroLifeEnemyBasic : public ACharacter
@@ -19,48 +17,50 @@ class NECROLIFE_API ANecroLifeEnemyBasic : public ACharacter
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	ANecroLifeEnemyBasic();
 
+	// --- Lógica de Salud y Networking (Tu avance) ---
+	UPROPERTY(ReplicatedUsing = OnRep_IsDead)
+	bool bIsDead = false;
 
-	//componente de salud
+	UFUNCTION()
+	void OnRep_IsDead();
+
+	UFUNCTION()
+	void Die();
+
+	UFUNCTION()
+	void HandleOnHealthChange(float Health, float HealthMax);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Event")
+	void BP_SetHealthBar(float Percent);
+
+	// --- Componentes y Tags (Ambos) ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
 	UUHealthComponent* HealthComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
 	FGameplayTag Tag;
 
+	UFUNCTION(BlueprintCallable)
+	FGameplayTag GetTag() { return Tag; }
+
+	UFUNCTION(BlueprintCallable)
+	void SetTag(FGameplayTag newTag) { Tag = newTag; }
+
+	// --- Sistema de Targeting (Avance de compañeros) ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Targeting")
 	class UWidgetComponent* TargetWidget;
-	
-	UFUNCTION(BlueprintCallable)
-	FGameplayTag GetTag()
-	{
-		return Tag;
-	}
 
-	UFUNCTION(BlueprintCallable)
-	void SetTag(FGameplayTag newTag)
-	{
-		Tag=newTag;
-	}
-	
-	
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	virtual bool IsAlive();
-	
-	// Evento que se dispara cuando el jugador lo fija o lo suelta
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Targeting")
 	void OnTargetStatusChanged(bool bIsTarget);
+
+protected:
+	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+public:
+	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual bool IsAlive();
 };

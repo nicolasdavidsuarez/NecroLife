@@ -50,7 +50,7 @@ void UAbilityComponent::AbilityAply()
 		AbilityCooldownEndTimes.Add(CurrentAbility, CurrentTime + CooldownTime);
 
 		// 3. Disparamos tu delegado para actualizar la UI (ej: iniciar la animación de reloj en la barra de habilidades)
-		AbilitySlot.Broadcast(CurrentAbilitySlot);
+		//AbilitySlot.Broadcast(CurrentAbilitySlot);
 	}
 	AbilitySlot.Broadcast(CurrentAbilitySlot);
 }

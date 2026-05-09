@@ -2,6 +2,8 @@
 
 
 #include "Public/Items/ItemXP.h"
+
+#include "Components/AttributeComponent.h"
 #include "Public/COmponents/RPGHelper.h"
 
 
@@ -15,11 +17,15 @@ AItemXP::AItemXP()
 void AItemXP::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
+	if (!HasAuthority()) 
+	{
+		return; 
+	}
+	
 	if (URPGHelper::TakeXP(OtherActor,13))
 	{
 		Destroy();	
-	}
-		
+	}		
 }
 
 // Called when the game starts or when spawned

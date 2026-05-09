@@ -3,6 +3,7 @@
 
 #include "NPC/NecroLifeNpcBasic.h"
 #include "NecroLifeCharacter.h"
+#include "NecroLifeGameState.h"
 #include "Components/QuestComponent.h"
 
 #include "Components/SphereComponent.h"
@@ -71,7 +72,6 @@ void ANecroLifeNpcBasic::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AAc
 		ANecroLifeCharacter* Character = Cast<ANecroLifeCharacter>(OtherActor);
 		if (Character)
 		{
-			// El personaje entró en el rango, que empiece a mirar
 			Character->LookAt(GetActorLocation());
 		}
 	}
@@ -87,6 +87,13 @@ void ANecroLifeNpcBasic::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActo
 	}
 }
 
+
+void ANecroLifeNpcBasic::OnRep_CurrentQuestIndex()
+{
+	///ejecutar aca que pasa en el cliente que no esta hablando con el character npc
+	
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, TEXT("mostrar si no es el que habla con npc"));
+}
 
 void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 {
@@ -104,20 +111,14 @@ void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 	ANecroLifeCharacter* MyCharacter = Cast<ANecroLifeCharacter>(Interactor);
 
 
-	// --- 1. NUEVA VALIDACIÓN DE COOLDOWN ---
 	float CurrentTime = GetWorld()->GetTimeSeconds();
 	if (CurrentTime - LastInteractTime < InteractCooldown)
 	{
-		// Si no ha pasado el tiempo suficiente, ignoramos el input
 		return; 
 	}
-	// Actualizamos el tiempo de la última interacción válida
 	LastInteractTime = CurrentTime;
 	
-	// 1. Verificamos si tenemos datos asignados
 	if (!DialogueData || DialogueData->DialogLines.Num() == 0) return;
-//CurrentDialogIndex=LastDialogIndex;
-	// 2. Comprobamos si todavía quedan líneas por leer
 	if (CurrentDialogIndex < DialogueData->DialogLines.Num())
 	{
 		//la linea siguienete updatea el Hablar con npc, pero tiene que hacerlo solo cuando sea ese tipo de mision
@@ -126,34 +127,25 @@ void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 		// Obtenemos la línea actual
 		FDialogLine CurrentLine = DialogueData->DialogLines[CurrentDialogIndex];
 
-		
-		//la linea siguienete updatea el Hablar con npc, pero tiene que hacerlo solo cuando sea ese tipo de mision
-		/*if (MyCharacter->QuestComponent->UpdateQuestProgress(NpcTag,1))
-		{
-			CurrentDialogIndex++;	
-		}*/
-		// --- AQUÍ VA LA COMUNICACIÓN CON LA UI ---
-		// Por ahora, lo mostramos en pantalla para debuguear
-		
 		FString DialogMsg = FString::Printf(TEXT("%s: %s Aca si o ni tiene linea de dialogos!!!"), 
 			*CurrentLine.SpeakerName.ToString(), 
 			*CurrentLine.DialogueText.ToString());
 		if (CurrentLine.bRequiresPreviousObjective)
 		{
 			// Si el jugador cumplió el objetivo y la quest se actualiza
-			if (MyCharacter->QuestComponent->UpdateQuestProgress(NpcTag, 1))
+			ANecroLifeGameState* GS = GetWorld()->GetGameState<ANecroLifeGameState>();
+
+			if (GS && GS->QuestComponent)
 			{
-				// Avanzamos el índice al diálogo de "¡Gracias por ayudarme!"
+//GS Game State
+				GS->QuestComponent->UpdateQuestProgress(NpcTag, 1);
 				CurrentDialogIndex++;
 				CurrentLine = DialogueData->DialogLines[CurrentDialogIndex];
-				UE_LOG(LogTemp, Warning, TEXT("MANDA A IMPRIMIR MENSAJE LUEGO DEL UPDATEQUESTPROGRESS"));
-				//MyCharacter->ShowDialogue(CurrentLine);
 			
+				// Opcional: Un log para confirmar que el servidor lo recibió
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("El Servidor recibió la interacción y actualizó el GameState"));
 			}
-			// Si UpdateQuestProgress dio false, CurrentDialogIndex no avanza, 
-			// y CurrentLine sigue siendo la de "Aún no terminaste, ve a buscar eso".
-
-			// Ahora sí, mandamos a la UI la línea (ya sea la nueva o la vieja)
+			
 			MyCharacter->ShowDialogue(CurrentLine);
 		
 		}
@@ -216,3 +208,11 @@ void ANecroLifeNpcBasic::NextAddQuest()
 	bIsWaitingForResponse = false;
 }
 
+//net
+void ANecroLifeNpcBasic::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// Registramos la variable para que viaje por internet
+	DOREPLIFETIME(ANecroLifeNpcBasic, CurrentQuestIndex);
+}

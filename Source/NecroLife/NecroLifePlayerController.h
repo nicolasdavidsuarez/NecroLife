@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/InventoryComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "Items/ItemData.h"
 #include "NecroLifePlayerController.generated.h"
 
 class UInputMappingContext;
@@ -41,5 +42,13 @@ protected:
 
 	/** Input mapping context setup */
 	virtual void SetupInputComponent() override;
+
+	UFUNCTION(Client, Reliable)
+	void Client_RefrescarInventarioVisual(const TArray<FDatosGema>& DatosGemas);
+	
+	UFUNCTION()
+	void RefrescarInventarioVisual(const TArray<FDatosGema>& DatosGemas);
+	
+	void OnPossess(APawn* InPawn) override;
 
 };

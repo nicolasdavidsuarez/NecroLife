@@ -12,5 +12,5 @@ ANecroLifePlayerState::ANecroLifePlayerState()
 {
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 	AttributeComponent = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributeComponent"));
-	QuestComponent=CreateDefaultSubobject<UQuestComponent>(TEXT("QuestComponent"));
+	//QuestComponent=CreateDefaultSubobject<UQuestComponent>(TEXT("QuestComponent"));
 }

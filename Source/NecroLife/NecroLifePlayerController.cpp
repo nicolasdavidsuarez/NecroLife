@@ -7,6 +7,9 @@
 #include "InputMappingContext.h"
 #include "Blueprint/UserWidget.h"
 #include "NecroLife.h"
+#include "NecroLifeCharacter.h"
+#include "Components/InventoryComponent.h"
+#include "Widgets/NecroLifeHud.h"
 #include "Widgets/Input/SVirtualJoystick.h"
 
 void ANecroLifePlayerController::BeginPlay()
@@ -59,3 +62,40 @@ void ANecroLifePlayerController::SetupInputComponent()
 		}
 	}
 }
+
+
+
+void ANecroLifePlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+	
+	UInventoryComponent* InvComp = InPawn->FindComponentByClass<UInventoryComponent>();
+	if (InvComp)
+	{		
+		//InvComp->GemsToShow.AddDynamic(this, &ANecroLifePlayerController::RefrescarInventarioVisual);
+		InvComp->GemsToShow.AddDynamic(this, &ANecroLifePlayerController::Client_RefrescarInventarioVisual);
+	}
+}
+
+void ANecroLifePlayerController::Client_RefrescarInventarioVisual_Implementation(const TArray<FDatosGema>& DatosGemas)
+{
+   ////////////////DRY!!!  don´t repeat yourself
+	/*ANecroLifeCharacter* MiChar = Cast<ANecroLifeCharacter>(GetPawn());
+	
+	if (MiChar&&MiChar->HubWidget)
+	{
+		UNecroLifeHud* MiHUD = Cast<UNecroLifeHud>(MiChar->HubWidget);
+		MiHUD->ActualizarInventario(DatosGemas);
+	}*/
+	RefrescarInventarioVisual(DatosGemas);
+}
+void ANecroLifePlayerController::RefrescarInventarioVisual(const TArray<FDatosGema>& DatosGemas)
+ {
+ 	if (!IsLocalController()) return;
+ 	ANecroLifeCharacter* MiChar = Cast<ANecroLifeCharacter>(GetPawn());	
+ 	if (MiChar&&MiChar->HubWidget)
+ 	{
+ 		UNecroLifeHud* MiHUD = Cast<UNecroLifeHud>(MiChar->HubWidget);
+ 		MiHUD->ActualizarInventario(DatosGemas);
+ 	}	
+ }

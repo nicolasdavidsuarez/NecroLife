@@ -1,52 +1,90 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "Public/NPC/NecroLifeEnemyBasic.h"
+#include "Net/UnrealNetwork.h" // Necesario para tu replicación
+#include "Components/WidgetComponent.h"
 
-
-
-
-// Sets default values
 ANecroLifeEnemyBasic::ANecroLifeEnemyBasic()
 {
-  //////	componente de salud
-	HealthComponent = CreateDefaultSubobject<UUHealthComponent>(TEXT("HealthComponent"));
-	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = true;
+    
+    // Tu lógica de red
+    SetReplicates(true);
 
-	TargetWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("TargetWidget"));
-	TargetWidget->SetupAttachment(RootComponent);
-	TargetWidget->SetWidgetSpace(EWidgetSpace::Screen);
-	TargetWidget->SetDrawSize(FVector2D(64.0f, 64.0f));
-	TargetWidget->SetVisibility(false); // Arranca invisible
-	
+    // Componente de salud
+    HealthComponent = CreateDefaultSubobject<UUHealthComponent>(TEXT("HealthComponent"));
+
+    // Configuración del TargetWidget (de tus compañeros)
+    TargetWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("TargetWidget"));
+    TargetWidget->SetupAttachment(RootComponent);
+    TargetWidget->SetWidgetSpace(EWidgetSpace::Screen);
+    TargetWidget->SetDrawSize(FVector2D(64.0f, 64.0f));
+    TargetWidget->SetVisibility(false);
 }
 
-// Called when the game starts or when spawned
 void ANecroLifeEnemyBasic::BeginPlay()
 {
-	Super::BeginPlay();
-	
+    Super::BeginPlay();
+
+    // Tu suscripción al delegado de salud
+    if (HealthComponent)
+    {
+        HealthComponent->OnHealthChanged.AddDynamic(this, &ANecroLifeEnemyBasic::HandleOnHealthChange);
+    }
 }
 
-// Called every frame
-void ANecroLifeEnemyBasic::Tick(float DeltaTime)
+void ANecroLifeEnemyBasic::HandleOnHealthChange(float Health, float HealthMax)
 {
-	Super::Tick(DeltaTime);
-}
-
-// Called to bind functionality to input
-void ANecroLifeEnemyBasic::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
+    if (HealthMax > 0)
+    {
+        float percent = Health / HealthMax;
+        BP_SetHealthBar(percent);
+    }
 }
 
 bool ANecroLifeEnemyBasic::IsAlive()
 {
-	if (HealthComponent->IsDead())
-	{
-		return false;
-	}
-	return true;
+    if (HealthComponent && HealthComponent->IsDead())
+    {
+        Die(); // Mantenemos tu llamada a la lógica de muerte
+        return false;
+    }
+    return true;
 }
 
+void ANecroLifeEnemyBasic::Die()
+{
+    if (HasAuthority()) // Solo el servidor dicta la muerte
+    {
+        bIsDead = true;
+        OnRep_IsDead(); // El servidor también ejecuta la visual localmente
+        SetLifeSpan(3.0f);
+    }
+}
+
+void ANecroLifeEnemyBasic::OnRep_IsDead()
+{
+    // Tu lógica de Ragdoll replicada
+    if (GetMesh())
+    {
+        GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+        GetMesh()->SetSimulatePhysics(true);
+    }
+}
+
+void ANecroLifeEnemyBasic::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    // Registro de tu variable bIsDead para el multijugador
+    DOREPLIFETIME(ANecroLifeEnemyBasic, bIsDead);
+}
+
+void ANecroLifeEnemyBasic::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+}
+
+void ANecroLifeEnemyBasic::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+    Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
