@@ -7,7 +7,6 @@
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "DrawDebugHelpers.h"
 #include "GameFramework/RootMotionSource.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -85,25 +84,22 @@ ANecroLifeCharacter::ANecroLifeCharacter()
 /////////////////// CÁMARA & MOVIMIENTO ///////////////////
 void ANecroLifeCharacter::SetBoomLength(const FInputActionValue& Value)
 {
-	// Si estamos fijando a un enemigo, bloqueamos el zoom para usar la rueda para cambiar de objetivo
-	if (bIsTargeting) return;
- 
-	FVector2D InputVector = Value.Get<FVector2D>();
-	float armLength = CameraBoom->TargetArmLength;
-
-	if (InputVector.X > 0 && armLength < MaxArmLenght)
-	{
-	  armLength += CameraBoom->TargetArmLength * 0.05f;
-	  CameraBoom->TargetArmLength = armLength;
-	}
-	else
-	{     
-	  armLength -= CameraBoom->TargetArmLength * 0.05f;
-	  if (armLength > MinArmLenght)
-	  {
-	     CameraBoom->TargetArmLength = armLength;
-	  }
-	}
+   FVector2D InputVector = Value.Get<FVector2D>();
+   float armLength = CameraBoom->TargetArmLength;
+  
+   if (InputVector.X > 0 && armLength < MaxArmLenght)
+   {
+      armLength += CameraBoom->TargetArmLength * 0.05f;
+      CameraBoom->TargetArmLength = armLength;
+   }
+   else
+   {     
+      armLength -= CameraBoom->TargetArmLength * 0.05f;
+      if (armLength > MinArmLenght)
+      {
+         CameraBoom->TargetArmLength = armLength;
+      }
+   }
 }
 
 void ANecroLifeCharacter::Move(const FInputActionValue& Value)
@@ -689,7 +685,7 @@ void ANecroLifeCharacter::Tick(float DeltaTime)
 		ANecroLifeEnemyBasic* Enemy = Cast<ANecroLifeEnemyBasic>(CurrentTarget);
         
 		// Si el enemigo se murió o lo destruyeron, soltamos el target automáticamente
-		if (!Enemy || !Enemy->IsAlive() || GetDistanceTo(Enemy) > (TargetingRadius * 1.5f))
+		if (!Enemy || !Enemy->IsAlive())
 		{
 			ToggleTargeting(); 
 		}
@@ -896,12 +892,6 @@ void ANecroLifeCharacter::ToggleTargeting()
 
     bool bHit = GetWorld()->OverlapMultiByChannel(Overlaps, StartLoc, FQuat::Identity, ECC_Pawn, Sphere);
 
-	// DEBUG: Dibuja la Esfera de búsqueda de targets
-	if (bDebugTargeting)
-	{
-		DrawDebugSphere(GetWorld(), StartLoc, TargetingRadius, 32, FColor::Cyan, false, 2.0f, 0, 1.0f);
-	}
-	
     if (bHit)
     {
     	ANecroLifeEnemyBasic* BestTarget = nullptr;
@@ -923,35 +913,9 @@ void ANecroLifeCharacter::ToggleTargeting()
     		// 3. Validamos que sea un enemigo y esté vivo
     		if (Enemy && Enemy->IsAlive())
     		{
-    			// Raycast para determinar visibiidad de enemigos entre obstáculos
-    			FHitResult HitResult;
-    			FCollisionQueryParams QueryParams;
-    			QueryParams.AddIgnoredActor(this); // Que el rayo no choque con nuestro propio personaje
-
-    			// Lanzamos un rayo desde la cámara hasta el enemigo usando el canal de visibilidad
-    			bool bHitObstacle = GetWorld()->LineTraceSingleByChannel(HitResult, CamLoc, Enemy->GetActorLocation(), ECC_Visibility, QueryParams);
-
-    			// Si el rayo chocó con algo, y ese algo NO es el enemigo... ¡Hay una pared en el medio!
-    			if (bHitObstacle && HitResult.GetActor() != Enemy)
-    			{
-    				// DEBUG: Hay una pared (Láser Rojo)
-    				if (bDebugTargeting) DrawDebugLine(GetWorld(), CamLoc, HitResult.ImpactPoint, FColor::Red, false, 2.0f, 0, 2.0f);
-    				continue; // "continue" hace que el bucle ignore a este enemigo y pase a evaluar al siguiente
-    			}
-    			
-    			// DEBUG: Visión despejada (Láser Verde)
-    			if (bDebugTargeting) DrawDebugLine(GetWorld(), CamLoc, Enemy->GetActorLocation(), FColor::Green, false, 2.0f, 0, 1.0f);
-    			
     			FVector DirToEnemy = (Enemy->GetActorLocation() - CamLoc).GetSafeNormal();
     			float Dot = FVector::DotProduct(CamForward, DirToEnemy);
 
-    			// DEBUG: Mostrar el valor del Dot Product sobre la cabeza del enemigo
-    			if (bDebugTargeting)
-    			{
-    				FString ScoreString = FString::Printf(TEXT("Dot: %f"), Dot);
-    				DrawDebugString(GetWorld(), Enemy->GetActorLocation() + FVector(0, 0, 100), ScoreString, nullptr, FColor::White, 2.0f);
-    			}
-    			
     			if (Dot > 0.0f && Dot > HighestDot) 
     			{
     				HighestDot = Dot;
@@ -998,9 +962,6 @@ void ANecroLifeCharacter::SwitchTargetRight()
 
 	GetWorld()->OverlapMultiByChannel(Overlaps, StartLoc, FQuat::Identity, ECC_Pawn, Sphere);
 
-	// DEBUG: Esfera de búsqueda para el cambio de objetivo
-	if (bDebugTargeting) DrawDebugSphere(GetWorld(), StartLoc, TargetingRadius, 32, FColor::Orange, false, 2.0f, 0, 1.0f);
-	
 	ANecroLifeEnemyBasic* BestTarget = nullptr;
 	float HighestForwardDot = -1.0f; 
     
@@ -1019,37 +980,11 @@ void ANecroLifeCharacter::SwitchTargetRight()
 
 		if (Enemy && Enemy->IsAlive())
 		{
-			// Raycast para determinar visibiidad de enemigos entre obstáculos
-			FHitResult HitResult;
-			FCollisionQueryParams QueryParams;
-			QueryParams.AddIgnoredActor(this); // Que el rayo no choque con nuestro propio personaje
-
-			// Lanzamos un rayo desde la cámara hasta el enemigo usando el canal de visibilidad
-			bool bHitObstacle = GetWorld()->LineTraceSingleByChannel(HitResult, CamLoc, Enemy->GetActorLocation(), ECC_Visibility, QueryParams);
-
-			// Si el rayo chocó con algo, y ese algo NO es el enemigo... ¡Hay una pared en el medio!
-			if (bHitObstacle && HitResult.GetActor() != Enemy)
-			{
-				// DEBUG: Pared (Láser Rojo)
-				if (bDebugTargeting) DrawDebugLine(GetWorld(), CamLoc, HitResult.ImpactPoint, FColor::Red, false, 2.0f, 0, 2.0f);
-				continue;
-			}
-			
-			// DEBUG: Visión despejada (Láser Verde)
-			if (bDebugTargeting) DrawDebugLine(GetWorld(), CamLoc, Enemy->GetActorLocation(), FColor::Green, false, 2.0f, 0, 1.0f);
-			
 			FVector DirToEnemy = (Enemy->GetActorLocation() - CamLoc).GetSafeNormal();
             
 			float RightDot = FVector::DotProduct(CamRight, DirToEnemy);
 			float ForwardDot = FVector::DotProduct(CamForward, DirToEnemy);
 
-			// DEBUG: Textos con los valores direccionales
-			if (bDebugTargeting)
-			{
-				FString ScoreString = FString::Printf(TEXT("Right: %.2f\nFwd: %.2f"), RightDot, ForwardDot);
-				DrawDebugString(GetWorld(), Enemy->GetActorLocation() + FVector(0, 0, 120), ScoreString, nullptr, FColor::Yellow, 2.0f);
-			}
-			
 			if (RightDot > 0.1f && ForwardDot > HighestForwardDot)
 			{
 				HighestForwardDot = ForwardDot;
@@ -1082,9 +1017,6 @@ void ANecroLifeCharacter::SwitchTargetLeft()
 
 	GetWorld()->OverlapMultiByChannel(Overlaps, StartLoc, FQuat::Identity, ECC_Pawn, Sphere);
 
-	// DEBUG: Esfera de búsqueda 
-	if (bDebugTargeting) DrawDebugSphere(GetWorld(), StartLoc, TargetingRadius, 32, FColor::Purple, false, 2.0f, 0, 1.0f);
-	
 	ANecroLifeEnemyBasic* BestTarget = nullptr;
 	float HighestForwardDot = -1.0f; 
     
@@ -1098,42 +1030,16 @@ void ANecroLifeCharacter::SwitchTargetLeft()
 
 		if (OtherActor == this || OtherActor == CurrentTarget) continue;
 
-		// CAST a la clase base de enemigo
+		// CAST A TU CLASE REAL
 		ANecroLifeEnemyBasic* Enemy = Cast<ANecroLifeEnemyBasic>(OtherActor);
 
 		if (Enemy && Enemy->IsAlive())
 		{
-			// Raycast para determinar visibiidad de enemigos entre obstáculos
-			FHitResult HitResult;
-			FCollisionQueryParams QueryParams;
-			QueryParams.AddIgnoredActor(this); // Que el rayo no choque con nuestro propio personaje
-
-			// Lanzamos un rayo desde la cámara hasta el enemigo usando el canal de visibilidad
-			bool bHitObstacle = GetWorld()->LineTraceSingleByChannel(HitResult, CamLoc, Enemy->GetActorLocation(), ECC_Visibility, QueryParams);
-
-			// Si el rayo chocó con algo, y ese algo NO es el enemigo... ¡Hay una pared en el medio!
-			if (bHitObstacle && HitResult.GetActor() != Enemy)
-			{
-				// DEBUG: Pared (Láser Rojo)
-				if (bDebugTargeting) DrawDebugLine(GetWorld(), CamLoc, HitResult.ImpactPoint, FColor::Red, false, 2.0f, 0, 2.0f);
-				continue; // "continue" hace que el bucle ignore a este enemigo y pase a evaluar al siguiente
-			}
-			
-			// DEBUG: Visión despejada (Láser Verde)
-			if (bDebugTargeting) DrawDebugLine(GetWorld(), CamLoc, Enemy->GetActorLocation(), FColor::Green, false, 2.0f, 0, 1.0f);
-			
 			FVector DirToEnemy = (Enemy->GetActorLocation() - CamLoc).GetSafeNormal();
             
 			float RightDot = FVector::DotProduct(CamRight, DirToEnemy);
 			float ForwardDot = FVector::DotProduct(CamForward, DirToEnemy);
 
-			// DEBUG: Textos con los valores direccionales
-			if (bDebugTargeting)
-			{
-				FString ScoreString = FString::Printf(TEXT("Right: %.2f\nFwd: %.2f"), RightDot, ForwardDot);
-				DrawDebugString(GetWorld(), Enemy->GetActorLocation() + FVector(0, 0, 120), ScoreString, nullptr, FColor::Yellow, 2.0f);
-			}
-			
 			if (RightDot < -0.1f && ForwardDot > HighestForwardDot)
 			{
 				HighestForwardDot = ForwardDot;
