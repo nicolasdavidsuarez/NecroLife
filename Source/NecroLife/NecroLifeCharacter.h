@@ -201,7 +201,10 @@ protected:
     UPROPERTY(BlueprintReadWrite, Category="Combat|Targeting")
     bool bIsTargeting = false;
     UPROPERTY(EditAnywhere, Category="Combat|Targeting")
-    float TargetingRadius = 1500.0f;
+    float TargetingRadius = 3500.0f;
+    // DEBUG: Switch para prender/apagar visuales
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Targeting")
+    bool bDebugTargeting = true;
 
     // --- Centrado de cámara (de los compañeros) ---
     bool bIsCenteringCamera = false;

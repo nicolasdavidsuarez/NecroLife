@@ -7,6 +7,7 @@
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "DrawDebugHelpers.h"
 #include "GameFramework/RootMotionSource.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -258,9 +259,11 @@ void ANecroLifeCharacter::Tick(float DeltaTime)
     {
         // MODO TARGETING: apuntamos la cámara al enemigo fijado
         ANecroLifeEnemyBasic* Enemy = Cast<ANecroLifeEnemyBasic>(CurrentTarget);
-        if (!Enemy || !Enemy->IsAlive())
+       
+        // Chequeo de distancia
+        if (!Enemy || !Enemy->IsAlive() || GetDistanceTo(Enemy) > (TargetingRadius * 1.5f))
         {
-            ToggleTargeting(); // El enemigo murió, soltamos el target
+            ToggleTargeting(); // El enemigo murió o se alejó, soltamos el target
         }
         else
         {
@@ -294,6 +297,9 @@ void ANecroLifeCharacter::Tick(float DeltaTime)
 
 void ANecroLifeCharacter::SetBoomLength(const FInputActionValue& Value)
 {
+    // Bloqueamos el zoom de la cámara si estamos fijando a un enemigo
+    if (bIsTargeting) return;
+    
     FVector2D InputVector = Value.Get<FVector2D>();
     float armLength = CameraBoom->TargetArmLength;
 
@@ -442,6 +448,8 @@ void ANecroLifeCharacter::ToggleTargeting()
     FCollisionShape Sphere = FCollisionShape::MakeSphere(TargetingRadius);
     bool bHit = GetWorld()->OverlapMultiByChannel(Overlaps, StartLoc, FQuat::Identity, ECC_Pawn, Sphere);
 
+    if (bDebugTargeting) DrawDebugSphere(GetWorld(), StartLoc, TargetingRadius, 32, FColor::Cyan, false, 2.0f, 0, 1.0f);
+
     if (bHit)
     {
         ANecroLifeEnemyBasic* BestTarget = nullptr;
@@ -454,10 +462,31 @@ void ANecroLifeCharacter::ToggleTargeting()
             AActor* OtherActor = Result.GetActor();
             if (OtherActor == this) continue;
             ANecroLifeEnemyBasic* Enemy = Cast<ANecroLifeEnemyBasic>(OtherActor);
+            
             if (Enemy && Enemy->IsAlive())
             {
+                FHitResult HitResult;
+                FCollisionQueryParams QueryParams;
+                QueryParams.AddIgnoredActor(this); 
+                bool bHitObstacle = GetWorld()->LineTraceSingleByChannel(HitResult, CamLoc, Enemy->GetActorLocation(), ECC_Visibility, QueryParams);
+
+                if (bHitObstacle && HitResult.GetActor() != Enemy)
+                {
+                    if (bDebugTargeting) DrawDebugLine(GetWorld(), CamLoc, HitResult.ImpactPoint, FColor::Red, false, 2.0f, 0, 2.0f);
+                    continue; 
+                }
+
+                if (bDebugTargeting) DrawDebugLine(GetWorld(), CamLoc, Enemy->GetActorLocation(), FColor::Green, false, 2.0f, 0, 1.0f);
+
                 FVector DirToEnemy = (Enemy->GetActorLocation() - CamLoc).GetSafeNormal();
                 float Dot = FVector::DotProduct(CamForward, DirToEnemy);
+                
+                if (bDebugTargeting)
+                {
+                    FString ScoreString = FString::Printf(TEXT("Dot: %f"), Dot);
+                    DrawDebugString(GetWorld(), Enemy->GetActorLocation() + FVector(0, 0, 100), ScoreString, nullptr, FColor::White, 2.0f);
+                }
+
                 if (Dot > 0.0f && Dot > HighestDot)
                 {
                     HighestDot = Dot;
@@ -493,6 +522,8 @@ void ANecroLifeCharacter::SwitchTargetRight()
     FCollisionShape Sphere = FCollisionShape::MakeSphere(TargetingRadius);
     GetWorld()->OverlapMultiByChannel(Overlaps, StartLoc, FQuat::Identity, ECC_Pawn, Sphere);
 
+    if (bDebugTargeting) DrawDebugSphere(GetWorld(), StartLoc, TargetingRadius, 32, FColor::Orange, false, 2.0f, 0, 1.0f);
+
     ANecroLifeEnemyBasic* BestTarget = nullptr;
     float HighestForwardDot = -1.0f;
     FVector CamRight   = FollowCamera->GetRightVector();
@@ -504,11 +535,32 @@ void ANecroLifeCharacter::SwitchTargetRight()
         AActor* OtherActor = Result.GetActor();
         if (OtherActor == this || OtherActor == CurrentTarget) continue;
         ANecroLifeEnemyBasic* Enemy = Cast<ANecroLifeEnemyBasic>(OtherActor);
+        
         if (Enemy && Enemy->IsAlive())
         {
+            FHitResult HitResult;
+            FCollisionQueryParams QueryParams;
+            QueryParams.AddIgnoredActor(this); 
+            bool bHitObstacle = GetWorld()->LineTraceSingleByChannel(HitResult, CamLoc, Enemy->GetActorLocation(), ECC_Visibility, QueryParams);
+
+            if (bHitObstacle && HitResult.GetActor() != Enemy)
+            {
+                if (bDebugTargeting) DrawDebugLine(GetWorld(), CamLoc, HitResult.ImpactPoint, FColor::Red, false, 2.0f, 0, 2.0f);
+                continue;
+            }
+
+            if (bDebugTargeting) DrawDebugLine(GetWorld(), CamLoc, Enemy->GetActorLocation(), FColor::Green, false, 2.0f, 0, 1.0f);
+
             FVector DirToEnemy = (Enemy->GetActorLocation() - CamLoc).GetSafeNormal();
             float RightDot   = FVector::DotProduct(CamRight, DirToEnemy);
             float ForwardDot = FVector::DotProduct(CamForward, DirToEnemy);
+            
+            if (bDebugTargeting)
+            {
+                FString ScoreString = FString::Printf(TEXT("Right: %.2f\nFwd: %.2f"), RightDot, ForwardDot);
+                DrawDebugString(GetWorld(), Enemy->GetActorLocation() + FVector(0, 0, 120), ScoreString, nullptr, FColor::Yellow, 2.0f);
+            }
+
             if (RightDot > 0.1f && ForwardDot > HighestForwardDot)
             {
                 HighestForwardDot = ForwardDot;
@@ -535,6 +587,8 @@ void ANecroLifeCharacter::SwitchTargetLeft()
     FCollisionShape Sphere = FCollisionShape::MakeSphere(TargetingRadius);
     GetWorld()->OverlapMultiByChannel(Overlaps, StartLoc, FQuat::Identity, ECC_Pawn, Sphere);
 
+    if (bDebugTargeting) DrawDebugSphere(GetWorld(), StartLoc, TargetingRadius, 32, FColor::Purple, false, 2.0f, 0, 1.0f);
+
     ANecroLifeEnemyBasic* BestTarget = nullptr;
     float HighestForwardDot = -1.0f;
     FVector CamRight   = FollowCamera->GetRightVector();
@@ -546,11 +600,32 @@ void ANecroLifeCharacter::SwitchTargetLeft()
         AActor* OtherActor = Result.GetActor();
         if (OtherActor == this || OtherActor == CurrentTarget) continue;
         ANecroLifeEnemyBasic* Enemy = Cast<ANecroLifeEnemyBasic>(OtherActor);
+        
         if (Enemy && Enemy->IsAlive())
         {
+            FHitResult HitResult;
+            FCollisionQueryParams QueryParams;
+            QueryParams.AddIgnoredActor(this); 
+            bool bHitObstacle = GetWorld()->LineTraceSingleByChannel(HitResult, CamLoc, Enemy->GetActorLocation(), ECC_Visibility, QueryParams);
+
+            if (bHitObstacle && HitResult.GetActor() != Enemy)
+            {
+                if (bDebugTargeting) DrawDebugLine(GetWorld(), CamLoc, HitResult.ImpactPoint, FColor::Red, false, 2.0f, 0, 2.0f);
+                continue;
+            }
+
+            if (bDebugTargeting) DrawDebugLine(GetWorld(), CamLoc, Enemy->GetActorLocation(), FColor::Green, false, 2.0f, 0, 1.0f);
+
             FVector DirToEnemy = (Enemy->GetActorLocation() - CamLoc).GetSafeNormal();
             float RightDot   = FVector::DotProduct(CamRight, DirToEnemy);
             float ForwardDot = FVector::DotProduct(CamForward, DirToEnemy);
+            
+            if (bDebugTargeting)
+            {
+                FString ScoreString = FString::Printf(TEXT("Right: %.2f\nFwd: %.2f"), RightDot, ForwardDot);
+                DrawDebugString(GetWorld(), Enemy->GetActorLocation() + FVector(0, 0, 120), ScoreString, nullptr, FColor::Yellow, 2.0f);
+            }
+
             if (RightDot < -0.1f && ForwardDot > HighestForwardDot)
             {
                 HighestForwardDot = ForwardDot;
