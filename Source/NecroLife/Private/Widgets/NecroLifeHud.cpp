@@ -171,6 +171,8 @@ void UNecroLifeHud::ActualizarStats(const FEstadisticasPersonaje& EstadisticasPe
 
 void UNecroLifeHud::MostrarForgeInventory(const TArray<FDatosGema>& GemsToShow)
 {
+	GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Blue,
+		  FString(TEXT("llamo al forge inventario")));
 	BP_UpdateForgeInventoryUI(GemsToShow);
 }
 void UNecroLifeHud::MostrarNuevaGema(FDatosGema gema)

@@ -14,6 +14,7 @@
 #include "Types/NecroLifeTypes.h"
 #include "NecroLifeCharacter.generated.h"
 
+struct FActiveQuestData;
 struct FGameplayTag;
 class UBoxComponent;
 class USpringArmComponent;
@@ -90,6 +91,12 @@ public:
     UFUNCTION(Server, Reliable)
     void Server_ActualizarProgresoMision(FGameplayTag ObjectiveID, int32 Amount);
     void Server_ActualizarProgresoMision_Implementation(FGameplayTag ObjectiveID, int32 Amount);
+    
+    UFUNCTION(Client, Reliable)
+    void Client_MostrarNuevaGema(FDatosGema Data);
+    
+    UFUNCTION(Client, Reliable)
+    void Client_SyncQuestUI(const TArray<FQuestUIData>& QuestList);
     
     UFUNCTION()
     void MostarNuevaGema(FDatosGema gemaData);
@@ -201,10 +208,7 @@ protected:
     UPROPERTY(BlueprintReadWrite, Category="Combat|Targeting")
     bool bIsTargeting = false;
     UPROPERTY(EditAnywhere, Category="Combat|Targeting")
-    float TargetingRadius = 3500.0f;
-    // DEBUG: Switch para prender/apagar visuales
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Targeting")
-    bool bDebugTargeting = true;
+    float TargetingRadius = 1500.0f;
 
     // --- Centrado de cámara (de los compañeros) ---
     bool bIsCenteringCamera = false;

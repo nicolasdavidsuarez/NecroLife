@@ -21,21 +21,14 @@
   <component name="ChangeListManager">
     <list default="true" id="6901eeb1-7054-49a3-a1a8-73e803d7cb74" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.NecroLife/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.NecroLife/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Arte/Materials/M_Rock.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Arte/Materials/M_Rock.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Arte/Materials/M_RockMoss.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Arte/Materials/M_RockMoss.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Assets/Items/MyItemGema.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Assets/Items/MyItemGema.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Maps/Lvl_Inicio/Lvl_Inicio.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Maps/Lvl_Inicio/Lvl_Inicio.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Maps/Lvl_Lan/Lvl_Lan.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Maps/Lvl_Lan/Lvl_Lan.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_Gems_Stats.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_Gems_Stats.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Characters/Npc/BP_NPC_Forge.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Characters/Npc/BP_NPC_Forge.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Characters/Playable_Characters/BP_Huesos.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Characters/Playable_Characters/BP_Huesos.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_Hud.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_Hud.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_PantallaInicio.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_PantallaInicio.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Widget/WBP_LanConnection.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widget/WBP_LanConnection.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NecroLife.uproject" beforeDir="false" afterPath="$PROJECT_DIR$/NecroLife.uproject" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_InventarioRow.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Widget/UX_UI/WB_InventarioRow.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/NecroLife.sln.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/NecroLife.sln.DotSettings.user" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/NecroLife/NecroLifeCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NecroLife/NecroLifeCharacter.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/NecroLife/NecroLifeCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NecroLife/NecroLifeCharacter.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/NecroLife/Private/Items/ItemGema.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NecroLife/Private/Items/ItemGema.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/NecroLife/Private/Widgets/NecroLifeHud.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NecroLife/Private/Widgets/NecroLifeHud.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/NecroLife/Public/Widgets/NecroLifeHud.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/NecroLife/Public/Widgets/NecroLifeHud.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,8 +42,8 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="cidr-memory-view://8" root0="FORCE_HIGHLIGHTING" />
-    <setting file="cidr-memory-view://9" root0="FORCE_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://4" root0="FORCE_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://5" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../Program Files/Epic Games/UE_5.6/Engine/Source/Runtime/Core/Public/Containers/Array.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../Program Files/Epic Games/UE_5.6/Engine/Source/Runtime/Core/Public/Templates/RefCounting.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../Program Files/Epic Games/UE_5.6/Engine/Source/Runtime/Core/Public/UObject/ScriptDelegates.h" root0="FORCE_HIGHLIGHTING" />
@@ -70,7 +63,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "C/C++ Project.NecroLife.executor": "Run",
+    "C/C++ Project.NecroLife.executor": "Debug",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.MCP Project settings loaded": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
@@ -81,13 +74,14 @@
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "cidr.known.project.marker": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "Programación__Fran__M2",
+    "git-widget-placeholder": "Rama__Programacion",
     "ignore.virus.scanning.warn.message": "true",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
+    "two.files.diff.last.used.file": "C:/Users/Nicol/OneDrive/Escritorio/Source/NecroLife/NecroLifeCharacter.cpp",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -222,6 +216,7 @@
       <workItem from="1778181767440" duration="10328000" />
       <workItem from="1778194616808" duration="8319000" />
       <workItem from="1778341612948" duration="4723000" />
+      <workItem from="1778418702019" duration="3560000" />
     </task>
     <servers />
   </component>
