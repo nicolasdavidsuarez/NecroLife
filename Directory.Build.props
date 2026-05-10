@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Suprime errores de auditoría de vulnerabilidades NuGet en proyectos del engine (Gauntlet, etc.) -->
+    <NuGetAudit>false</NuGetAudit>
+  </PropertyGroup>
+</Project>

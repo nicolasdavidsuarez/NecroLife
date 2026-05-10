@@ -5,6 +5,7 @@
 
 ANecroLifeEnemyRanged::ANecroLifeEnemyRanged()
 {
+	EsenciasAlMorir = 90.f;
 }
 
 void ANecroLifeEnemyRanged::ShootProjectile(AActor* Target)

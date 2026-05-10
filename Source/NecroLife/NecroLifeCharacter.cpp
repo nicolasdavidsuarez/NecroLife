@@ -63,7 +63,7 @@ void ANecroLifeCharacter::Server_AplyAbility_Implementation()
             URPGHelper::ApplyDamage(Other, 100);
             if (!EnemyBasic->IsAlive())
             {
-                URPGHelper::TakeXP(this, 10);
+                URPGHelper::TakeXP(this, EnemyBasic->EsenciasAlMorir);
                 Server_ActualizarProgresoMision(EnemyBasic->GetTag(), 1);
             }
         }
@@ -95,10 +95,9 @@ void ANecroLifeCharacter::Server_AplyAction_Implementation()
         if (AngleToTarget <= 45.f)
         {
             URPGHelper::ApplyDamage(Other, 10);
-            //EnemyBasic->setHealtBar();
             if (!EnemyBasic->IsAlive())
             {
-                URPGHelper::TakeXP(this, 10);
+                URPGHelper::TakeXP(this, EnemyBasic->EsenciasAlMorir);
                 Server_ActualizarProgresoMision(EnemyBasic->GetTag(), 1);
             }
         }
@@ -713,8 +712,7 @@ void ANecroLifeCharacter::ExecuteAttackHit()
 
             if (!EnemyBasic->IsAlive())
             {
-                URPGHelper::TakeXP(this, 10);
-                // Redirigido al GameState para coop
+                URPGHelper::TakeXP(this, EnemyBasic->EsenciasAlMorir);
                 Server_ActualizarProgresoMision(EnemyBasic->GetTag(), 1);
             }
         }
@@ -750,8 +748,7 @@ void ANecroLifeCharacter::ExecuteAbilityHit()
             URPGHelper::ApplyDamage(Other, Attribute->Attack);
             if (!EnemyBasic->IsAlive())
             {
-                URPGHelper::TakeXP(this, 10);
-                // Redirigido al GameState para coop
+                URPGHelper::TakeXP(this, EnemyBasic->EsenciasAlMorir);
                 Server_ActualizarProgresoMision(EnemyBasic->GetTag(), 1);
             }
         }

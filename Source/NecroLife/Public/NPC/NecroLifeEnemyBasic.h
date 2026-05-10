@@ -48,6 +48,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetTag(FGameplayTag newTag) { Tag = newTag; }
 
+	// Esencias que otorga al morir (configurable por instancia en Blueprint)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Esencias")
+	float EsenciasAlMorir = 60.f;
+
 	// --- Sistema de Targeting (Avance de compañeros) ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Targeting")
 	class UWidgetComponent* TargetWidget;

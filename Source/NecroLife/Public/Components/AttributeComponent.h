@@ -75,6 +75,9 @@ public:
     FOnXPChanged OnXPChanged;
 
     // --- Level / XP ---
+    static constexpr int32 MaxLevel = 20;
+    static const float XPTable[MaxLevel];
+
     UFUNCTION(BlueprintCallable, Category="Level")
     void TakeXP(float Amount);
 
@@ -86,6 +89,15 @@ public:
 
     UPROPERTY(ReplicatedUsing=OnRep_XPChanged, VisibleAnywhere, BlueprintReadOnly, Category="Level")
     int32 Level = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Level|Progresion")
+    int32 VidaPorNivel = 15;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Level|Progresion")
+    int32 AtaquePorNivel = 5;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Level|Progresion")
+    int32 DefensaPorNivel = 3;
 
     // --- Life ---
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Life")

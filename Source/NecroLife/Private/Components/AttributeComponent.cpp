@@ -4,6 +4,29 @@
 #include "Components/InventoryComponent.h"
 #include "Net/UnrealNetwork.h"
 
+const float UAttributeComponent::XPTable[UAttributeComponent::MaxLevel] = {
+    100.f,    // 0 → 1  (~2 kills)
+    160.f,    // 1 → 2  (~3 kills)
+    220.f,    // 2 → 3  (~4 kills)
+    280.f,    // 3 → 4  (~5 kills)
+    500.f,    // 4 → 5
+    750.f,    // 5 → 6
+    1000.f,   // 6 → 7
+    1400.f,   // 7 → 8
+    1900.f,   // 8 → 9
+    2500.f,   // 9 → 10
+    3200.f,   // 10 → 11
+    4000.f,   // 11 → 12
+    4900.f,   // 12 → 13
+    5900.f,   // 13 → 14
+    7000.f,   // 14 → 15
+    8200.f,   // 15 → 16
+    9500.f,   // 16 → 17
+    11000.f,  // 17 → 18
+    12500.f,  // 18 → 19
+    14000.f,  // 19 → 20
+};
+
 UAttributeComponent::UAttributeComponent()
 {
     PrimaryComponentTick.bCanEverTick = true;
@@ -31,18 +54,26 @@ void UAttributeComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 void UAttributeComponent::TakeXP(float Amount)
 {
-    // Authority check (networking)
     if (!GetOwner()->HasAuthority()) return;
+    if (Level >= MaxLevel) return;
 
-    if (XP + Amount > XPtoNextLevel)
+    XP += Amount;
+
+    while (XP >= XPtoNextLevel && Level < MaxLevel)
     {
+        XP -= XPtoNextLevel;
         Level++;
-        XP = XPtoNextLevel + Amount - XPtoNextLevel;
+
+        BaseLife    += VidaPorNivel;
+        BaseAttack  += AtaquePorNivel;
+        DefenseBase += DefensaPorNivel;
+
+        if (Level < MaxLevel)
+            XPtoNextLevel = XPTable[Level];
+        else
+            XPtoNextLevel = 0.f;
     }
-    else
-    {
-        XP += Amount;
-    }
+
     OnXPChanged.Broadcast(XP, XPtoNextLevel, Level);
 }
 
