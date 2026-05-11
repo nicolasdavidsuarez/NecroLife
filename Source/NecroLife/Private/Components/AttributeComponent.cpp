@@ -36,7 +36,21 @@ UAttributeComponent::UAttributeComponent()
 void UAttributeComponent::BeginPlay()
 {
     Super::BeginPlay();
-    
+
+    if (GetOwner()->HasAuthority())
+    {
+        StatsSincronizadas.VidaMaxima          = BaseLife;
+        StatsSincronizadas.Ataque              = BaseAttack;
+        StatsSincronizadas.Defensa             = DefenseBase;
+        StatsSincronizadas.Velocidad           = BaseVelocity;
+        StatsSincronizadas.EnergiaMaxima       = BaseEnergy;
+        StatsSincronizadas.VelocidadRegeneracion = velocidadEnergyReg;
+        StatsSincronizadas.Nivel               = Level;
+        StatsSincronizadas.RegenVida           = BaseRegenVida;
+        StatsSincronizadas.RegenEnergia        = BaseRegenEnergia;
+
+        OnRep_StatsActualizadas();
+    }
 }
 
 void UAttributeComponent::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -97,8 +111,6 @@ void UAttributeComponent::RecalcularEstadisticas(const TArray<FDatosGema>& Gemas
         float BonoVelocidadAttack = 0.0f;
         float BonoDefensaPorcentaje = 0.0f;
         float BonoVelocidadPorcentaje = 0.0f;
-        float BonoRegenVidaPorcentaje = 0.0f;
-        float BonoRegenEnergiaPorcentaje = 0.0f;
 
         // 2. Iterar gemas
         for (const FDatosGema& Gema : GemasEquipadas)
@@ -142,11 +154,11 @@ void UAttributeComponent::RecalcularEstadisticas(const TArray<FDatosGema>& Gemas
                 break;
 
             case ETipoEstadisticaGema::RegeneracionVida:
-                BonoRegenVidaPorcentaje += Gema.ValorMejora / 100.0f;
+                RegenVida += Gema.ValorMejora;
                 break;
 
             case ETipoEstadisticaGema::RegeneracionEnergia:
-                BonoRegenEnergiaPorcentaje += Gema.ValorMejora / 100.0f;
+                RegenEnergia += Gema.ValorMejora;
                 break;
 
             default:
@@ -162,14 +174,12 @@ void UAttributeComponent::RecalcularEstadisticas(const TArray<FDatosGema>& Gemas
             Attack = Attack * (1 + BonoAtaquePorcentaje);
 
         if (BonoVelocidadAttack > 0.0f)
-            VelocityAttack = FMath::RoundToInt(VelocityAttack * BonoVelocidadAttack);
+            VelocityAttack = VelocityAttack * (1.0f + BonoVelocidadAttack);
 
         if (BonoDefensaPorcentaje > 0.0f)
             Defense += FMath::RoundToInt(Defense * BonoDefensaPorcentaje);
 
         Velocity += Velocity * BonoVelocidadPorcentaje;
-        RegenVida += RegenVida * BonoRegenVidaPorcentaje;
-        RegenEnergia += RegenEnergia * BonoRegenEnergiaPorcentaje;
 
         if (Life > LifeMax)
             Life = LifeMax;
@@ -178,7 +188,7 @@ void UAttributeComponent::RecalcularEstadisticas(const TArray<FDatosGema>& Gemas
         StatsSincronizadas.VidaMaxima = LifeMax;
         StatsSincronizadas.Ataque = Attack;
         GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Emerald,
-            FString::Printf(TEXT("Attack: %d"),Attack));
+            FString::Printf(TEXT("Attack: %d  |  Velocity: %.2f  |  MaxWalkSpeed aprox: %.0f"), Attack, Velocity, Velocity * 50.f));
         StatsSincronizadas.Defensa = Defense;
         StatsSincronizadas.Velocidad = Velocity;
         StatsSincronizadas.Nivel = Level;

@@ -248,6 +248,14 @@ void ANecroLifeCharacter::PossessedBy(AController* NewController)
         {
             UE_LOG(LogTemp, Error, TEXT("Character %s failed to cache all components from PlayerState."), *GetName());
         }
+
+        // Si las gemas se equipan via el InventoryComponent del PlayerState, el delegate
+        // que recalcula es el de CachedAttributeComponent, no el de Attribute (char).
+        // Bindeamos aqui para que MaxWalkSpeed se actualice en ambos casos.
+        if (CachedAttributeComponent)
+        {
+            CachedAttributeComponent->OnAtributosActualizados.AddDynamic(this, &ANecroLifeCharacter::OnAtributosActualizados);
+        }
     }
     else
     {
