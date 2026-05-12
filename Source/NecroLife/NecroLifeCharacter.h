@@ -95,6 +95,12 @@ public:
     UFUNCTION(Client, Reliable)
     void Client_MostrarNuevaGema(FDatosGema Data);
     
+    UFUNCTION(Server, Reliable)
+    void Server_CancelQuest(ANecroLifeNpcBasic* Npc);
+
+    UFUNCTION(Server, Reliable)
+    void Server_NextQuest(ANecroLifeNpcBasic* Npc);
+    
     UFUNCTION(Client, Reliable)
     void Client_SyncQuestUI(const TArray<FQuestUIData>& QuestList);
     

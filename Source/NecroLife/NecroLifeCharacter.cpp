@@ -1030,27 +1030,41 @@ void ANecroLifeCharacter::ShowForgeInventoryAction()
 
 void ANecroLifeCharacter::TakePosion()
 {
-    if (MyPlayerState)
-    {
-        if (CachedInventoryComponent->UseHealtPosion())
-            HealthComponent->ApplyHealing(30.0f);
-    }
+    Server_TakePosion();
 }
 
 void ANecroLifeCharacter::AddCurrentQuest()
 {
-    // Redirigido al GameState para coop via Server RPC
     if (ANecroLifeNpcBasic* NpcBasic = Cast<ANecroLifeNpcBasic>(CurrentInteractable))
     {
         Server_AgregarMision(NpcBasic->QuestActual);
-        NpcBasic->NextAddQuest();
+        Server_NextQuest(NpcBasic); 
     }
+    
 }
 
 void ANecroLifeCharacter::CancelCurrentQuest()
 {
     if (ANecroLifeNpcBasic* NpcBasic = Cast<ANecroLifeNpcBasic>(CurrentInteractable))
-        NpcBasic->CancelAddQuest();
+    {
+        Server_CancelQuest(NpcBasic); // ← ya lo tenés implementado
+    }
+}
+
+void ANecroLifeCharacter::Server_CancelQuest_Implementation(ANecroLifeNpcBasic* Npc)
+{
+    if (Npc)
+    {
+        Npc->CancelAddQuest(); // ahora corre en el servidor con autoridad
+    }
+}
+
+void ANecroLifeCharacter::Server_NextQuest_Implementation(ANecroLifeNpcBasic* Npc)
+{
+    if (Npc)
+    {
+        Npc->NextAddQuest();
+    }
 }
 
 bool ANecroLifeCharacter::ShowDialogue(FDialogLine CurrentLine)

@@ -60,10 +60,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Dialogue")
 	float InteractCooldown = 0.5f;
 
-protected:
+public:
 	// Esta es la llave que traba el diálogo
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialogue")
+	UPROPERTY(Replicated)
 	bool bIsWaitingForResponse = false;
+	
 
 protected:
 	// El archivo que contiene el guion de este NPC

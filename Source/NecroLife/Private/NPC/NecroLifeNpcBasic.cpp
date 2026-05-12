@@ -97,101 +97,68 @@ void ANecroLifeNpcBasic::OnRep_CurrentQuestIndex()
 
 void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 {
-	//ACA se implementa la interface, muestra las lineas de dialogo que tiene el npc hasta que pregunta}
-	// Si acepta la mision
-	UE_LOG(LogTemp, Warning, TEXT("implementa on interact"));
-	UE_LOG(LogTemp, Warning, TEXT("CurrentDialogIndex: %d"),CurrentDialogIndex);
 	
 	if (bIsWaitingForResponse)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, TEXT("Esperando que el jugador responda en la UI..."));
-		return; 
+			GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Red,TEXT("bIsWaitingForResponse"));
+		return;
 	}
-	
-	ANecroLifeCharacter* MyCharacter = Cast<ANecroLifeCharacter>(Interactor);
 
+	ANecroLifeCharacter* MyCharacter = Cast<ANecroLifeCharacter>(Interactor);
+	if (!MyCharacter) return;
 
 	float CurrentTime = GetWorld()->GetTimeSeconds();
-	if (CurrentTime - LastInteractTime < InteractCooldown)
-	{
-		return; 
-	}
+	if (CurrentTime - LastInteractTime < InteractCooldown) return;
 	LastInteractTime = CurrentTime;
-	
+
 	if (!DialogueData || DialogueData->DialogLines.Num() == 0) return;
-	if (CurrentDialogIndex < DialogueData->DialogLines.Num())
+
+	// Clamp defensivo por si acaso
+	if (CurrentDialogIndex >= DialogueData->DialogLines.Num())
 	{
-		//la linea siguienete updatea el Hablar con npc, pero tiene que hacerlo solo cuando sea ese tipo de mision
-		
-		MyCharacter->SetUIState(true);
-		// Obtenemos la línea actual
-		FDialogLine CurrentLine = DialogueData->DialogLines[CurrentDialogIndex];
+		CurrentDialogIndex = DialogueData->DialogLines.Num() - 1; // ← Volvemos a la última línea válida
+	}
 
-		FString DialogMsg = FString::Printf(TEXT("%s: %s Aca si o ni tiene linea de dialogos!!!"), 
-			*CurrentLine.SpeakerName.ToString(), 
-			*CurrentLine.DialogueText.ToString());
-		if (CurrentLine.bRequiresPreviousObjective)
-		{
-			// Si el jugador cumplió el objetivo y la quest se actualiza
-			ANecroLifeGameState* GS = GetWorld()->GetGameState<ANecroLifeGameState>();
+	MyCharacter->SetUIState(true);
+	FDialogLine CurrentLine = DialogueData->DialogLines[CurrentDialogIndex];
 
-			if (GS && GS->QuestComponent)
-			{
-//GS Game State
-				GS->QuestComponent->UpdateQuestProgress(NpcTag, 1);
-				CurrentDialogIndex++;
-				CurrentLine = DialogueData->DialogLines[CurrentDialogIndex];
-			
-				// Opcional: Un log para confirmar que el servidor lo recibió
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("El Servidor recibió la interacción y actualizó el GameState"));
-			}
-			
-			MyCharacter->ShowDialogue(CurrentLine);
-		
-		}
-		else
+	if (CurrentLine.bRequiresPreviousObjective)
+	{
+		ANecroLifeGameState* GS = GetWorld()->GetGameState<ANecroLifeGameState>();
+		if (GS && GS->QuestComponent)
 		{
-			// Si no requiere objetivo, mostramos y avanzamos normalmente
-			MyCharacter->ShowDialogue(CurrentLine);
+			GS->QuestComponent->UpdateQuestProgress(NpcTag, 1);
 			CurrentDialogIndex++;
-		}
-		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Cyan, DialogMsg);
 
-		// 3. Si tiene animación asociada, la reproducimos
-		if (CurrentLine.SpeakerAnim && GetMesh())
-		{
-			PlayAnimMontage(CurrentLine.SpeakerAnim);
-		}
-
-		if (CurrentLine.bIsMissionChoice)
-		{
-			bIsWaitingForResponse = true;
-	QuestActual=Quests[CurrentQuestIndex];
-			if (QuestActual == nullptr)
+			// Chequeamos que el nuevo índice sea válido antes de usarlo
+			if (CurrentDialogIndex < DialogueData->DialogLines.Num())
 			{
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ERROR: El elemento en el array Quests es NULO en C++"));
-			}
-			else
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("ÉXITO: QuestActual se asignó correctamente en C++"));
+				CurrentLine = DialogueData->DialogLines[CurrentDialogIndex];
 			}
 		}
-			// 4. Incrementamos el índice para la próxima vez que el jugador apriete la "T"
-
-		
-		
+		MyCharacter->ShowDialogue(CurrentLine);
 	}
 	else
 	{
-		// Se terminaron las líneas de diálogo
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red,
-			TEXT("Fin de la charla. deberia repetir el ultimo mensaje"));
-      MyCharacter->SetUIState(true);
-		FDialogLine CurrentLine = DialogueData->DialogLines.Last();
-		//CurrentDialogIndex = DialogueData->DialogLines.Num() - 1;
 		MyCharacter->ShowDialogue(CurrentLine);
 
-		// Aquí es donde llamarías a Character->SetUIState(false) para liberar el movimiento
+		// Solo avanzamos si NO es la última línea
+		if (CurrentDialogIndex < DialogueData->DialogLines.Num() - 1)
+		{
+			CurrentDialogIndex++;
+		}
+		// Si es la última, se queda ahí y siempre muestra la misma ✓
+	}
+
+	if (CurrentLine.SpeakerAnim && GetMesh())
+	{
+		PlayAnimMontage(CurrentLine.SpeakerAnim);
+	}
+
+	if (CurrentLine.bIsMissionChoice)
+	{
+		bIsWaitingForResponse = true;
+		QuestActual = Quests[CurrentQuestIndex];
 	}
 }
 
@@ -215,4 +182,6 @@ void ANecroLifeNpcBasic::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 
 	// Registramos la variable para que viaje por internet
 	DOREPLIFETIME(ANecroLifeNpcBasic, CurrentQuestIndex);
+	DOREPLIFETIME(ANecroLifeNpcBasic, bIsWaitingForResponse);
+
 }

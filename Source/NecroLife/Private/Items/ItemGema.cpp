@@ -43,7 +43,7 @@ void AItemGema::NotifyActorBeginOverlap(AActor* OtherActor)
 			ANecroLifeCharacter* character=Cast<ANecroLifeCharacter>(Pawn);
 			if (character)
 			{
-				character->MostarNuevaGema(GemaData);
+				character->Client_MostrarNuevaGema(GemaData);
 			}
 			
 			
