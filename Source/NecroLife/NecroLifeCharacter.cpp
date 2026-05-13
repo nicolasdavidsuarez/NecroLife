@@ -139,9 +139,13 @@ void ANecroLifeCharacter::MostarNuevaGema(FDatosGema gemaData)
 
 void ANecroLifeCharacter::Server_AgregarMision_Implementation(UQuestData* QuestData)
 {
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange,
+           TEXT("Entro a Server_AgregarMision_Implementation"));
     ANecroLifeGameState* GS = GetWorld()->GetGameState<ANecroLifeGameState>();
     if (GS && GS->QuestComponent)
     {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange,
+            TEXT("Entro a GS->QuestComponent, para AddQuest"));
         GS->QuestComponent->AddQuest(QuestData);
     }
 }
@@ -1040,6 +1044,9 @@ void ANecroLifeCharacter::AddCurrentQuest()
      
     if (ANecroLifeNpcBasic* NpcBasic = Cast<ANecroLifeNpcBasic>(CurrentInteractable))
     {
+        GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Emerald,
+  TEXT("Entro al add current quest"));
+    
         Server_AgregarMision(NpcBasic->QuestActual);
         Server_NextQuest(NpcBasic); 
         GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Emerald,TEXT("Acepto y entro al addCurrent quest"));
