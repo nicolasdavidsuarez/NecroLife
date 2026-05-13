@@ -29,6 +29,7 @@ private:
 	bool bBindeoAtribute = false;
 	bool bBindeoMisiones=false;
 	bool bBindeoAbility = false;
+	bool bBindeoCharacter=false;
     FTimerHandle TimerHandleBind;
 	
 	public:

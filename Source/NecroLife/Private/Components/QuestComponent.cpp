@@ -53,8 +53,7 @@ void UQuestComponent::AddQuest(UQuestData* QuestData)
 	{
 		FProgresoObjetivo NuevoProgreso;
 		NuevoProgreso.TargetID = QuestData->Objectives[i].TargetID;
-		NuevoProgreso.CantidadActual = 0;
-    
+		NuevoProgreso.CantidadActual = 0;    
 		tempQuest.ObjectiveProgress.Add(NuevoProgreso); // Ahora es un TArray
 	}
 	

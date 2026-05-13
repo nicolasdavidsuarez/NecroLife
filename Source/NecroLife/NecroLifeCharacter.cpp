@@ -1035,12 +1035,20 @@ void ANecroLifeCharacter::TakePosion()
 
 void ANecroLifeCharacter::AddCurrentQuest()
 {
+    GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Emerald,
+     TEXT("Entro al add current quest"));
+     
     if (ANecroLifeNpcBasic* NpcBasic = Cast<ANecroLifeNpcBasic>(CurrentInteractable))
     {
         Server_AgregarMision(NpcBasic->QuestActual);
         Server_NextQuest(NpcBasic); 
-    }
-    
+        GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Emerald,TEXT("Acepto y entro al addCurrent quest"));
+    }  else
+    {
+        GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Emerald,
+            TEXT("no entro en el  if (ANecroLifeNpcBasic* NpcBasic = Cast<ANecroLifeNpcBasic>(CurrentInteractable))"));
+     
+    }  
 }
 
 void ANecroLifeCharacter::CancelCurrentQuest()
@@ -1048,7 +1056,14 @@ void ANecroLifeCharacter::CancelCurrentQuest()
     if (ANecroLifeNpcBasic* NpcBasic = Cast<ANecroLifeNpcBasic>(CurrentInteractable))
     {
         Server_CancelQuest(NpcBasic); // ← ya lo tenés implementado
-    }
+        GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Emerald,TEXT("cancelo y entro al Cancelcurrent quest"));
+ 
+    } else
+    {
+        GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Emerald,
+            TEXT("no entro en el  if (ANecroLifeNpcBasic* NpcBasic = Cast<ANecroLifeNpcBasic>(CurrentInteractable) del cancel)"));
+     
+    }  
 }
 
 void ANecroLifeCharacter::Server_CancelQuest_Implementation(ANecroLifeNpcBasic* Npc)

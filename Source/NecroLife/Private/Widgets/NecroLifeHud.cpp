@@ -104,10 +104,17 @@ void UNecroLifeHud::BindDelegate()
 		}
 	}
 	APawn* PlayerPawn = GetOwningPlayerPawn();
-	if (!PlayerPawn) return;
-	ANecroLifeCharacter* character = Cast <ANecroLifeCharacter>(PlayerPawn->GetController()->GetCharacter());
-	character->OnShowForgeInventory.AddDynamic(this, &UNecroLifeHud::MostrarForgeInventory);
-	character->ShowNuevaGema.AddDynamic(this,&UNecroLifeHud::MostrarNuevaGema);
+	if (!bBindeoCharacter)
+	{
+		
+		if (!PlayerPawn) return;
+		ANecroLifeCharacter* character = Cast <ANecroLifeCharacter>(PlayerPawn->GetController()->GetCharacter());
+		character->OnShowForgeInventory.AddDynamic(this, &UNecroLifeHud::MostrarForgeInventory);
+		character->ShowNuevaGema.AddDynamic(this,&UNecroLifeHud::MostrarNuevaGema);
+	
+		bBindeoCharacter=true;
+	}
+	
 	
 	if (!bBindeoHealth)
 	{
@@ -150,12 +157,13 @@ if (!bBindeoMisiones)
 			// Bindeamos el evento (asegúrate de que el nombre OnUpdateObjectiveList coincida con el tuyo)
 			QuestComp->OnUpdateObjectiveList.AddDynamic(this, &UNecroLifeHud::ActualizarQuestList);
 			bBindeoMisiones = true;
+			QuestComp->ActualizarQuests(); 
 		}
 	}
 }
 	
 
-	if (bBindeoAtribute&&bBindeoHealth&&bBindeo&&bBindeoMisiones&&bBindeoAbility)
+	if (bBindeoAtribute&&bBindeoHealth&&bBindeo&&bBindeoMisiones&&bBindeoAbility&&bBindeoCharacter)
 	{
 		GetWorld()->GetTimerManager().ClearTimer(TimerHandleBind);
 		GEngine->AddOnScreenDebugMessage(-1,5.0f, FColor::Red, "cLeAr tImEr");			

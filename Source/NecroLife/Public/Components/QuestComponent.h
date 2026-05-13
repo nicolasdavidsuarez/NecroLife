@@ -94,7 +94,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI | Quests")
 	TArray<FName> QuestsActivasNombre;
 
-	// En QuestComponent.h (dentro de la clase UQuestComponent)
+	
 	UPROPERTY(BlueprintAssignable, Category = "Quests|UI")
 	FOnUpdateObjetiveList OnUpdateObjectiveList;
 
