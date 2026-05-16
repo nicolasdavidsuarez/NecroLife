@@ -66,6 +66,13 @@ private:
 
 	UFUNCTION()
 	void ActualizarGemasInSlots(const TArray<FDatosGema>& DatosGemas);
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void BP_MostrarItems(const TArray<UItemData*>& Array);
+	
+	UFUNCTION()
+	void HandleOnPickUpItem(const TArray<UItemData*>& ItemDatas);
+	
 	UFUNCTION()
 	void BindDelegate();
 

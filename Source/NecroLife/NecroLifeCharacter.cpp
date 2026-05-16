@@ -984,6 +984,7 @@ void ANecroLifeCharacter::Multicast_PlayCombatMontage_Implementation(UAnimMontag
 
 void ANecroLifeCharacter::Interact()
 {
+    GEngine->AddOnScreenDebugMessage(-1,5.0f, FColor::Yellow, TEXT("Interact"));
     if (CurrentInteractable && CurrentInteractable->Implements<UNecroLifeInterface>())
         INecroLifeInterface::Execute_OnInteract(CurrentInteractable, this);
 }

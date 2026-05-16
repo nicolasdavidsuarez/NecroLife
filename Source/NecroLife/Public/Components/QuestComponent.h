@@ -102,6 +102,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Quests")
 	void ActualizarListasQuests();
 	
+	UFUNCTION(BlueprintCallable, Category = "Quests")
+	bool haveQuests();
+	
 	// Función para actualizar progreso (cuando matas algo)
 	UFUNCTION(BlueprintCallable, Category="Quests")
 	bool UpdateQuestProgress(FGameplayTag ObjectiveID, int32 Amount);

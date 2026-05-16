@@ -86,6 +86,12 @@ void UNecroLifeHud::ActualizarGemasInSlots(const TArray<FDatosGema>& DatosGemas)
 	}
 }
 
+void UNecroLifeHud::HandleOnPickUpItem(const TArray<UItemData*>& ItemDatas)
+{
+	GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Red,TEXT("hANDLE OnPickUpItem"));
+	BP_MostrarItems(ItemDatas);
+}
+
 void UNecroLifeHud::BindDelegate()
 {
 	if (!bBindeo)
@@ -99,6 +105,9 @@ void UNecroLifeHud::BindDelegate()
 				Inventory->GemsToShow.AddDynamic(this, &UNecroLifeHud::ActualizarInventario);
 				Inventory->GemsToShowInSlots.AddDynamic(this,&UNecroLifeHud::ActualizarGemasInSlots);
 				Inventory->OnPotionChange.AddDynamic(this,&UNecroLifeHud::HandleOnPotionChange);
+				Inventory->OnShowItem.AddDynamic(this,&UNecroLifeHud::HandleOnPickUpItem);
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, 
+	   TEXT("OnShowItem BINDEADO correctamente"));
 				bBindeo = true;
 			}
 		}

@@ -24,8 +24,7 @@ ANecroLifeNpcBasic::ANecroLifeNpcBasic()
 	// 2. Crear el Mesh
 	NPCMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("NPCMesh"));
 
-	// 3. ¡ESTO ES LO QUE TE FALTA! 
-	// Atamos el Mesh a la Raíz para que se mueva con el Actor
+	 	// Atamos el Mesh a la Raíz para que se mueva con el Actor
 	NPCMesh->SetupAttachment(RootComponent);
 
 	// Configuración básica de colisión

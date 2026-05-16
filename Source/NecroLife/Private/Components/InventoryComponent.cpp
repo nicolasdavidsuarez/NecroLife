@@ -41,11 +41,24 @@ bool UInventoryComponent::UseHealtPosion()
 
 void UInventoryComponent::PickUp(UItemData* Aitem)
 {
-	if (UItemData* Item=Cast<UItemData>(Aitem))
+
+	
+
+	if (UItemData* Item = Cast<UItemData>(Aitem))
 	{
-		InventoryItems.Add(Item);
+		if (InventoryItems.Find(Item))
+		{
+			InventoryItems.Add(Item);	
+		}else
+		{
+			GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Yellow,"Ya tienes agua");
+
+		}
+		
 	}
 	OnShowItem.Broadcast(InventoryItems);
+	OnRep_Items();
+
 }
 
 void UInventoryComponent::OnRep_GemsItems()
@@ -54,6 +67,14 @@ void UInventoryComponent::OnRep_GemsItems()
 	GemsToShow.Broadcast(GemsItemsInInventory);	
 	GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Yellow,"Broadcasted Gems item");
 }
+
+void UInventoryComponent::OnRep_Items()
+{	
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, 
+	   TEXT("OnRep_Items ejecutado - Items: ") + FString::FromInt(InventoryItems.Num()));
+	OnShowItem.Broadcast(InventoryItems);
+}
+
 
 void UInventoryComponent::OnRep_GemsInSlots()
 {
@@ -118,6 +139,11 @@ void UInventoryComponent::AddGems(FDatosGema gema)
 const TArray<FDatosGema> UInventoryComponent::GetGemsItemsInInventory()
 {
 	return GemsItemsInInventory;
+}
+
+const TArray<UItemData*> UInventoryComponent::GetItemsInInventory()
+{
+	return InventoryItems;
 }
 
 const TArray<FDatosGema> UInventoryComponent::GetGemsItemsInSlots()
@@ -308,4 +334,7 @@ void UInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 
 	DOREPLIFETIME(UInventoryComponent, GemsInSlots);
 	DOREPLIFETIME(UInventoryComponent, GemsItems);
+	DOREPLIFETIME(UInventoryComponent, InventoryItems);
+
+	
 }

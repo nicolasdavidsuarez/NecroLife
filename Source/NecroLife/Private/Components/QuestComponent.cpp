@@ -174,6 +174,15 @@ void UQuestComponent::ActualizarListasQuests()
     
 }
 
+bool UQuestComponent::haveQuests()
+{
+	if (!Quests.IsEmpty())
+	{
+		return true;	
+	}
+	return false;
+}
+
 bool UQuestComponent::UpdateQuestProgress(FGameplayTag ObjectiveID, int32 Amount)
 {
 

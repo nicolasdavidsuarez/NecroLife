@@ -121,7 +121,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Inventory")
 	void PickUp(UItemData* Aitem);
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
+	UPROPERTY(ReplicatedUsing= OnRep_Items, EditAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TArray<UItemData*> InventoryItems;
 
 	UPROPERTY(ReplicatedUsing= OnRep_GemsItems, EditAnywhere, BlueprintReadOnly, Category = "Inventory")
@@ -135,6 +135,9 @@ public:
 
 	UFUNCTION()
 	void OnRep_GemsItems();
+	
+	UFUNCTION()
+	void OnRep_Items();
 
 	UFUNCTION()
 	void OnRep_GemsInSlots();
@@ -162,6 +165,10 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	const TArray<FDatosGema> GetGemsItemsInInventory();
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	const TArray<UItemData*> GetItemsInInventory();
+	
 	
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	const TArray<FDatosGema> GetGemsItemsInSlots();
@@ -194,5 +201,4 @@ public:
 	// RPC servidor para CraftGem
 	UFUNCTION(Server, Reliable)
 	void Server_CraftGem(FDatosGema GemaBase, FDatosGema GemaUpgrade);
-	
 };
