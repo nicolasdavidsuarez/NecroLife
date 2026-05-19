@@ -12,7 +12,10 @@
       "Bash(Select-Object -ExpandProperty Name)",
       "Bash(Sort-Object)",
       "Bash(Get-Unique)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(git merge *)",
+      "Bash(git checkout *)",
+      "Bash(git add *)"
     ]
   }
 }

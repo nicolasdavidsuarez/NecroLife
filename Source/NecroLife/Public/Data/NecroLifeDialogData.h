@@ -11,7 +11,6 @@ class NECROLIFE_API UNecroLifeDialogData : public UDataAsset
 	GENERATED_BODY()
 
 public:
-	// Aquí usamos el struct que acabás de crear
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	TArray<FDialogLine> DialogLines;
 };

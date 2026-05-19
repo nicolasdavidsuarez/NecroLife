@@ -1012,8 +1012,7 @@ void ANecroLifeCharacter::InventoryInput()
 
 void ANecroLifeCharacter::ShowForgeInventoryAction()
 {
-    // Ejemplo: OnShowForgeInventory.Broadcast(Inventory->GetGemasDisponibles());
-    
+   
     if (!IsLocallyControlled())
     {
         return;
