@@ -5,7 +5,14 @@
       "Bash(xargs ls *)",
       "Bash(git rm *)",
       "WebFetch(domain:docs.google.com)",
-      "WebFetch(domain:doc-0c-8g-sheets.googleusercontent.com)"
+      "WebFetch(domain:doc-0c-8g-sheets.googleusercontent.com)",
+      "Bash(xargs grep -l \"Quest\\\\|quest\")",
+      "Bash(xargs grep -l \"EQuestObjectiveType\\\\|FQuestObjective\\\\|UpdateQuestProgress\")",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Guido\\\\Desktop\\\\NecroRepo\\\\NecroLife\\\\Source\\\\NecroLife\" -Recurse -File)",
+      "Bash(Select-Object -ExpandProperty Name)",
+      "Bash(Sort-Object)",
+      "Bash(Get-Unique)",
+      "WebSearch"
     ]
   }
 }

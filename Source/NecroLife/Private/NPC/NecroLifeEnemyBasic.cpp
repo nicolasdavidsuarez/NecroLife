@@ -54,9 +54,11 @@ bool ANecroLifeEnemyBasic::IsAlive()
 
 void ANecroLifeEnemyBasic::Die()
 {
-    if (HasAuthority()) // Solo el servidor dicta la muerte
+    if (bIsDead || !HasAuthority()) return;
     {
         bIsDead = true;
+        OnEnemyDied.Broadcast(this);
+        BP_OnDie();
         OnRep_IsDead(); // El servidor también ejecuta la visual localmente
         SetLifeSpan(3.0f);
     }
