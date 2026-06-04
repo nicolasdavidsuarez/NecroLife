@@ -681,7 +681,7 @@ void ANecroLifeCharacter::AplyAction()
         if (AttackCount >= ComboMontages.Num())
             AttackCount = 0;
 
-        GetWorldTimerManager().SetTimer(ComboResetTimer, this, &ANecroLifeCharacter::ResetCombo, 2.5f, false);
+        GetWorldTimerManager().SetTimer(ComboResetTimer, this, &ANecroLifeCharacter::ResetCombo, 1.f, false);
     }
 }
 
@@ -1167,6 +1167,7 @@ void ANecroLifeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
         EnhancedInputComponent->BindAction(Action, ETriggerEvent::Started, this, &ANecroLifeCharacter::AplyAction);
     }
 }
+
 void ANecroLifeCharacter::Server_TakePosion_Implementation()
 {
     // ESTO CORRE EN EL SERVIDOR
