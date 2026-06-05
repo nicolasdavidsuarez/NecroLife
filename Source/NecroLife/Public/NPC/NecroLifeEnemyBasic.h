@@ -9,6 +9,8 @@
 #include "Components/WidgetComponent.h" // Agregado por compañeros
 #include "NecroLifeEnemyBasic.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyDied, ANecroLifeEnemyBasic*, Enemy);
+
 class UUHealthComponent;
 
 UCLASS()
@@ -34,6 +36,12 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Event")
 	void BP_SetHealthBar(float Percent);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Event")
+	void BP_OnDie();
+
+	UPROPERTY(BlueprintAssignable, Category = "Event")
+	FOnEnemyDied OnEnemyDied;
 
 	// --- Componentes y Tags (Ambos) ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
