@@ -43,6 +43,17 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Event")
 	FOnEnemyDied OnEnemyDied;
 
+// --- Variables de Animación ---
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Animacion")
+	bool bIsEAttacking = false;
+
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Animacion")
+	bool bIsEDamaged = false;
+	
+	// Función para que el AnimBP avise que la animación terminó
+	UFUNCTION(BlueprintCallable, Server, Reliable, Category = "Animacion")
+	void Server_ResetDamageState();
+	
 	// --- Componentes y Tags (Ambos) ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
 	UUHealthComponent* HealthComponent;

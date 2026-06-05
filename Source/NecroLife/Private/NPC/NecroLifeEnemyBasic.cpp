@@ -79,6 +79,8 @@ void ANecroLifeEnemyBasic::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     // Registro de tu variable bIsDead para el multijugador
     DOREPLIFETIME(ANecroLifeEnemyBasic, bIsDead);
+    DOREPLIFETIME(ANecroLifeEnemyBasic, bIsEAttacking);
+    DOREPLIFETIME(ANecroLifeEnemyBasic, bIsEDamaged);
 }
 
 void ANecroLifeEnemyBasic::Tick(float DeltaTime)
@@ -89,4 +91,9 @@ void ANecroLifeEnemyBasic::Tick(float DeltaTime)
 void ANecroLifeEnemyBasic::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
+
+void ANecroLifeEnemyBasic::Server_ResetDamageState_Implementation()
+{
+    bIsEDamaged = false;
 }
