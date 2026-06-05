@@ -32,6 +32,7 @@ void AItemGema::NotifyActorBeginOverlap(AActor* OtherActor)
 	}
 	
 	APawn* Pawn=Cast<APawn>(OtherActor);
+	if (!Pawn) return;
 	APlayerState* PS = Pawn->GetPlayerState();
 
 	if (PS)
