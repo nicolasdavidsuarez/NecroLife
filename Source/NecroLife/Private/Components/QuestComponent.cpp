@@ -33,7 +33,10 @@ void UQuestComponent::OnRep_ActiveQuests()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, TEXT("CLIENTE: Recibí la actualización de misiones por red!"));
 	ActualizarQuests();
-	
+	if (!Quests.IsEmpty())
+	{
+		OnQuestAdded.Broadcast(Quests.Last());
+	}
 }
 
 
@@ -64,8 +67,9 @@ void UQuestComponent::AddQuest(UQuestData* QuestData)
 	FString::Printf(TEXT("Ya contenia el data Asset")));	
 	
 	}else{
-	Quests.Add(QuestData);
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green,
+		Quests.Add(QuestData);
+		OnQuestAdded.Broadcast(QuestData);//para las misiones que deben hacer algo al empezar, se suscriben aca los objetos del mundo
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green,
     	FString::Printf(TEXT("Se agrego el data Asset. %s"), *QuestData->Description.ToString()));
 		//FActiveQuestData tempQuest;
 		tempQuest.CurrentStage=0;
@@ -87,6 +91,7 @@ void UQuestComponent::AddQuest(UQuestData* QuestData)
 			tempQuest.ObjectiveProgress.Add(NuevoProgreso);
 		}
 		ActiveQuests.Add(tempQuest);
+		
 		//OnRep_MisionesActualizadas();
 	ActualizarQuests();
 	}
@@ -181,6 +186,11 @@ bool UQuestComponent::haveQuests()
 		return true;	
 	}
 	return false;
+}
+
+bool UQuestComponent::hasQuest(UQuestData* QuestToFind)
+{
+	return Quests.Contains(QuestToFind);
 }
 
 bool UQuestComponent::UpdateQuestProgress(FGameplayTag ObjectiveID, int32 Amount)

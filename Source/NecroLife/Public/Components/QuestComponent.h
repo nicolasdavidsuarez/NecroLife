@@ -9,6 +9,9 @@
 #include "QuestComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUpdateObjetiveList, const TArray<FQuestUIData>&, ItemsToMisionList);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnQuestAdded, UQuestData*, Quest);
+
+
 
 
 
@@ -97,6 +100,9 @@ public:
 	
 	UPROPERTY(BlueprintAssignable, Category = "Quests|UI")
 	FOnUpdateObjetiveList OnUpdateObjectiveList;
+	
+	UPROPERTY(BlueprintAssignable, Category = "Quests")
+	FOnQuestAdded OnQuestAdded;
 
 	// Función para actualizar listas de completadas y listas
 	UFUNCTION(BlueprintCallable, Category = "Quests")
@@ -105,6 +111,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Quests")
 	bool haveQuests();
 	
+	UFUNCTION(BlueprintCallable, Category = "Quests")
+	bool hasQuest(UQuestData* QuestToFind);
+
 	// Función para actualizar progreso (cuando matas algo)
 	UFUNCTION(BlueprintCallable, Category="Quests")
 	bool UpdateQuestProgress(FGameplayTag ObjectiveID, int32 Amount);
