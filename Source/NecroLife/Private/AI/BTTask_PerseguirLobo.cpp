@@ -73,7 +73,7 @@ void UBTTask_PerseguirLobo::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* N
 	{
 		if (Memory->MoveUpdateTimer <= 0.f)
 		{
-			AIC->MoveToActor(Target, Lobo->AttackRange - 10.f);
+			AIC->MoveToActor(Target, Lobo->AttackRange * 0.5f);
 			Memory->MoveUpdateTimer = MoveUpdateInterval;
 		}
 	}

@@ -51,11 +51,22 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category="Lobo")
 	void BP_OnAttack();
 
+	UFUNCTION(BlueprintImplementableEvent, Category="Lobo")
+	void BP_OnTakeDamage();
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_OnTakeDamage();
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:
+	float PreviousHealth = 0.f;
+
 	UFUNCTION()
 	void OnSeePawn(APawn* Pawn);
+
+	UFUNCTION()
+	void OnLoboHealthChanged(float Health, float HealthMax);
 };

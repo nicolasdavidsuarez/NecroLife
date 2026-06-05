@@ -21,10 +21,12 @@ void ANecroLifeEnemyLobo::BeginPlay()
 	PawnSensing->SightRadius = SightRadius;
 	PawnSensing->SetPeripheralVisionAngle(VisionAngle);
 	GetCharacterMovement()->MaxWalkSpeed = IdleSpeed;
+	PreviousHealth = HealthComponent->CurrentHealth;
 
 	if (HasAuthority())
 	{
 		PawnSensing->OnSeePawn.AddDynamic(this, &ANecroLifeEnemyLobo::OnSeePawn);
+		HealthComponent->OnHealthChanged.AddDynamic(this, &ANecroLifeEnemyLobo::OnLoboHealthChanged);
 	}
 }
 
@@ -46,6 +48,20 @@ void ANecroLifeEnemyLobo::OnSeePawn(APawn* Pawn)
 		GetCharacterMovement()->MaxWalkSpeed = ChaseSpeed;
 		OnRep_IsChasing();
 	}
+}
+
+void ANecroLifeEnemyLobo::OnLoboHealthChanged(float Health, float HealthMax)
+{
+	if (!bIsDead && Health < PreviousHealth)
+	{
+		Multicast_OnTakeDamage();
+	}
+	PreviousHealth = Health;
+}
+
+void ANecroLifeEnemyLobo::Multicast_OnTakeDamage_Implementation()
+{
+	BP_OnTakeDamage();
 }
 
 void ANecroLifeEnemyLobo::OnRep_IsChasing()
