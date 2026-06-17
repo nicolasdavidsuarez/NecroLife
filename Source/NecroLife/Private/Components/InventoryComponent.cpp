@@ -99,6 +99,19 @@ void UInventoryComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
+	if (UAttributeComponent* Atributos = GetOwner()->FindComponentByClass<UAttributeComponent>())
+	{
+		Atributos->RecalcularEstadisticas(GemsInSlots);
+
+		if (UUHealthComponent* Health = GetOwner()->FindComponentByClass<UUHealthComponent>())
+		{
+			if (Atributos->RegenVida > 0.f)
+				Health->SetRegenVida(Atributos->RegenVida);
+			else
+				Health->StopRegenVida();
+		}
+		
+	}
 	
 }
 
@@ -170,6 +183,8 @@ void UInventoryComponent::AddGemToSlot(FDatosGema gema)
 		}
 
 		// Agregar al slot de equipamiento
+		GemsToShow.Broadcast(GemsItemsInInventory);
+
 		GemsInSlots.Add(gema);
 		GemsToShowInSlots.Broadcast(GemsInSlots);
 
