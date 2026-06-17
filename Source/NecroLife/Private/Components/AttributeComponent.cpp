@@ -51,6 +51,8 @@ void UAttributeComponent::BeginPlay()
 
         OnRep_StatsActualizadas();
     }
+    OnAtributosActualizados.Broadcast(StatsSincronizadas);
+
 }
 
 void UAttributeComponent::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -214,6 +216,7 @@ void UAttributeComponent::Server_RecalcularEstadisticas_Implementation(const TAr
 
 void UAttributeComponent::OnRep_StatsActualizadas()
 {
+    
     OnAtributosActualizados.Broadcast(StatsSincronizadas);
 }
 
