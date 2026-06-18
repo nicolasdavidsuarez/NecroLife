@@ -243,52 +243,6 @@ bool UQuestComponent::UpdateQuestProgress(FGameplayTag ObjectiveID, int32 Amount
 	}
 
 	return bHasUpdatedProgress;
-	
-	// Si NO somos el servidor (Autoridad), no hacemos nada.
-	/*if (!GetOwner()->HasAuthority()) return false; 
-	
-	if (!ObjectiveID.IsValid()) return false;
-
-	bool bHasUpdatedProgress = false;
-    
-	
-	for (FActiveQuestData& ActiveQuestData : ActiveQuests)
-	{
-		
-		if (!ActiveQuestData.QuestDataAsset) continue;
-
-		bool bIsObjectiveInCurrentStage = false;
-
-			for (const FQuestObjective& ObjectiveTemplate : ActiveQuestData.QuestDataAsset->Objectives)
-		{
-			if (ObjectiveTemplate.TargetID == ObjectiveID)
-			{
-				if (ObjectiveTemplate.Stage == ActiveQuestData.CurrentStage)
-				{
-					bIsObjectiveInCurrentStage = true;
-				}
-				break; // Ya encontramos, no es necesario recorrer todo
-			}
-		}
-
-		if (!bIsObjectiveInCurrentStage)
-		{
-			continue; 
-		}
-		int32* CurrentProgress = ActiveQuestData.ObjectiveProgress.Find(ObjectiveID);
-
-		if (CurrentProgress)
-		{
-			*CurrentProgress += Amount; 
-            
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Progreso: %d"), *CurrentProgress)); 
-          
-			CheckObjetivoComplete(ActiveQuestData, ObjectiveID);
-          
-			bHasUpdatedProgress = true;
-		}   
-	}
-	return bHasUpdatedProgress;*/
 }
 
 
@@ -384,8 +338,35 @@ void UQuestComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(UQuestComponent,Quests);
 }
 
+bool UQuestComponent::IsObjectiveComplete(FGameplayTag ObjectiveID)
+{
+	for (const FActiveQuestData& Quest : ActiveQuests)
+	{
+		if (Quest.ObjetivosCompletados.Contains(ObjectiveID))
+			return true;
+	}
+	return false;
+}
 
-
-
+bool UQuestComponent::IsStageComplete(int32 Stage)
+{
+	for (const FActiveQuestData& Quest : ActiveQuests)
+	{
+		bool bHayObjetivosEnStage = false;
+        
+		for (const FQuestObjective& Objective : Quest.QuestDataAsset->Objectives)
+		{
+			if (Objective.Stage == Stage)
+			{
+				bHayObjetivosEnStage = true;
+				if (!Quest.ObjetivosCompletados.Contains(Objective.TargetID))
+					return false;
+			}
+		}
+        
+		if (bHayObjetivosEnStage) return true;
+	}
+	return false;
+}
 
 
