@@ -999,8 +999,7 @@ void ANecroLifeCharacter::InventoryInput()
     if (bShowForgeInventory)return;
 
     if (!bShowInventory)
-    {
-      
+    {      
         bShowInventory = true;
         SetUIState(true);
         Attribute->RecalcularEstadisticas(Inventory->GemsInSlots);
@@ -1124,7 +1123,7 @@ void ANecroLifeCharacter::SetUIState(bool bIsTalking)
 {
     APlayerController* PC = Cast<APlayerController>(GetController());
     if (PC)
-    {
+    {   
         if (bIsTalking)
         {
             PC->SetInputMode(FInputModeGameAndUI());
