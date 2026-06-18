@@ -94,7 +94,86 @@ void ANecroLifeNpcBasic::OnRep_CurrentQuestIndex()
 	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, TEXT("mostrar si no es el que habla con npc"));
 }
 
+
 void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
+{
+    if (bIsWaitingForResponse) return;
+
+    ANecroLifeCharacter* MyCharacter = Cast<ANecroLifeCharacter>(Interactor);
+    if (!MyCharacter) return;
+
+    // Cooldown
+    float CurrentTime = GetWorld()->GetTimeSeconds();
+    if (CurrentTime - LastInteractTime < InteractCooldown) return;
+    LastInteractTime = CurrentTime;
+
+    if (!DialogueData || DialogueData->DialogLines.Num() == 0) return;
+
+    // Clamp defensivo
+    CurrentDialogIndex = FMath::Clamp(CurrentDialogIndex, 0, DialogueData->DialogLines.Num() - 1);
+
+    FDialogLine CurrentLine = DialogueData->DialogLines[CurrentDialogIndex];
+	// Después del clamp defensivo
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::White,
+		FString::Printf(TEXT("Index al entrar: %d | Total lineas: %d"),
+		CurrentDialogIndex, DialogueData->DialogLines.Num()));
+
+    // --- Caso 1: línea que requiere objetivo completado ---
+	if (CurrentLine.bRequiresPreviousObjective)
+	{
+		ANecroLifeGameState* GS = GetWorld()->GetGameState<ANecroLifeGameState>();
+		if (!GS || !GS->QuestComponent) return;
+
+		bool bObjetivoCompletado = GS->QuestComponent->IsStageComplete(CurrentLine.RequiredStage);
+
+		if (!bObjetivoCompletado)
+		{
+			// Objetivo no completado, mostramos la línea de bloqueo y no avanzamos
+			MyCharacter->SetUIState(true);
+			MyCharacter->ShowDialogue(CurrentLine);
+			return;
+		}else
+		{
+			CurrentDialogIndex++;
+			if (CurrentDialogIndex >= DialogueData->DialogLines.Num()) return;
+			CurrentLine = DialogueData->DialogLines[CurrentDialogIndex];
+			MyCharacter->SetUIState(true);
+			MyCharacter->ShowDialogue(CurrentLine);
+			return;
+		}
+	
+	}
+
+	// Flujo normal (aplica también después del bloque de arriba)
+	MyCharacter->SetUIState(true);
+	MyCharacter->ShowDialogue(CurrentLine);
+	
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange,
+	FString::Printf(TEXT("Flujo normal - Index: %d | Linea: %s"),
+	CurrentDialogIndex,
+	*DialogueData->DialogLines[CurrentDialogIndex].DialogueText.ToString()));
+
+	if (CurrentLine.bIsMissionChoice)
+	{
+		bIsWaitingForResponse = true;
+		QuestActual = Quests[CurrentQuestIndex];
+	
+		return;
+	}
+
+	if (CurrentDialogIndex < DialogueData->DialogLines.Num() - 1)
+	{
+		CurrentDialogIndex++;
+	}
+
+	if (CurrentLine.SpeakerAnim && GetMesh())
+	{
+		PlayAnimMontage(CurrentLine.SpeakerAnim);
+	}
+	
+	
+}
+/*void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 {
 	
 	if (bIsWaitingForResponse)
@@ -159,7 +238,7 @@ void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 		bIsWaitingForResponse = true;
 		QuestActual = Quests[CurrentQuestIndex];
 	}
-}
+}*/
 
 void ANecroLifeNpcBasic::CancelAddQuest()
 {
@@ -172,6 +251,10 @@ void ANecroLifeNpcBasic::NextAddQuest()
 	LastDialogIndex=CurrentDialogIndex;
 	CurrentQuestIndex++;
 	bIsWaitingForResponse = false;
+	if (CurrentDialogIndex < DialogueData->DialogLines.Num() - 1)
+	{
+		CurrentDialogIndex++;
+	}
 }
 
 //net

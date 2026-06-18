@@ -27,6 +27,9 @@ struct FDialogLine
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	bool bIsInfoOnly;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 RequiredStage = 0;
+	
 	// Constructor para inicializar valores
 	FDialogLine()
 	{
@@ -36,5 +39,6 @@ struct FDialogLine
 		bIsMissionChoice = false;
 		bRequiresPreviousObjective = false;
 		bIsInfoOnly = false;
+		RequiredStage=0;		
 	}
 };

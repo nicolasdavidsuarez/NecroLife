@@ -384,8 +384,35 @@ void UQuestComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(UQuestComponent,Quests);
 }
 
+bool UQuestComponent::IsObjectiveComplete(FGameplayTag ObjectiveID)
+{
+	for (const FActiveQuestData& Quest : ActiveQuests)
+	{
+		if (Quest.ObjetivosCompletados.Contains(ObjectiveID))
+			return true;
+	}
+	return false;
+}
 
-
-
+bool UQuestComponent::IsStageComplete(int32 Stage)
+{
+	for (const FActiveQuestData& Quest : ActiveQuests)
+	{
+		bool bHayObjetivosEnStage = false;
+        
+		for (const FQuestObjective& Objective : Quest.QuestDataAsset->Objectives)
+		{
+			if (Objective.Stage == Stage)
+			{
+				bHayObjetivosEnStage = true;
+				if (!Quest.ObjetivosCompletados.Contains(Objective.TargetID))
+					return false;
+			}
+		}
+        
+		if (bHayObjetivosEnStage) return true;
+	}
+	return false;
+}
 
 
