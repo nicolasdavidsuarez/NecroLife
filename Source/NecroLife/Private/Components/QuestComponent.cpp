@@ -78,10 +78,7 @@ void UQuestComponent::AddQuest(UQuestData* QuestData)
 		tempQuest.ObjectiveProgress.Empty();
 		for (int i=0;i<QuestData->Objectives.Num();i++)//inicializacion del los objetivos
 		{
-			//GEngine->AddOnScreenDebugMessage(i+1, 50.f, FColor::Yellow,
-		//QuestData->Objectives[i].Description.ToString());
-			//tempQuest.ObjectiveProgress.Add(QuestData->Objectives[i].TargetID,0);
-
+		
 			// 1. Creamos la "caja" (la estructura)
 			FProgresoObjetivo NuevoProgreso;    
 			// 2. La rellenamos con el ID y el progreso inicial en 0
@@ -112,15 +109,16 @@ void UQuestComponent::ActualizarQuests()
 
 	for (const auto& ActiveQuestTemp : ActiveQuests)  
 	{
-		// 2. Creamos el contenedor para ESTA misión específica
+		if (ActiveQuestTemp.bIsDone) continue;
+		
 		FQuestUIData NuevaQuestUI;
 		NuevaQuestUI.QuestName = FText::FromName(ActiveQuestTemp.QuestDataAsset->QuestName);
 
 		// 3. Buscamos los objetivos de la etapa actual
 		for (int i = 0; i < ActiveQuestTemp.QuestDataAsset->Objectives.Num(); i++)
 		{
-			if (ActiveQuestTemp.QuestDataAsset->Objectives[i].Stage == ActiveQuestTemp.CurrentStage)
-			{
+			//if (ActiveQuestTemp.QuestDataAsset->Objectives[i].Stage == ActiveQuestTemp.CurrentStage)
+			//{
 				FQuestObjectiveListEntry NuevoObjetivo;
 				NuevoObjetivo.EntryText = ActiveQuestTemp.QuestDataAsset->Objectives[i].Description;
 				NuevoObjetivo.img = nullptr; 
@@ -128,7 +126,7 @@ void UQuestComponent::ActualizarQuests()
 
 				// Agregamos el objetivo a la lista de esta misión
 				NuevaQuestUI.Objectives.Add(NuevoObjetivo);
-			}
+			//}
 		}
        
 		// 4. Si la misión tiene objetivos en esta etapa, la agregamos a la lista final
@@ -314,12 +312,29 @@ bool bFaltaObjetivo = false;
 				}
 			}
 		}
-if (!bFaltaObjetivo)
-{
-	QuestToCheck.CurrentStage++;
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue,
-FString::Printf(TEXT("¡Objetivo Completado! Nueva etapa: %d"), QuestToCheck.CurrentStage));
-}
+		if (!bFaltaObjetivo)
+		{
+			QuestToCheck.CurrentStage++;
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue,
+				FString::Printf(TEXT("¡Objetivo Completado! Nueva etapa: %d"), QuestToCheck.CurrentStage));
+
+			// Verificar si ya no hay más stages (quest completa)
+			bool bHayMasObjetivos = false;
+			for (const auto& Objective : QuestToCheck.QuestDataAsset->Objectives)
+			{
+				if (Objective.Stage == QuestToCheck.CurrentStage)
+				{
+					bHayMasObjetivos = true;
+					break;
+				}
+			}
+
+			if (!bHayMasObjetivos)
+			{
+				QuestToCheck.bIsDone = true;
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("¡Quest completada!"));
+			}
+		}
 		
 		// Aquí podrías llamar a una función que verifique si TODOS los objetivos de la quest están listos
 	}
@@ -352,8 +367,10 @@ bool UQuestComponent::IsStageComplete(int32 Stage)
 {
 	for (const FActiveQuestData& Quest : ActiveQuests)
 	{
+		// Si la quest está completa, cualquier stage se considera completa
+		if (Quest.bIsDone) return true;
+
 		bool bHayObjetivosEnStage = false;
-        
 		for (const FQuestObjective& Objective : Quest.QuestDataAsset->Objectives)
 		{
 			if (Objective.Stage == Stage)
@@ -363,7 +380,6 @@ bool UQuestComponent::IsStageComplete(int32 Stage)
 					return false;
 			}
 		}
-        
 		if (bHayObjetivosEnStage) return true;
 	}
 	return false;

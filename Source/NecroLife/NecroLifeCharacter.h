@@ -146,6 +146,9 @@ public:
 
     UFUNCTION(BlueprintImplementableEvent)
     void SetAbilitySlot(int32 CoolDownAbility);
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void Bp_SpawnReward();
 
 protected:
     // --- Inputs ---
@@ -380,6 +383,8 @@ public:
 
     UFUNCTION(BlueprintCallable)
     void SetUIState(bool bIsTalking);
+    
+    bool bCanMove=true;
 
     // Callback cuando el AttributeComponent recalcula stats (de los compañeros)
     UFUNCTION()

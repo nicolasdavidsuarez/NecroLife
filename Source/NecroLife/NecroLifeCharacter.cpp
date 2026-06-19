@@ -227,6 +227,7 @@ void ANecroLifeCharacter::Move(const FInputActionValue& Value)
 {
     if (bShowInventory) return;
     if (bShowForgeInventory) return;
+    if (!bCanMove)return;
     FVector2D MovementVector = Value.Get<FVector2D>();
     DoMove(MovementVector.X, MovementVector.Y);
 }
@@ -1128,11 +1129,13 @@ void ANecroLifeCharacter::SetUIState(bool bIsTalking)
         {
             PC->SetInputMode(FInputModeGameAndUI());
             PC->bShowMouseCursor = true;
+            bCanMove=false;
         }
         else
         {
             PC->SetInputMode(FInputModeGameOnly());
             PC->bShowMouseCursor = false;
+            bCanMove=true;
         }
     }
 }

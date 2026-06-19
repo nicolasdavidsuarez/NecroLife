@@ -129,7 +129,7 @@ void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 			GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Yellow,TEXT("viva peron"));
 			//aca deberia spawnear el premio por la mision
 			MyCharacter->ShowDialogue(CurrentLine);
-
+			MyCharacter->Bp_SpawnReward();
 		}
 	
 		bool bObjetivoCompletado = GS->QuestComponent->IsStageComplete(CurrentLine.RequiredStage);
