@@ -30,10 +30,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lobo|Vision")
 	float VisionAngle = 60.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lobo|Combate")
-	float AttackDamage = 20.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lobo|Combate")
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lobo|Combate")
 	float AttackRange = 150.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lobo|Combate")

@@ -2,6 +2,8 @@
 
 #include "Public/NPC/NecroLifeEnemyBasic.h"
 #include "Net/UnrealNetwork.h" // Necesario para tu replicación
+#include "Kismet/KismetSystemLibrary.h"
+#include "Public/Components/RPGHelper.h"
 #include "Components/WidgetComponent.h"
 
 ANecroLifeEnemyBasic::ANecroLifeEnemyBasic()
@@ -96,4 +98,69 @@ void ANecroLifeEnemyBasic::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 void ANecroLifeEnemyBasic::Server_ResetDamageState_Implementation()
 {
     bIsEDamaged = false;
+}
+
+void ANecroLifeEnemyBasic::ExecuteMeleeAttack()
+{
+    // 1. Verificamos autoridad para evitar trampas
+    if (!HasAuthority() || !GetMesh()) return;
+
+    // 2. Obtenemos la posición exacta del socket/hueso
+    FVector TraceLocation = GetMesh()->GetSocketLocation(AttackSocketName);
+
+    TArray<AActor*> ActorsToIgnore;
+    ActorsToIgnore.Add(this); // Que no se golpee a sí mismo
+
+    // NUEVO FIX 1: Ampliamos la búsqueda para asegurarnos de pescar a Huesos
+    TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+    ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));
+    ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_PhysicsBody));
+    ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldDynamic));
+
+    TArray<AActor*> OutActors;
+
+    // NUEVO FIX 2: Cambiamos nullptr por AActor::StaticClass()
+    bool bHit = UKismetSystemLibrary::SphereOverlapActors(
+        this,
+        TraceLocation,
+        AttackRadius,
+        ObjectTypes,
+        AActor::StaticClass(), 
+        ActorsToIgnore,
+        OutActors
+    );
+
+    // Dibujamos la esfera manualmente (Verde si toca algo, Roja si no toca nada)
+    UKismetSystemLibrary::DrawDebugSphere(
+        this,
+        TraceLocation,
+        AttackRadius,
+        12,
+        bHit ? FLinearColor::Green : FLinearColor::Red,
+        1.5f,
+        1.5f
+    );
+
+    // 5. Aplicamos daño
+    if (bHit)
+    {
+        for (AActor* HitActor : OutActors)
+        {
+            if (HitActor)
+            {
+                // DEBUG: Te imprime en amarillo en la pantalla todo lo que tocó el mordisco
+                UKismetSystemLibrary::PrintString(this, "Toque a: " + HitActor->GetName(), true, true, FLinearColor::Yellow, 2.f);
+
+                // Si el objeto tocado NO es un enemigo básico...
+                if (!HitActor->IsA<ANecroLifeEnemyBasic>())
+                {
+                    // DEBUG: Te avisa en verde si la validación funcionó y pegó el golpe
+                    UKismetSystemLibrary::PrintString(this, "¡Dano aplicado a " + HitActor->GetName() + "!", true, true, FLinearColor::Green, 2.f);
+					
+                    URPGHelper::ApplyDamage(HitActor, AttackDamage);
+                    break; // Rompemos el ciclo
+                }
+            }
+        }
+    }
 }
