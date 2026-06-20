@@ -58,6 +58,9 @@ public:
     // --- Replicación (networking) ---
     UPROPERTY(ReplicatedUsing=OnRep_StatsActualizadas)
     FEstadisticasPersonaje StatsSincronizadas;
+    
+    UFUNCTION(BlueprintCallable)
+    FEstadisticasPersonaje GetStatsSincronizadas();
 
     UFUNCTION()
     void OnRep_StatsActualizadas();

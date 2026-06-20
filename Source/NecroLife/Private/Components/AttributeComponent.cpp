@@ -38,18 +38,11 @@ void UAttributeComponent::BeginPlay()
     Super::BeginPlay();
 
     if (GetOwner()->HasAuthority())
+    { 
+        RecalcularEstadisticas(TArray<FDatosGema>());     
+    }else
     {
-        StatsSincronizadas.VidaMaxima          = BaseLife;
-        StatsSincronizadas.Ataque              = BaseAttack;
-        StatsSincronizadas.Defensa             = DefenseBase;
-        StatsSincronizadas.Velocidad           = BaseVelocity;
-        StatsSincronizadas.EnergiaMaxima       = BaseEnergy;
-        StatsSincronizadas.VelocidadRegeneracion = velocidadEnergyReg;
-        StatsSincronizadas.Nivel               = Level;
-        StatsSincronizadas.RegenVida           = BaseRegenVida;
-        StatsSincronizadas.RegenEnergia        = BaseRegenEnergia;
-
-        OnRep_StatsActualizadas();
+        Server_RecalcularEstadisticas(TArray<FDatosGema>());
     }
 }
 
@@ -212,8 +205,14 @@ void UAttributeComponent::Server_RecalcularEstadisticas_Implementation(const TAr
     OnRep_StatsActualizadas();
 }
 
+FEstadisticasPersonaje UAttributeComponent::GetStatsSincronizadas()
+{
+    return StatsSincronizadas;
+}
+
 void UAttributeComponent::OnRep_StatsActualizadas()
 {
+    
     OnAtributosActualizados.Broadcast(StatsSincronizadas);
 }
 

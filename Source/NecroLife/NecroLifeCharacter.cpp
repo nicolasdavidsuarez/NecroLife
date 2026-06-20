@@ -33,122 +33,7 @@
 #include "NPC/NecroLifeNpcBasic.h"
 #include "Widgets/NecroLifeHud.h"
 
-// ============================================================
-// RPCs de networking (tuyas)
-// ============================================================
 
-void ANecroLifeCharacter::Server_AplyAbility_Implementation()
-{
-    TArray<FOverlapResult> Overlaps;
-    FVector Origin = GetActorLocation();
-    FCollisionShape CollisionShape = FCollisionShape::MakeSphere(300.f);
-
-    bool bHit = GetWorld()->OverlapMultiByChannel(Overlaps, Origin, FQuat::Identity, ECC_Pawn, CollisionShape);
-    if (!bHit) return;
-
-    FVector Forward = GetActorForwardVector();
-
-    for (auto& Result : Overlaps)
-    {
-        AActor* Other = Result.GetActor();
-        ANecroLifeEnemyBasic* EnemyBasic = Cast<ANecroLifeEnemyBasic>(Other);
-        if (!EnemyBasic || Other == this) continue;
-
-        FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
-        float Dot = FVector::DotProduct(Forward, ToTarget);
-        float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
-
-        if (AngleToTarget <= 45.f)
-        {
-            URPGHelper::ApplyDamage(Other, 100);
-            if (!EnemyBasic->IsAlive())
-            {
-                URPGHelper::TakeXP(this, EnemyBasic->EsenciasAlMorir);
-                Server_ActualizarProgresoMision(EnemyBasic->GetTag(), 1);
-            }
-        }
-    }
-}
-bool ANecroLifeCharacter::Server_AplyAbility_Validate() { return true; }
-
-void ANecroLifeCharacter::Server_AplyAction_Implementation()
-{
-    TArray<FOverlapResult> Overlaps;
-    FVector Origin = GetActorLocation();
-    FCollisionShape CollisionShape = FCollisionShape::MakeBox(FVector(100, 100, 100));
-
-    bool bHit = GetWorld()->OverlapMultiByChannel(Overlaps, Origin, FQuat::Identity, ECC_Pawn, CollisionShape);
-    if (!bHit) return;
-
-    FVector Forward = GetActorForwardVector();
-
-    for (auto& Result : Overlaps)
-    {
-        AActor* Other = Result.GetActor();
-        ANecroLifeEnemyBasic* EnemyBasic = Cast<ANecroLifeEnemyBasic>(Other);
-        if (!EnemyBasic || Other == this) continue;
-
-        FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
-        float Dot = FVector::DotProduct(Forward, ToTarget);
-        float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
-
-        if (AngleToTarget <= 45.f)
-        {
-            URPGHelper::ApplyDamage(Other, 10);
-            if (!EnemyBasic->IsAlive())
-            {
-                URPGHelper::TakeXP(this, EnemyBasic->EsenciasAlMorir);
-                Server_ActualizarProgresoMision(EnemyBasic->GetTag(), 1);
-            }
-        }
-    }
-}
-bool ANecroLifeCharacter::Server_AplyAction_Validate() { return true; }
-
-void ANecroLifeCharacter::Server_ActualizarProgresoMision_Implementation(FGameplayTag ObjectiveID, int32 Amount)
-{
-    // QuestComponent movido al GameState para coop
-    ANecroLifeGameState* GS = GetWorld()->GetGameState<ANecroLifeGameState>();
-    if (GS && GS->QuestComponent)
-    {
-        GS->QuestComponent->UpdateQuestProgress(ObjectiveID, Amount);
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange,
-            TEXT("El Servidor recibió la interacción y actualizó el GameState"));
-    }
-}
-
-void ANecroLifeCharacter::Client_MostrarNuevaGema_Implementation(FDatosGema Data)
-{
-    MostarNuevaGema(Data);
-}
-
-
-
-void ANecroLifeCharacter::Client_SyncQuestUI_Implementation(const TArray<FQuestUIData>& QuestList)
-{
-    if (UNecroLifeHud* HUD = Cast<UNecroLifeHud>(HubWidget))
-    {
-        HUD->ActualizarQuestList(QuestList); // ← tu función existente
-    }
-}
-
-void ANecroLifeCharacter::MostarNuevaGema(FDatosGema gemaData)
-{
-    ShowNuevaGema.Broadcast(gemaData);
-}
-
-void ANecroLifeCharacter::Server_AgregarMision_Implementation(UQuestData* QuestData)
-{
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange,
-           TEXT("Entro a Server_AgregarMision_Implementation"));
-    ANecroLifeGameState* GS = GetWorld()->GetGameState<ANecroLifeGameState>();
-    if (GS && GS->QuestComponent)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange,
-            TEXT("Entro a GS->QuestComponent, para AddQuest"));
-        GS->QuestComponent->AddQuest(QuestData);
-    }
-}
 
 // ============================================================
 // Constructor
@@ -228,8 +113,9 @@ void ANecroLifeCharacter::BeginPlay()
     // Bind del delegate y recálculo inicial de stats (de los compañeros)
     if (Attribute)
     {
-        Attribute->OnAtributosActualizados.AddDynamic(this, &ANecroLifeCharacter::OnAtributosActualizados);
         Attribute->RecalcularEstadisticas(Inventory->GemsInSlots);
+        Attribute->OnAtributosActualizados.AddDynamic(this, &ANecroLifeCharacter::OnAtributosActualizados);
+        
     }
 }
 
@@ -441,6 +327,124 @@ void ANecroLifeCharacter::HandleCameraAutoAlignment(float DeltaTime)
         NewControlRot.Yaw = FMath::RInterpTo(CurrentControlRot, TargetRot, DeltaTime, AutoAlignSpeed).Yaw;
         if (AController* CharController = GetController())
             CharController->SetControlRotation(NewControlRot);
+    }
+}
+
+
+// ============================================================
+// RPCs de networking (tuyas)
+// ============================================================
+
+void ANecroLifeCharacter::Server_AplyAbility_Implementation()
+{
+    TArray<FOverlapResult> Overlaps;
+    FVector Origin = GetActorLocation();
+    FCollisionShape CollisionShape = FCollisionShape::MakeSphere(300.f);
+
+    bool bHit = GetWorld()->OverlapMultiByChannel(Overlaps, Origin, FQuat::Identity, ECC_Pawn, CollisionShape);
+    if (!bHit) return;
+
+    FVector Forward = GetActorForwardVector();
+
+    for (auto& Result : Overlaps)
+    {
+        AActor* Other = Result.GetActor();
+        ANecroLifeEnemyBasic* EnemyBasic = Cast<ANecroLifeEnemyBasic>(Other);
+        if (!EnemyBasic || Other == this) continue;
+
+        FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
+        float Dot = FVector::DotProduct(Forward, ToTarget);
+        float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
+
+        if (AngleToTarget <= 45.f)
+        {
+            URPGHelper::ApplyDamage(Other, 100);
+            if (!EnemyBasic->IsAlive())
+            {
+                URPGHelper::TakeXP(this, EnemyBasic->EsenciasAlMorir);
+                Server_ActualizarProgresoMision(EnemyBasic->GetTag(), 1);
+            }
+        }
+    }
+}
+bool ANecroLifeCharacter::Server_AplyAbility_Validate() { return true; }
+
+void ANecroLifeCharacter::Server_AplyAction_Implementation()
+{
+    TArray<FOverlapResult> Overlaps;
+    FVector Origin = GetActorLocation();
+    FCollisionShape CollisionShape = FCollisionShape::MakeBox(FVector(100, 100, 100));
+
+    bool bHit = GetWorld()->OverlapMultiByChannel(Overlaps, Origin, FQuat::Identity, ECC_Pawn, CollisionShape);
+    if (!bHit) return;
+
+    FVector Forward = GetActorForwardVector();
+
+    for (auto& Result : Overlaps)
+    {
+        AActor* Other = Result.GetActor();
+        ANecroLifeEnemyBasic* EnemyBasic = Cast<ANecroLifeEnemyBasic>(Other);
+        if (!EnemyBasic || Other == this) continue;
+
+        FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
+        float Dot = FVector::DotProduct(Forward, ToTarget);
+        float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
+
+        if (AngleToTarget <= 45.f)
+        {
+            URPGHelper::ApplyDamage(Other, 10);
+            if (!EnemyBasic->IsAlive())
+            {
+                URPGHelper::TakeXP(this, EnemyBasic->EsenciasAlMorir);
+                Server_ActualizarProgresoMision(EnemyBasic->GetTag(), 1);
+            }
+        }
+    }
+}
+bool ANecroLifeCharacter::Server_AplyAction_Validate() { return true; }
+
+void ANecroLifeCharacter::Server_ActualizarProgresoMision_Implementation(FGameplayTag ObjectiveID, int32 Amount)
+{
+    // QuestComponent movido al GameState para coop
+    ANecroLifeGameState* GS = GetWorld()->GetGameState<ANecroLifeGameState>();
+    if (GS && GS->QuestComponent)
+    {
+        GS->QuestComponent->UpdateQuestProgress(ObjectiveID, Amount);
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange,
+            TEXT("El Servidor recibió la interacción y actualizó el GameState"));
+    }
+}
+
+void ANecroLifeCharacter::Client_MostrarNuevaGema_Implementation(FDatosGema Data)
+{
+    MostarNuevaGema(Data);
+}
+
+
+
+void ANecroLifeCharacter::Client_SyncQuestUI_Implementation(const TArray<FQuestUIData>& QuestList)
+{
+    if (UNecroLifeHud* HUD = Cast<UNecroLifeHud>(HubWidget))
+    {
+        HUD->ActualizarQuestList(QuestList); // ← tu función existente
+    }
+}
+
+void ANecroLifeCharacter::MostarNuevaGema(FDatosGema gemaData)
+{
+    ShowNuevaGema.Broadcast(gemaData);
+}
+
+void ANecroLifeCharacter::Server_AgregarMision_Implementation(UQuestData* QuestData)
+{
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange,
+           TEXT("Entro a Server_AgregarMision_Implementation"));
+    ANecroLifeGameState* GS = GetWorld()->GetGameState<ANecroLifeGameState>();
+    if (GS && GS->QuestComponent)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange,
+            TEXT("Entro a GS->QuestComponent, para AddQuest"));
+        GS->QuestComponent->AddQuest(QuestData);
     }
 }
 
@@ -995,8 +999,7 @@ void ANecroLifeCharacter::InventoryInput()
     if (bShowForgeInventory)return;
 
     if (!bShowInventory)
-    {
-      
+    {      
         bShowInventory = true;
         SetUIState(true);
         Attribute->RecalcularEstadisticas(Inventory->GemsInSlots);
@@ -1120,7 +1123,7 @@ void ANecroLifeCharacter::SetUIState(bool bIsTalking)
 {
     APlayerController* PC = Cast<APlayerController>(GetController());
     if (PC)
-    {
+    {   
         if (bIsTalking)
         {
             PC->SetInputMode(FInputModeGameAndUI());
