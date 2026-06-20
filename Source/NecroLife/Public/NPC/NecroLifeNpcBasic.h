@@ -32,6 +32,14 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	
+	UPROPERTY(BlueprintReadWrite, Category = "Animation")
+	bool bIsTalking = false;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Animation")
+	bool bIsAttacking = false;
+	
+	FTimerHandle TalkingTimerHandle;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TArray<UQuestData*> Quests;

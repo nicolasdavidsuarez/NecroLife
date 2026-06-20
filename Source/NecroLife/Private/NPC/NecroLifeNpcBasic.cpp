@@ -129,6 +129,13 @@ void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 			GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Yellow,TEXT("viva peron"));
 			//aca deberia spawnear el premio por la mision
 			MyCharacter->ShowDialogue(CurrentLine);
+			bIsTalking = true;
+			GetWorldTimerManager().SetTimer(
+				TalkingTimerHandle,
+				[this]() { bIsTalking = false; },
+				2.5f, // segundos que dura el diálogo
+				false
+			);
 			MyCharacter->Bp_SpawnReward();
 		}
 	
@@ -140,6 +147,13 @@ void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 			// Objetivo no completado, mostramos la línea de bloqueo y no avanzamos
 			MyCharacter->SetUIState(true);
 			MyCharacter->ShowDialogue(CurrentLine);
+			bIsTalking = true;
+			GetWorldTimerManager().SetTimer(
+				TalkingTimerHandle,
+				[this]() { bIsTalking = false; },
+				2.5f, // segundos que dura el diálogo
+				false
+			);
 			return;
 		}else
 		{
@@ -148,6 +162,13 @@ void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 				CurrentLine = DialogueData->DialogLines[CurrentDialogIndex];
 				MyCharacter->SetUIState(true);
 				MyCharacter->ShowDialogue(CurrentLine);
+			bIsTalking = true;
+			GetWorldTimerManager().SetTimer(
+				TalkingTimerHandle,
+				[this]() { bIsTalking = false; },
+				2.5f, // segundos que dura el diálogo
+				false
+			);
     
 				if (CurrentDialogIndex < DialogueData->DialogLines.Num() - 1)
 					CurrentDialogIndex++;
@@ -161,6 +182,14 @@ void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 	// Flujo normal (aplica también después del bloque de arriba)
 	MyCharacter->SetUIState(true);
 	MyCharacter->ShowDialogue(CurrentLine);
+	bIsTalking = true;
+	GetWorldTimerManager().SetTimer(
+		TalkingTimerHandle,
+		[this]() { bIsTalking = false; },
+		2.5f, // segundos que dura el diálogo
+		false
+	);
+	
 	
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange,
 	FString::Printf(TEXT("Flujo normal - Index: %d | Linea: %s"),
