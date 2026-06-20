@@ -113,8 +113,9 @@ void ANecroLifeCharacter::BeginPlay()
     // Bind del delegate y recálculo inicial de stats (de los compañeros)
     if (Attribute)
     {
-        Attribute->RecalcularEstadisticas(Inventory->GemsInSlots);
         Attribute->OnAtributosActualizados.AddDynamic(this, &ANecroLifeCharacter::OnAtributosActualizados);
+        Attribute->RecalcularEstadisticas(Inventory->GemsInSlots);
+       
         
     }
 }

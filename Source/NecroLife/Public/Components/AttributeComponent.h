@@ -130,7 +130,7 @@ public:
 
     // --- Velocity ---
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Velocity")
-    float Velocity = 10;
+    float Velocity = 18;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Velocity")
     float BaseVelocity = 10;
