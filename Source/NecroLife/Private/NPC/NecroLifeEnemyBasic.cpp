@@ -102,64 +102,60 @@ void ANecroLifeEnemyBasic::Server_ResetDamageState_Implementation()
 
 void ANecroLifeEnemyBasic::ExecuteMeleeAttack()
 {
-    // 1. Verificamos autoridad para evitar trampas
+    // 1. Verificamos autoridad para evitar trampas en red
     if (!HasAuthority() || !GetMesh()) return;
 
-    // 2. Obtenemos la posición exacta del socket/hueso
-    FVector TraceLocation = GetMesh()->GetSocketLocation(AttackSocketName);
+    // DEBUG VITAL: Si este texto no sale en pantalla, el Anim Notify está desconectado.
+    UKismetSystemLibrary::PrintString(this, "C++: Disparando ataque", true, true, FLinearColor::Blue, 2.f);
+
+    // 2. Trayectoria para atravesar a la manada
+    FVector TraceStart = GetMesh()->GetSocketLocation(AttackSocketName);
+    FVector TraceEnd = TraceStart + (GetActorForwardVector() * 60.f); // Viaja 60 cm hacia adelante
 
     TArray<AActor*> ActorsToIgnore;
-    ActorsToIgnore.Add(this); // Que no se golpee a sí mismo
+    ActorsToIgnore.Add(this); // Que el lobo no se muerda a sí mismo
 
-    // NUEVO FIX 1: Ampliamos la búsqueda para asegurarnos de pescar a Huesos
+    // 3. LA SOLUCIÓN: Buscamos específicamente por Tipo de Objeto (Peones)
     TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-    ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));
+    ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn)); // Atrapa a Huesos y otros lobos
     ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_PhysicsBody));
     ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldDynamic));
 
-    TArray<AActor*> OutActors;
+    TArray<FHitResult> HitResults;
 
-    // NUEVO FIX 2: Cambiamos nullptr por AActor::StaticClass()
-    bool bHit = UKismetSystemLibrary::SphereOverlapActors(
+    // 4. Usamos SphereTraceMultiForObjects
+    bool bHit = UKismetSystemLibrary::SphereTraceMultiForObjects(
         this,
-        TraceLocation,
+        TraceStart,
+        TraceEnd,
         AttackRadius,
         ObjectTypes,
-        AActor::StaticClass(), 
+        false,
         ActorsToIgnore,
-        OutActors
+        EDrawDebugTrace::ForDuration, // Dibuja la cápsula
+        HitResults,
+        true,
+        FLinearColor::Red,
+        FLinearColor::Green,
+        1.5f // La cápsula dura 1.5 segundos en pantalla
     );
 
-    // Dibujamos la esfera manualmente (Verde si toca algo, Roja si no toca nada)
-    UKismetSystemLibrary::DrawDebugSphere(
-        this,
-        TraceLocation,
-        AttackRadius,
-        12,
-        bHit ? FLinearColor::Green : FLinearColor::Red,
-        1.5f,
-        1.5f
-    );
-
-    // 5. Aplicamos daño
+    // 5. Filtramos los impactos
     if (bHit)
     {
-        for (AActor* HitActor : OutActors)
+        for (const FHitResult& Hit : HitResults)
         {
-            if (HitActor)
-            {
-                // DEBUG: Te imprime en amarillo en la pantalla todo lo que tocó el mordisco
-                UKismetSystemLibrary::PrintString(this, "Toque a: " + HitActor->GetName(), true, true, FLinearColor::Yellow, 2.f);
+            AActor* HitActor = Hit.GetActor();
 
-                // Si el objeto tocado NO es un enemigo básico...
-                if (!HitActor->IsA<ANecroLifeEnemyBasic>())
-                {
-                    // DEBUG: Te avisa en verde si la validación funcionó y pegó el golpe
-                    UKismetSystemLibrary::PrintString(this, "¡Dano aplicado a " + HitActor->GetName() + "!", true, true, FLinearColor::Green, 2.f);
-					
-                    URPGHelper::ApplyDamage(HitActor, AttackDamage);
-                    break; // Rompemos el ciclo
-                }
+            // Si el objeto tocado es válido y NO es otro enemigo básico...
+            if (HitActor && !HitActor->IsA<ANecroLifeEnemyBasic>())
+            {
+                // DEBUG: Te avisa a quién le acaba de pegar
+                UKismetSystemLibrary::PrintString(this, "C++: Le pegue a " + HitActor->GetName(), true, true, FLinearColor::Yellow, 2.f);
+				
+                // Aplicamos daño y rompemos el ciclo
+                URPGHelper::ApplyDamage(HitActor, AttackDamage);
+                break; 
             }
         }
     }
