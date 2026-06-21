@@ -2,6 +2,8 @@
 
 #include "Public/NPC/NecroLifeEnemyBasic.h"
 #include "Net/UnrealNetwork.h" // Necesario para tu replicación
+#include "Kismet/KismetSystemLibrary.h"
+#include "Public/Components/RPGHelper.h"
 #include "Components/WidgetComponent.h"
 
 ANecroLifeEnemyBasic::ANecroLifeEnemyBasic()
@@ -96,4 +98,65 @@ void ANecroLifeEnemyBasic::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 void ANecroLifeEnemyBasic::Server_ResetDamageState_Implementation()
 {
     bIsEDamaged = false;
+}
+
+void ANecroLifeEnemyBasic::ExecuteMeleeAttack()
+{
+    // 1. Verificamos autoridad para evitar trampas en red
+    if (!HasAuthority() || !GetMesh()) return;
+
+    // DEBUG VITAL: Si este texto no sale en pantalla, el Anim Notify está desconectado.
+    UKismetSystemLibrary::PrintString(this, "C++: Disparando ataque", true, true, FLinearColor::Blue, 2.f);
+
+    // 2. Trayectoria para atravesar a la manada
+    FVector TraceStart = GetMesh()->GetSocketLocation(AttackSocketName);
+    FVector TraceEnd = TraceStart + (GetActorForwardVector() * 60.f); // Viaja 60 cm hacia adelante
+
+    TArray<AActor*> ActorsToIgnore;
+    ActorsToIgnore.Add(this); // Que el lobo no se muerda a sí mismo
+
+    // 3. LA SOLUCIÓN: Buscamos específicamente por Tipo de Objeto (Peones)
+    TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+    ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn)); // Atrapa a Huesos y otros lobos
+    ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_PhysicsBody));
+    ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldDynamic));
+
+    TArray<FHitResult> HitResults;
+
+    // 4. Usamos SphereTraceMultiForObjects
+    bool bHit = UKismetSystemLibrary::SphereTraceMultiForObjects(
+        this,
+        TraceStart,
+        TraceEnd,
+        AttackRadius,
+        ObjectTypes,
+        false,
+        ActorsToIgnore,
+        EDrawDebugTrace::ForDuration, // Dibuja la cápsula
+        HitResults,
+        true,
+        FLinearColor::Red,
+        FLinearColor::Green,
+        1.5f // La cápsula dura 1.5 segundos en pantalla
+    );
+
+    // 5. Filtramos los impactos
+    if (bHit)
+    {
+        for (const FHitResult& Hit : HitResults)
+        {
+            AActor* HitActor = Hit.GetActor();
+
+            // Si el objeto tocado es válido y NO es otro enemigo básico...
+            if (HitActor && !HitActor->IsA<ANecroLifeEnemyBasic>())
+            {
+                // DEBUG: Te avisa a quién le acaba de pegar
+                UKismetSystemLibrary::PrintString(this, "C++: Le pegue a " + HitActor->GetName(), true, true, FLinearColor::Yellow, 2.f);
+				
+                // Aplicamos daño y rompemos el ciclo
+                URPGHelper::ApplyDamage(HitActor, AttackDamage);
+                break; 
+            }
+        }
+    }
 }

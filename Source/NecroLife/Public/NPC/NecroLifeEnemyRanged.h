@@ -21,9 +21,6 @@ public:
 	TSubclassOf<ANecroLifeProjectile> ProjectileClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ranged")
-	float AttackDamage = 15.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ranged")
 	float ShootRange = 700.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ranged")

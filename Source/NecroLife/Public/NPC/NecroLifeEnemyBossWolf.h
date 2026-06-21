@@ -78,6 +78,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Boss|Dash")
 	AActor* DashTargetActor;
 
+	// --- Patrulla (durante WaitingForWolves) ---
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Boss|Patrol")
+	float PatrolDistance = 400.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Boss|Patrol")
+	float PatrolSpeed = 300.f;
+
 	// --- Visión ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Boss|Vision")
 	float SightRadius = 2000.f;
@@ -119,6 +126,10 @@ private:
 	FVector BossStartLocation;
 	bool bNextDashToTarget = true;
 	FVector CurrentDashDestination;
+	FVector DashDirection;
+	FVector PatrolRightAxis;
+	bool bPatrolGoingRight = true;
+	float NormalWalkSpeed = 600.f;
 	bool bActivated = false;
 
 	FTimerHandle HowlTimerHandle;
@@ -127,6 +138,7 @@ private:
 	FTimerHandle PostDashTimerHandle;
 
 	void SetBossState(EBossWolfState NewState);
+	void StartPatrol();
 	void SpawnWolves();
 	void StartFreeDamagePhase();
 	void StartCharging();
