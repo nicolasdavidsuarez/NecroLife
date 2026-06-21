@@ -195,7 +195,8 @@ void UAttributeComponent::RecalcularEstadisticas(const TArray<FDatosGema>& Gemas
         // Cliente: delega al servidor
         Server_RecalcularEstadisticas(GemasEquipadas);
     }
-
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red,
+        FString::Printf(TEXT("BaseVelocity al recalcular: %.1f"), BaseVelocity));
     OnRep_StatsActualizadas();
 }
 
