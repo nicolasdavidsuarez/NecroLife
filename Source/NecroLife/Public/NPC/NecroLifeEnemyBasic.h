@@ -77,13 +77,30 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Targeting")
 	void OnTargetStatusChanged(bool bIsTarget);
+	
+	// --- Configuración de Ataque Melee ---
+	
+	// El nombre del socket o hueso desde donde sale el ataque (ej. "MouthSocket", "Hand_R")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combate")
+	FName AttackSocketName = FName("AttackSocket");
+
+	// Qué tan grande es la zona de impacto del golpe
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combate")
+	float AttackRadius = 45.f;
+
+	// Daño unificado para todos los enemigos
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combate")
+	float AttackDamage = 20.f;
+
+	// Función que dispara el AnimBP en el frame del golpe
+	UFUNCTION(BlueprintCallable, Category = "Combate")
+	void ExecuteMeleeAttack();
+	
+	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual bool IsAlive();
 
 protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-public:
-	virtual void Tick(float DeltaTime) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	virtual bool IsAlive();
 };

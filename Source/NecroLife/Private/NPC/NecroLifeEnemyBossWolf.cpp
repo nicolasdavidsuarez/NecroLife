@@ -3,6 +3,7 @@
 #include "Public/NPC/NecroLifeEnemyBossWolf.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Public/Components/RPGHelper.h"
 #include "Engine/World.h"
 #include "AIController.h"
@@ -33,6 +34,8 @@ void ANecroLifeEnemyBossWolf::BeginPlay()
 	Super::BeginPlay();
 
 	BossStartLocation = GetActorLocation();
+	PatrolRightAxis = GetActorRightVector();
+	NormalWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
 	PawnSensing->SightRadius = SightRadius;
 	PawnSensing->SetPeripheralVisionAngle(VisionAngle);
 	DashHitSphere->SetSphereRadius(DashHitRadius);
@@ -48,16 +51,26 @@ void ANecroLifeEnemyBossWolf::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (!HasAuthority() || BossState != EBossWolfState::Dashing) return;
+	if (!HasAuthority()) return;
 
-	float Dist = FVector::Dist2D(GetActorLocation(), CurrentDashDestination);
-	if (Dist <= DashArrivalThreshold)
+	if (BossState == EBossWolfState::Dashing)
 	{
-		OnDashArrived();
+		float Dist = FVector::Dist2D(GetActorLocation(), CurrentDashDestination);
+		if (Dist <= DashArrivalThreshold)
+			OnDashArrived();
+		else
+			SetActorLocation(GetActorLocation() + DashDirection * DashSpeed * DeltaTime);
 	}
-	else
+	else if (BossState == EBossWolfState::WaitingForWolves)
 	{
-		AddMovementInput(GetActorForwardVector(), 1.f);
+		FVector PatrolDir = bPatrolGoingRight ? PatrolRightAxis : -PatrolRightAxis;
+		AddMovementInput(PatrolDir, 1.f);
+
+		float Offset = FVector::DotProduct(GetActorLocation() - BossStartLocation, PatrolRightAxis);
+		if (bPatrolGoingRight && Offset >= PatrolDistance)
+			bPatrolGoingRight = false;
+		else if (!bPatrolGoingRight && Offset <= -PatrolDistance)
+			bPatrolGoingRight = true;
 	}
 }
 
@@ -149,6 +162,7 @@ void ANecroLifeEnemyBossWolf::SpawnWolves()
 	}
 
 	SetBossState(EBossWolfState::WaitingForWolves);
+	StartPatrol();
 
 	if (AliveWolvesCount == 0)
 	{
@@ -169,10 +183,28 @@ void ANecroLifeEnemyBossWolf::OnWolfDied(ANecroLifeEnemyBasic* Wolf)
 
 // --- Fase: Daño libre ---
 
+void ANecroLifeEnemyBossWolf::StartPatrol()
+{
+	bPatrolGoingRight = true;
+	GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+}
+
 void ANecroLifeEnemyBossWolf::StartFreeDamagePhase()
 {
 	SetBossState(EBossWolfState::FreeDamage);
+	GetCharacterMovement()->MaxWalkSpeed = NormalWalkSpeed;
 	GetCharacterMovement()->StopMovementImmediately();
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+
+	if (DashTargetActor)
+	{
+		FVector NextDest = bNextDashToTarget ? DashTargetActor->GetActorLocation() : BossStartLocation;
+		FVector Dir = (NextDest - GetActorLocation()).GetSafeNormal2D();
+		if (!Dir.IsNearlyZero())
+			SetActorRotation(Dir.Rotation());
+	}
 
 	GetWorldTimerManager().SetTimer(FreeDamageTimerHandle, this, &ANecroLifeEnemyBossWolf::StartCharging, FreeDamageTime, false);
 }
@@ -184,6 +216,7 @@ void ANecroLifeEnemyBossWolf::StartCharging()
 	if (bIsDead) return;
 
 	SetBossState(EBossWolfState::Charging);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 
 	GetWorldTimerManager().SetTimer(ChargeTimerHandle, this, &ANecroLifeEnemyBossWolf::StartDashing, ChargeDuration, false);
 }
@@ -208,14 +241,14 @@ void ANecroLifeEnemyBossWolf::StartDashing()
 
 	bNextDashToTarget = !bNextDashToTarget;
 
-	FVector Dir = (CurrentDashDestination - GetActorLocation()).GetSafeNormal2D();
-	if (!Dir.IsNearlyZero())
+	DashDirection = (CurrentDashDestination - GetActorLocation()).GetSafeNormal2D();
+	if (!DashDirection.IsNearlyZero())
 	{
-		SetActorRotation(Dir.Rotation());
+		SetActorRotation(DashDirection.Rotation());
 	}
 
 	GetCharacterMovement()->bOrientRotationToMovement = false;
-	GetCharacterMovement()->MaxWalkSpeed = DashSpeed;
+	GetCharacterMovement()->SetMovementMode(MOVE_None);
 	DashHitSphere->SetGenerateOverlapEvents(true);
 
 	SetBossState(EBossWolfState::Dashing);
@@ -223,10 +256,11 @@ void ANecroLifeEnemyBossWolf::StartDashing()
 
 void ANecroLifeEnemyBossWolf::OnDashArrived()
 {
-	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	DashHitSphere->SetGenerateOverlapEvents(false);
 	DamagedActorsDuringDash.Empty();
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
 
 	StartPostDash();
 }
