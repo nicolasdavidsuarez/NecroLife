@@ -671,6 +671,15 @@ void ANecroLifeCharacter::AplyAction()
             AttackCount = 0;
         }
     }
+    // NUEVO: Interceptamos el ataque si Huesos está en el aire
+    else if (GetCharacterMovement()->IsFalling())
+    {
+        if (!bIsPlunging) // Semáforo para no espamear el ataque en el aire
+        {
+            StartPlungingAttack();
+        }
+    }
+    // FIN NUEVO
     else
     {
         if (bIsAttacking || ComboMontages.Num() == 0) return;
@@ -732,6 +741,95 @@ void ANecroLifeCharacter::ExecuteAttackHit()
             {
                 URPGHelper::TakeXP(this, EnemyBasic->EsenciasAlMorir);
                 Server_ActualizarProgresoMision(EnemyBasic->GetTag(), 1);
+            }
+        }
+    }
+}
+
+void ANecroLifeCharacter::StartPlungingAttack()
+{
+    bIsPlunging = true;
+
+    // 1. Modificamos un poco la gravedad para que la caída se sienta más pesada que un salto normal
+    GetCharacterMovement()->GravityScale = 2.0f; // Podés jugar con este valor (1.0 es lo normal)
+
+    // 2. Calculamos y aplicamos el impulso diagonal INMEDIATAMENTE
+    FVector ForwardLaunch = GetActorForwardVector() * PlungeForwardForce;
+    FVector DownwardLaunch = FVector(0.f, 0.f, -PlungeDownwardForce);
+    LaunchCharacter(ForwardLaunch + DownwardLaunch, true, true);
+
+    // 3. Reproducimos el Montage del hachazo (que ahora configuraremos en bucle)
+    if (AerialAttackMontage)
+    {
+        PlayAnimMontage(AerialAttackMontage);
+        Server_PlayCombatMontage(AerialAttackMontage);
+    }
+}
+
+void ANecroLifeCharacter::Landed(const FHitResult& Hit)
+{
+    Super::Landed(Hit); 
+
+    if (bIsPlunging)
+    {
+        bIsPlunging = false;
+		
+        // Restauramos la gravedad a la normalidad
+        GetCharacterMovement()->GravityScale = 1.0f; 
+
+        // Le decimos al Montage que salte a la sección del hachazo final
+        if (AerialAttackMontage)
+        {
+            if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+            {
+                AnimInstance->Montage_JumpToSection(FName("Ataque"), AerialAttackMontage);
+            }
+        }
+    }
+}
+
+void ANecroLifeCharacter::ExecutePlungeHit()
+{
+    TArray<AActor*> ActorsToIgnore;
+    ActorsToIgnore.Add(this);
+
+    TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+    ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));
+
+    TArray<AActor*> OutActors;
+
+    // Calculamos el centro de la explosión (los pies de Huesos)
+    // 96.0f es el HalfHeight de tu cápsula
+    FVector ImpactPoint = GetActorLocation() - FVector(0.f, 0.f, 96.0f); 
+
+    bool bHit = UKismetSystemLibrary::SphereOverlapActors(
+        this,
+        ImpactPoint, 
+        PlungeDamageRadius,
+        ObjectTypes,
+        AActor::StaticClass(),
+        ActorsToIgnore,
+        OutActors
+    );
+
+    // Dejamos el debug activo para que calibres el radio visualmente
+    UKismetSystemLibrary::DrawDebugSphere(this, ImpactPoint, PlungeDamageRadius, 12, FLinearColor::Red, 1.f, 2.f);
+
+    if (bHit)
+    {
+        // 1. Verificamos que el componente de atributos exista por seguridad
+        if (Attribute) 
+        {
+            // 2. Calculamos el daño final (Daño Base * Multiplicador)
+            float FinalPlungeDamage = Attribute->Attack * PlungeDamageMultiplier;
+
+            for (AActor* HitActor : OutActors)
+            {
+                if (HitActor && HitActor->IsA<ANecroLifeEnemyBasic>())
+                {
+                    // 3. Aplicamos el daño calculado dinámicamente
+                    URPGHelper::ApplyDamage(HitActor, FinalPlungeDamage);
+                }
             }
         }
     }

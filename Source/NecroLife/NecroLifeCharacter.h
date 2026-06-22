@@ -247,6 +247,10 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combate|Animaciones")
     UAnimMontage* DashAttackMontage;
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combate|Animaciones")
+    UAnimMontage* AerialAttackMontage;
+
+    
     // --- Sistema de combos (de los compañeros) ---
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat|State")
     bool bIsAttacking;
@@ -392,4 +396,32 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
     class UInputMappingContext* InputMapping;
+    
+    // --- Ataque en Picada (Plunging Attack) ---
+
+    UPROPERTY(BlueprintReadWrite, Category = "Combate|Picada")
+    bool bIsPlunging = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combate|Picada")
+    float PlungeForwardForce = 1500.f; // Fuerza hacia adelante
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combate|Picada")
+    float PlungeDownwardForce = 2500.f; // Fuerza hacia abajo (gravedad extra)
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combate|Picada")
+    float PlungeDamageRadius = 300.f; // Tamaño de la explosión al caer
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combate|Picada")
+    float PlungeDamageMultiplier = 1.1f; // 1.0 es daño normal, 1.5 es 50% más fuerte, etc.
+
+    // Funciones del ataque
+    void StartPlungingAttack();
+
+    UFUNCTION(BlueprintCallable, Category="Combat")
+    void ExecutePlungeHit();
+    
+    // Sobreescribimos la función nativa de Unreal para saber cuándo tocamos el piso
+    virtual void Landed(const FHitResult& Hit) override;
+    
+    
 };
