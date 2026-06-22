@@ -82,6 +82,7 @@ ANecroLifeCharacter::ANecroLifeCharacter()
     BoxCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCol"));
     BoxCollision->SetBoxExtent(FVector(100, 100, 100), true);
 
+        
     // Networking
     bReplicates = true;
     SetReplicatingMovement(true);
@@ -287,7 +288,13 @@ void ANecroLifeCharacter::DoMove(float Right, float Forward)
     }
 }
 
-void ANecroLifeCharacter::DoJumpStart() { Jump(); }
+void ANecroLifeCharacter::DoJumpStart() 
+{ 
+    // Si Huesos está ocupado en una animación de combate, no puede saltar
+    if (bIsAttacking || bIsDashing || bIsPlunging || bEnabledAbility || !bCanMove) return;
+
+    Jump(); 
+}
 void ANecroLifeCharacter::DoJumpEnd()   { StopJumping(); }
 
 void ANecroLifeCharacter::OnRightMouseDown()  { bMouseRightDown = true; }
@@ -607,6 +614,9 @@ void ANecroLifeCharacter::SwitchTargetLeft()
 
 void ANecroLifeCharacter::AbilityEnabled(const FInputActionValue& InputActionValue)
 {
+    // Bloqueamos el casteo de habilidades si estamos a mitad de un ataque
+    if (bIsAttacking || bIsDashing || bIsPlunging) return;
+    
     int32 pressedKeys = static_cast<int32>(InputActionValue.Get<float>()) - 1;
     Ability->SelectAbility(pressedKeys);
 
@@ -671,6 +681,15 @@ void ANecroLifeCharacter::AplyAction()
             AttackCount = 0;
         }
     }
+    // NUEVO: Interceptamos el ataque si Huesos está en el aire
+    else if (GetCharacterMovement()->IsFalling())
+    {
+        if (!bIsPlunging) // Semáforo para no espamear el ataque en el aire
+        {
+            StartPlungingAttack();
+        }
+    }
+    // FIN NUEVO
     else
     {
         if (bIsAttacking || ComboMontages.Num() == 0) return;
@@ -732,6 +751,95 @@ void ANecroLifeCharacter::ExecuteAttackHit()
             {
                 URPGHelper::TakeXP(this, EnemyBasic->EsenciasAlMorir);
                 Server_ActualizarProgresoMision(EnemyBasic->GetTag(), 1);
+            }
+        }
+    }
+}
+
+void ANecroLifeCharacter::StartPlungingAttack()
+{
+    bIsPlunging = true;
+
+    // 1. Modificamos un poco la gravedad para que la caída se sienta más pesada que un salto normal
+    GetCharacterMovement()->GravityScale = 2.0f; // Podés jugar con este valor (1.0 es lo normal)
+
+    // 2. Calculamos y aplicamos el impulso diagonal INMEDIATAMENTE
+    FVector ForwardLaunch = GetActorForwardVector() * PlungeForwardForce;
+    FVector DownwardLaunch = FVector(0.f, 0.f, -PlungeDownwardForce);
+    LaunchCharacter(ForwardLaunch + DownwardLaunch, true, true);
+
+    // 3. Reproducimos el Montage del hachazo (que ahora configuraremos en bucle)
+    if (AerialAttackMontage)
+    {
+        PlayAnimMontage(AerialAttackMontage);
+        Server_PlayCombatMontage(AerialAttackMontage);
+    }
+}
+
+void ANecroLifeCharacter::Landed(const FHitResult& Hit)
+{
+    Super::Landed(Hit); 
+
+    if (bIsPlunging)
+    {
+        bIsPlunging = false;
+		
+        // Restauramos la gravedad a la normalidad
+        GetCharacterMovement()->GravityScale = 1.0f; 
+
+        // Le decimos al Montage que salte a la sección del hachazo final
+        if (AerialAttackMontage)
+        {
+            if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+            {
+                AnimInstance->Montage_JumpToSection(FName("Ataque"), AerialAttackMontage);
+            }
+        }
+    }
+}
+
+void ANecroLifeCharacter::ExecutePlungeHit()
+{
+    TArray<AActor*> ActorsToIgnore;
+    ActorsToIgnore.Add(this);
+
+    TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+    ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));
+
+    TArray<AActor*> OutActors;
+
+    // Calculamos el centro de la explosión (los pies de Huesos)
+    // 96.0f es el HalfHeight de tu cápsula
+    FVector ImpactPoint = GetActorLocation() - FVector(0.f, 0.f, 96.0f); 
+
+    bool bHit = UKismetSystemLibrary::SphereOverlapActors(
+        this,
+        ImpactPoint, 
+        PlungeDamageRadius,
+        ObjectTypes,
+        AActor::StaticClass(),
+        ActorsToIgnore,
+        OutActors
+    );
+
+    // Dejamos el debug activo para que calibres el radio visualmente
+    UKismetSystemLibrary::DrawDebugSphere(this, ImpactPoint, PlungeDamageRadius, 12, FLinearColor::Red, 1.f, 2.f);
+
+    if (bHit)
+    {
+        // 1. Verificamos que el componente de atributos exista por seguridad
+        if (Attribute) 
+        {
+            // 2. Calculamos el daño final (Daño Base * Multiplicador)
+            float FinalPlungeDamage = Attribute->Attack * PlungeDamageMultiplier;
+
+            for (AActor* HitActor : OutActors)
+            {
+                if (HitActor && HitActor->IsA<ANecroLifeEnemyBasic>())
+                {
+                    // 3. Aplicamos el daño calculado dinámicamente
+                    URPGHelper::ApplyDamage(HitActor, FinalPlungeDamage);
+                }
             }
         }
     }
@@ -990,6 +1098,9 @@ void ANecroLifeCharacter::Multicast_PlayCombatMontage_Implementation(UAnimMontag
 
 void ANecroLifeCharacter::Interact()
 {
+    // No podemos interactuar mientras repartimos golpes
+    if (bIsAttacking || bIsDashing || bIsPlunging) return;
+
     GEngine->AddOnScreenDebugMessage(-1,5.0f, FColor::Yellow, TEXT("Interact"));
     if (CurrentInteractable && CurrentInteractable->Implements<UNecroLifeInterface>())
         INecroLifeInterface::Execute_OnInteract(CurrentInteractable, this);
@@ -1155,8 +1266,8 @@ void ANecroLifeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 {
     if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
     {
-        EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-        EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+        EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ANecroLifeCharacter::DoJumpStart);
+        EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ANecroLifeCharacter::DoJumpEnd);
         EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Move);
         EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Look);
         EnhancedInputComponent->BindAction(MouseRightDown, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::OnRightMouseDown);
@@ -1193,6 +1304,40 @@ void ANecroLifeCharacter::Server_TakePosion_Implementation()
         {
             // Opcional: Cliente recibe mensaje de que no hay pociones
             // (Tendrías que hacer una Client RPC para esto si quieres ser estricto)
+        }
+    }
+}
+
+
+void ANecroLifeCharacter::ClearWeaponHitMemory()
+{
+    DamagedActors.Empty();
+}
+
+void ANecroLifeCharacter::ApplyWeaponHit(AActor* HitActor)
+{
+    // Validamos que toquemos algo válido y que no esté en la memoria
+    if (HitActor && HitActor != this && !DamagedActors.Contains(HitActor))
+    {
+        if (ANecroLifeEnemyBasic* Enemy = Cast<ANecroLifeEnemyBasic>(HitActor))
+        {
+            // Lo guardamos en la memoria para no volver a pegarle en este frame
+            DamagedActors.Add(HitActor);
+
+            // Calculamos y aplicamos daño
+            float FinalDamage = Attribute ? Attribute->Attack : 10.0f;
+            URPGHelper::ApplyDamage(Enemy, FinalDamage);
+
+            if (HitVFX)
+            {
+                UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, Enemy->GetActorLocation());
+            }
+
+            if (!Enemy->IsAlive())
+            {
+                URPGHelper::TakeXP(this, Enemy->EsenciasAlMorir);
+                Server_ActualizarProgresoMision(Enemy->GetTag(), 1);
+            }
         }
     }
 }
