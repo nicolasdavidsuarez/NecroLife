@@ -82,6 +82,7 @@ ANecroLifeCharacter::ANecroLifeCharacter()
     BoxCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCol"));
     BoxCollision->SetBoxExtent(FVector(100, 100, 100), true);
 
+        
     // Networking
     bReplicates = true;
     SetReplicatingMovement(true);
@@ -287,7 +288,13 @@ void ANecroLifeCharacter::DoMove(float Right, float Forward)
     }
 }
 
-void ANecroLifeCharacter::DoJumpStart() { Jump(); }
+void ANecroLifeCharacter::DoJumpStart() 
+{ 
+    // Si Huesos está ocupado en una animación de combate, no puede saltar
+    if (bIsAttacking || bIsDashing || bIsPlunging || bEnabledAbility || !bCanMove) return;
+
+    Jump(); 
+}
 void ANecroLifeCharacter::DoJumpEnd()   { StopJumping(); }
 
 void ANecroLifeCharacter::OnRightMouseDown()  { bMouseRightDown = true; }
@@ -607,6 +614,9 @@ void ANecroLifeCharacter::SwitchTargetLeft()
 
 void ANecroLifeCharacter::AbilityEnabled(const FInputActionValue& InputActionValue)
 {
+    // Bloqueamos el casteo de habilidades si estamos a mitad de un ataque
+    if (bIsAttacking || bIsDashing || bIsPlunging) return;
+    
     int32 pressedKeys = static_cast<int32>(InputActionValue.Get<float>()) - 1;
     Ability->SelectAbility(pressedKeys);
 
@@ -1088,6 +1098,9 @@ void ANecroLifeCharacter::Multicast_PlayCombatMontage_Implementation(UAnimMontag
 
 void ANecroLifeCharacter::Interact()
 {
+    // No podemos interactuar mientras repartimos golpes
+    if (bIsAttacking || bIsDashing || bIsPlunging) return;
+
     GEngine->AddOnScreenDebugMessage(-1,5.0f, FColor::Yellow, TEXT("Interact"));
     if (CurrentInteractable && CurrentInteractable->Implements<UNecroLifeInterface>())
         INecroLifeInterface::Execute_OnInteract(CurrentInteractable, this);
@@ -1253,8 +1266,8 @@ void ANecroLifeCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 {
     if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
     {
-        EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-        EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+        EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ANecroLifeCharacter::DoJumpStart);
+        EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ANecroLifeCharacter::DoJumpEnd);
         EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Move);
         EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::Look);
         EnhancedInputComponent->BindAction(MouseRightDown, ETriggerEvent::Triggered, this, &ANecroLifeCharacter::OnRightMouseDown);
@@ -1291,6 +1304,40 @@ void ANecroLifeCharacter::Server_TakePosion_Implementation()
         {
             // Opcional: Cliente recibe mensaje de que no hay pociones
             // (Tendrías que hacer una Client RPC para esto si quieres ser estricto)
+        }
+    }
+}
+
+
+void ANecroLifeCharacter::ClearWeaponHitMemory()
+{
+    DamagedActors.Empty();
+}
+
+void ANecroLifeCharacter::ApplyWeaponHit(AActor* HitActor)
+{
+    // Validamos que toquemos algo válido y que no esté en la memoria
+    if (HitActor && HitActor != this && !DamagedActors.Contains(HitActor))
+    {
+        if (ANecroLifeEnemyBasic* Enemy = Cast<ANecroLifeEnemyBasic>(HitActor))
+        {
+            // Lo guardamos en la memoria para no volver a pegarle en este frame
+            DamagedActors.Add(HitActor);
+
+            // Calculamos y aplicamos daño
+            float FinalDamage = Attribute ? Attribute->Attack : 10.0f;
+            URPGHelper::ApplyDamage(Enemy, FinalDamage);
+
+            if (HitVFX)
+            {
+                UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, Enemy->GetActorLocation());
+            }
+
+            if (!Enemy->IsAlive())
+            {
+                URPGHelper::TakeXP(this, Enemy->EsenciasAlMorir);
+                Server_ActualizarProgresoMision(Enemy->GetTag(), 1);
+            }
         }
     }
 }
