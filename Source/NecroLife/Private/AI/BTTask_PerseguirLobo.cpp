@@ -65,7 +65,7 @@ void UBTTask_PerseguirLobo::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* N
 		if (Memory->AttackCooldown <= 0.f)
 		{
 			Lobo->BP_OnAttack();
-			URPGHelper::ApplyDamage(Target, Lobo->AttackDamage);
+			Lobo->bIsEAttacking = true;
 			Memory->AttackCooldown = Lobo->AttackCooldown;
 		}
 	}
