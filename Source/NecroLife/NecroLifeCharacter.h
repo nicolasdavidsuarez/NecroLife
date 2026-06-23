@@ -259,6 +259,15 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat|State")
     int32 AttackCount;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat|State")
+    bool bCanRotateDuringAttack = false;
+
+    UFUNCTION(BlueprintCallable, Category="Combat|Movement")
+    void EnableAttackRotation();
+
+    UFUNCTION(BlueprintCallable, Category="Combat|Movement")
+    void DisableAttackRotation();
+    
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Animations")
     TArray<UAnimMontage*> ComboMontages;
 

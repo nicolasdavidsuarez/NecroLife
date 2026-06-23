@@ -283,8 +283,25 @@ void ANecroLifeCharacter::DoMove(float Right, float Forward)
         const FRotator YawRotation(0, Rotation.Yaw, 0);
         const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
         const FVector RightDirection   = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-        AddMovementInput(ForwardDirection, Forward);
-        AddMovementInput(RightDirection, Right);
+
+        // 1. Caminata Normal (Bloqueada si ataca, cae o castea)
+        if (!bIsAttacking && !bIsPlunging && !bEnabledAbility)
+        {
+            AddMovementInput(ForwardDirection, Forward);
+            AddMovementInput(RightDirection, Right);
+        }
+        // 2. Lógica de Redirección (Pivote en el lugar)
+        else if (bIsAttacking && bCanRotateDuringAttack && (Right != 0.0f || Forward != 0.0f))
+        {
+            // Calculamos hacia dónde apunta el joystick
+            FVector DesiredDirection = (ForwardDirection * Forward) + (RightDirection * Right);
+            DesiredDirection.Normalize();
+
+            // Interpolamos la rotación para que no sea robótica/instantánea
+            FRotator TargetRot = DesiredDirection.Rotation();
+            FRotator NewRot = FMath::RInterpTo(GetActorRotation(), TargetRot, GetWorld()->GetDeltaSeconds(), 15.0f); 
+            SetActorRotation(NewRot);
+        }
     }
 }
 
@@ -315,7 +332,8 @@ void ANecroLifeCharacter::RunActivated(const FInputActionValue& Value)
 
 void ANecroLifeCharacter::HandleCameraAutoAlignment(float DeltaTime)
 {
-    if (bEnabledAbility) return;
+    // Bloqueamos la auto-alineación de la cámara libre durante los ataques y habilidades
+    if (bEnabledAbility || bIsAttacking || bIsPlunging || AttackCount > 0) return;
 
     FVector Velocity = GetVelocity();
     if (Velocity.SizeSquared2D() < 10.0f) return;
@@ -714,11 +732,13 @@ void ANecroLifeCharacter::ResetCombo()
 {
     AttackCount  = 0;
     bIsAttacking = false;
+    bCanRotateDuringAttack = false;
 }
 
 void ANecroLifeCharacter::ResetAttackState()
 {
     bIsAttacking = false;
+    bCanRotateDuringAttack = false;
 }
 
 void ANecroLifeCharacter::ExecuteAttackHit()
@@ -1340,4 +1360,14 @@ void ANecroLifeCharacter::ApplyWeaponHit(AActor* HitActor)
             }
         }
     }
+}
+
+void ANecroLifeCharacter::EnableAttackRotation()
+{
+    bCanRotateDuringAttack = true;
+}
+
+void ANecroLifeCharacter::DisableAttackRotation()
+{
+    bCanRotateDuringAttack = false;
 }
