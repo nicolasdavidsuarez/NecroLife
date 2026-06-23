@@ -2,6 +2,8 @@
 
 
 #include "NPC/NecroLifeNpcBasic.h"
+
+#include "AIController.h"
 #include "NecroLifeCharacter.h"
 #include "NecroLifeGameState.h"
 #include "Components/QuestComponent.h"
@@ -9,6 +11,7 @@
 #include "Components/SphereComponent.h"
 
 
+class AAIController;
 // Sets default values
 ANecroLifeNpcBasic::ANecroLifeNpcBasic()
 {
@@ -43,7 +46,13 @@ void ANecroLifeNpcBasic::BeginPlay()
 		SphereCollision->OnComponentEndOverlap.AddDynamic(this, &ANecroLifeNpcBasic::OnOverlapEnd);
 	}
 	
-	
+	if (AGameStateBase* GS = GetWorld()->GetGameState())
+	{
+		if (UQuestComponent* QC = GS->FindComponentByClass<UQuestComponent>())
+		{
+			QC->OnQuestAdded.AddDynamic(this, &ANecroLifeNpcBasic::OnQuestAgregada);
+		}
+	}
 }
 
 // Called every frame
@@ -232,6 +241,49 @@ void ANecroLifeNpcBasic::NextAddQuest()
 	{
 		CurrentDialogIndex++;
 	}
+}
+
+//para mover por las misiones
+void ANecroLifeNpcBasic::OnQuestAgregada(UQuestData* Quest)
+{
+	if (!HasAuthority() || !Quest) return;
+
+	for (const FQuestTeleportEntry& Entry : TeleportsPorMision)
+	{
+		if (Entry.Mision == Quest && Entry.Destino)
+		{
+			if (AAIController* AIC = Cast<AAIController>(GetController()))
+				AIC->StopMovement();
+			FVector LocationAjustada = Entry.Destino->GetActorLocation() + FVector(200.0f, 0.f, 90.f);
+			Multicast_TeleportarA(
+				LocationAjustada,
+				Entry.Destino->GetActorRotation()
+			);
+			return; // una misión activa un solo teleport
+		}
+	}
+}
+
+void ANecroLifeNpcBasic::Multicast_TeleportarA_Implementation(FVector Location, FRotator Rotation)
+{
+	SetActorLocationAndRotation(
+		Location, Rotation,
+		false, nullptr, ETeleportType::TeleportPhysics
+	);
+}
+
+void ANecroLifeNpcBasic::TeleportarA(AActor* Destino)
+{
+	if (!Destino) return;
+
+	if (AAIController* AIC = Cast<AAIController>(GetController()))
+		AIC->StopMovement();
+
+	SetActorLocationAndRotation(
+		Destino->GetActorLocation(),
+		Destino->GetActorRotation(),
+		false, nullptr, ETeleportType::TeleportPhysics
+	);
 }
 
 //net

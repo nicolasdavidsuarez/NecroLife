@@ -13,6 +13,19 @@ class USphereComponent;
 class ANecroLifeCharacter;
 //struct FGameplayTag;
 
+USTRUCT(BlueprintType)
+struct FQuestTeleportEntry
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UQuestData* Mision = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	AActor* Destino = nullptr;
+};
+
+
 UCLASS()
 class NECROLIFE_API ANecroLifeNpcBasic : public ACharacter, public INecroLifeInterface
 {
@@ -40,6 +53,19 @@ public:
 	bool bIsAttacking = false;
 	
 	FTimerHandle TalkingTimerHandle;
+	
+	//para mover durante las misiones
+	// La misión específica que activa el movimiento de este NPC
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest")
+	TArray<FQuestTeleportEntry> TeleportsPorMision;
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_TeleportarA(FVector Location, FRotator Rotation);
+	
+	UFUNCTION()
+	void OnQuestAgregada(UQuestData* Quest);
+
+	void TeleportarA(AActor* Destino);
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TArray<UQuestData*> Quests;
