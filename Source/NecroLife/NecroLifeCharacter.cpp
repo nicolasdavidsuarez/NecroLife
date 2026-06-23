@@ -242,13 +242,15 @@ void ANecroLifeCharacter::Look(const FInputActionValue& Value)
 
 void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
 {
-    // Reiniciamos el timer de auto-alineación y cancelamos centrado
-    TimeSinceLastCameraInput = 0.0f;
-    bIsCenteringCamera = false;
-
+    // Solo reiniciamos el timer y rotamos la cámara SI el clic derecho está presionado
     if (GetController() != nullptr && bMouseRightDown)
     {
+        // Reiniciamos el timer de auto-alineación y cancelamos centrado
+        TimeSinceLastCameraInput = 0.0f;
+        bIsCenteringCamera = false;
+
         AddControllerYawInput(Yaw);
+        
         if (CameraBoom->GetRelativeRotation().Pitch + Pitch >= MaxPitch &&
             CameraBoom->GetRelativeRotation().Pitch + Pitch <= MinPitch)
         {
@@ -700,7 +702,7 @@ void ANecroLifeCharacter::AplyAction()
         }
     }
     // NUEVO: Interceptamos el ataque si Huesos está en el aire
-    else if (GetCharacterMovement()->IsFalling())
+    else if (GetCharacterMovement()->IsFalling() || bIsPlunging)
     {
         if (!bIsPlunging) // Semáforo para no espamear el ataque en el aire
         {
@@ -779,6 +781,7 @@ void ANecroLifeCharacter::ExecuteAttackHit()
 void ANecroLifeCharacter::StartPlungingAttack()
 {
     bIsPlunging = true;
+    bIsAttacking = true;
 
     // 1. Modificamos un poco la gravedad para que la caída se sienta más pesada que un salto normal
     GetCharacterMovement()->GravityScale = 2.0f; // Podés jugar con este valor (1.0 es lo normal)
