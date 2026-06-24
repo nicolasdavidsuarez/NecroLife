@@ -31,6 +31,7 @@ EBTNodeResult::Type UBTTask_CombateRanged::ExecuteTask(UBehaviorTreeComponent& O
 	Memory->ShootCooldown  = 0.f;
 	Memory->ShootPause     = 0.f;
 	Memory->TimeOutOfRange = 0.f;
+	Memory->MoveUpdateTimer = 0.f;
 	Memory->bFleeing       = false;
 
 	return EBTNodeResult::InProgress;
@@ -85,15 +86,22 @@ void UBTTask_CombateRanged::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* N
 		Memory->bFleeing = false;
 	}
 
-	// Si el jugador está fuera de rango, contar tiempo y volver a patrullar
+	// Si el jugador está fuera de rango, acercarse y contar tiempo límite
 	if (Distance > Enemy->ShootRange)
 	{
+		Memory->MoveUpdateTimer -= DeltaSeconds;
+		if (Memory->MoveUpdateTimer <= 0.f)
+		{
+			AIController->MoveToActor(PlayerTarget, Enemy->ShootRange * 0.8f);
+			Memory->MoveUpdateTimer = 0.5f;
+		}
 		Memory->TimeOutOfRange += DeltaSeconds;
 		if (Memory->TimeOutOfRange >= LoseTargetTime)
 			FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
 		return;
 	}
 	Memory->TimeOutOfRange = 0.f;
+	AIController->StopMovement();
 
 	// Disparo: para en seco, dispara, y queda 1s quieto antes de retomar la huida
 	if (Distance <= Enemy->ShootRange && Memory->ShootCooldown <= 0.f)
