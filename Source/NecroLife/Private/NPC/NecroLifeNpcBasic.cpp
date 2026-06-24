@@ -6,6 +6,7 @@
 #include "AIController.h"
 #include "NecroLifeCharacter.h"
 #include "NecroLifeGameState.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/QuestComponent.h"
 
 #include "Components/SphereComponent.h"
@@ -264,13 +265,6 @@ void ANecroLifeNpcBasic::OnQuestAgregada(UQuestData* Quest)
 	}
 }
 
-void ANecroLifeNpcBasic::Multicast_TeleportarA_Implementation(FVector Location, FRotator Rotation)
-{
-	SetActorLocationAndRotation(
-		Location, Rotation,
-		false, nullptr, ETeleportType::TeleportPhysics
-	);
-}
 
 void ANecroLifeNpcBasic::TeleportarA(AActor* Destino)
 {
@@ -285,6 +279,57 @@ void ANecroLifeNpcBasic::TeleportarA(AActor* Destino)
 		false, nullptr, ETeleportType::TeleportPhysics
 	);
 }
+
+void ANecroLifeNpcBasic::Multicast_TeleportarA_Implementation(FVector Location, FRotator Rotation)
+{
+	TeleportDestino = Location;
+	TeleportRotacion = Rotation;
+
+	// Spawnear efecto en la posición actual del NPC
+	if (TeleportFX)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			TeleportFX,
+			GetActorLocation(),
+			GetActorRotation()
+		);
+	}
+
+	// Ocultar el mesh del NPC
+	if (USkeletalMeshComponent* NpcMesh = GetMesh())
+	{
+		NpcMesh->SetVisibility(false);
+	}
+		
+
+	// Timer: después de 1.5s ejecutar el teleport real
+	FTimerHandle TimerHandle;
+	GetWorldTimerManager().SetTimer(
+		TimerHandle,
+		this,
+		&ANecroLifeNpcBasic::EjecutarTeleportDespuesDeEfecto,
+		1.5f,
+		false
+	);
+}
+
+void ANecroLifeNpcBasic::EjecutarTeleportDespuesDeEfecto()
+{
+	FVector LocationAjustada = TeleportDestino;
+	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
+		LocationAjustada.Z += Capsule->GetScaledCapsuleHalfHeight()/2;
+
+	SetActorLocationAndRotation(
+		LocationAjustada, TeleportRotacion,
+		false, nullptr, ETeleportType::TeleportPhysics
+	);
+
+	// Volver a mostrar el mesh
+	if (USkeletalMeshComponent* NpcMesh = GetMesh())
+		NpcMesh->SetVisibility(true);
+}
+
 
 //net
 void ANecroLifeNpcBasic::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
