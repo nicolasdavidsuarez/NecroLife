@@ -365,6 +365,10 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
     void ExecuteAbilityHit();
+    
+    // Función para atrapar enemigos en área (Habilidad 3)
+    UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
+    void ExecuteAreaRoot();
 
     UFUNCTION(BlueprintCallable, Category="Combat|State")
     void ResetAttackState();
