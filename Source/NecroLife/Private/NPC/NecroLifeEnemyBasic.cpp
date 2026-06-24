@@ -102,6 +102,9 @@ void ANecroLifeEnemyBasic::Server_ResetDamageState_Implementation()
 
 void ANecroLifeEnemyBasic::ExecuteMeleeAttack()
 {
+    // ---> TU SOLUCIÓN ACÁ: Si está aturdido, el ataque se cancela inmediatamente
+    if (bIsStunned) return;
+
     // 1. Verificamos autoridad para evitar trampas en red
     if (!HasAuthority() || !GetMesh()) return;
 
@@ -115,7 +118,7 @@ void ANecroLifeEnemyBasic::ExecuteMeleeAttack()
     TArray<AActor*> ActorsToIgnore;
     ActorsToIgnore.Add(this); // Que el lobo no se muerda a sí mismo
 
-    // 3. LA SOLUCIÓN: Buscamos específicamente por Tipo de Objeto (Peones)
+    // 3. Buscamos específicamente por Tipo de Objeto (Peones)
     TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
     ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn)); // Atrapa a Huesos y otros lobos
     ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_PhysicsBody));
@@ -152,11 +155,49 @@ void ANecroLifeEnemyBasic::ExecuteMeleeAttack()
             {
                 // DEBUG: Te avisa a quién le acaba de pegar
                 UKismetSystemLibrary::PrintString(this, "C++: Le pegue a " + HitActor->GetName(), true, true, FLinearColor::Yellow, 2.f);
-				
+             
                 // Aplicamos daño y rompemos el ciclo
                 URPGHelper::ApplyDamage(HitActor, AttackDamage);
                 break; 
             }
         }
+    }
+}
+
+void ANecroLifeEnemyBasic::Immobilize(float Duration)
+{
+    if (!IsAlive() || bIsBoss) return;
+
+    bIsStunned = true;
+
+    // Guardamos su velocidad original (si es la primera vez que lo aturden)
+    if (DefaultWalkSpeed == 0.0f)
+    {
+        DefaultWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
+    }
+
+    // PASO CLAVE: Le robamos las piernas. La IA intentará moverse pero su velocidad será 0
+    GetCharacterMovement()->MaxWalkSpeed = 0.0f;
+    GetCharacterMovement()->StopMovementImmediately();
+
+    if (AController* AIController = GetController())
+    {
+        AIController->StopMovement();
+    }
+
+    // Cortamos la animación de ataque si estaba en medio de una
+    StopAnimMontage();
+
+    GetWorldTimerManager().SetTimer(StunTimerHandle, this, &ANecroLifeEnemyBasic::ClearImmobilize, Duration, false);
+}
+
+void ANecroLifeEnemyBasic::ClearImmobilize()
+{
+    bIsStunned = false;
+
+    // Le devolvemos su velocidad original para que vuelva a perseguirte
+    if (DefaultWalkSpeed > 0.0f)
+    {
+        GetCharacterMovement()->MaxWalkSpeed = DefaultWalkSpeed;
     }
 }

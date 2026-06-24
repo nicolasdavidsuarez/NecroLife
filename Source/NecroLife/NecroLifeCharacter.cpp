@@ -1462,3 +1462,33 @@ void ANecroLifeCharacter::DisableAttackRotation()
 {
     bCanRotateDuringAttack = false;
 }
+
+void ANecroLifeCharacter::ExecuteAreaRoot()
+{
+    float RootRadius = 400.f; 
+    FVector Origin = GetActorLocation();
+    
+    // --- DEBUG VISUAL --- (La esfera verde durará 2 segundos en pantalla)
+    UKismetSystemLibrary::DrawDebugSphere(this, Origin, RootRadius, 12, FLinearColor::Green, 2.f, 2.f);
+
+    TArray<FOverlapResult> Overlaps;
+    FCollisionShape CollisionShape = FCollisionShape::MakeSphere(RootRadius);
+
+    bool bHit = GetWorld()->OverlapMultiByChannel(Overlaps, Origin, FQuat::Identity, ECC_Pawn, CollisionShape);
+    
+    Ability->AbilityAply(); 
+
+    if (!bHit) return;
+
+    for (auto& Result : Overlaps)
+    {
+        AActor* Other = Result.GetActor();
+        ANecroLifeEnemyBasic* EnemyBasic = Cast<ANecroLifeEnemyBasic>(Other);
+        
+        if (!EnemyBasic || Other == this || !EnemyBasic->IsAlive()) continue;
+
+        EnemyBasic->Immobilize(3.0f);
+        
+        GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Purple, FString::Printf(TEXT("¡Enemigo %s atrapado!"), *EnemyBasic->GetName()));
+    }
+}

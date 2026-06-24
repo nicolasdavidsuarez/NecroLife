@@ -96,6 +96,31 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combate")
 	void ExecuteMeleeAttack();
 	
+	// --- Sistema de Estados (Crowd Control) ---
+    
+	// Tildar esto en el Blueprint del Jefe para que sea inmune
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Config")
+	bool bIsBoss = false;
+
+	// Estado actual del enemigo
+	UPROPERTY(BlueprintReadOnly, Category = "Combat|State")
+	bool bIsStunned = false;
+	
+	// Memoria para restaurar la velocidad después del aturdimiento
+	UPROPERTY()
+	float DefaultWalkSpeed = 0.0f;
+
+	// Cronómetro para saber cuándo devolverle la movilidad
+	FTimerHandle StunTimerHandle;
+
+	// Función que Huesos llamará para atraparlo
+	UFUNCTION(BlueprintCallable, Category = "Combat|Abilities")
+	void Immobilize(float Duration);
+
+	// Función interna para liberarlo
+	void ClearImmobilize();
+	
+	
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual bool IsAlive();
