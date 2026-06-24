@@ -356,10 +356,16 @@ public:
     bool ShowDialogue(FDialogLine CurrentLine);
 
     // --- Funciones de ataque ---
-    UFUNCTION(BlueprintCallable, Category="Combat")
+    UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
     void ExecuteAttackHit();
-    UFUNCTION(BlueprintCallable, Category="Combat")
+
+    // Elevación extra al empujar enemigos (0.0 = empuje plano, 1.0 = 45 grados hacia arriba)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Abilities")
+    float KnockbackVerticalOffset = 0.75f;
+
+    UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
     void ExecuteAbilityHit();
+
     UFUNCTION(BlueprintCallable, Category="Combat|State")
     void ResetAttackState();
     

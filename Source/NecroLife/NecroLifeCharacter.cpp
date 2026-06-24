@@ -937,18 +937,23 @@ void ANecroLifeCharacter::ExecuteAbilityHit()
 
             // Aplicamos el daño
             URPGHelper::ApplyDamage(Other, FinalDamage);
-
+            
+            GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan, FString::Printf(TEXT("Fuerza de empuje: %f"), Knockback));
+            
             // 2. Lógica de Empuje (Pushback)
             if (Knockback > 0.0f)
             {
-                // Usamos el vector 'ToTarget' que ya calculaste arriba, que es la dirección desde Huesos hacia el enemigo
                 FVector KnockbackDirection = ToTarget;
-                
-                // Le agregamos un poco de fuerza vertical para despegarlo del piso y anular la fricción
                 KnockbackDirection.Z = 0.5f; 
                 KnockbackDirection.Normalize();
 
-                // Lanzamos al enemigo (el true, true asegura que ignoremos su velocidad actual)
+                // PASO CLAVE 1: Clavamos los frenos de la IA y cancelamos su navegación actual
+                EnemyBasic->GetCharacterMovement()->StopMovementImmediately();
+
+                // PASO CLAVE 2: Cortamos cualquier animación de ataque para anular el Root Motion
+                EnemyBasic->StopAnimMontage();
+
+                // PASO CLAVE 3: Ahora sí, sin resistencia de la IA, lo mandamos a volar
                 EnemyBasic->LaunchCharacter(KnockbackDirection * Knockback, true, true);
             }
 
@@ -1397,23 +1402,48 @@ void ANecroLifeCharacter::ClearWeaponHitMemory()
 
 void ANecroLifeCharacter::ApplyWeaponHit(AActor* HitActor)
 {
-    // Validamos que toquemos algo válido y que no esté en la memoria
     if (HitActor && HitActor != this && !DamagedActors.Contains(HitActor))
     {
         if (ANecroLifeEnemyBasic* Enemy = Cast<ANecroLifeEnemyBasic>(HitActor))
         {
-            // Lo guardamos en la memoria para no volver a pegarle en este frame
             DamagedActors.Add(HitActor);
-
-            // Calculamos y aplicamos daño
             float FinalDamage = Attribute ? Attribute->Attack : 10.0f;
-            URPGHelper::ApplyDamage(Enemy, FinalDamage);
+            float Knockback = 0.0f;
 
-            if (HitVFX)
+            // Verificamos si estamos en medio de una habilidad para aplicar sus modificadores
+            if (Ability && Ability->CurrentAbility)
             {
-                UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, Enemy->GetActorLocation());
+                if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+                {
+                    if (AnimInstance->Montage_IsPlaying(Ability->CurrentAbility->AbilityMontage))
+                    {
+                        FinalDamage *= Ability->CurrentAbility->DamageMultiplier;
+                        Knockback = Ability->CurrentAbility->KnockbackForce;
+                    }
+                }
             }
 
+            // Aplicamos el daño final
+            URPGHelper::ApplyDamage(Enemy, FinalDamage);
+
+            // Ejecutamos el Pushback
+            // Ejecutamos el Pushback
+            if (Knockback > 0.0f)
+            {
+                FVector KnockbackDirection = Enemy->GetActorLocation() - GetActorLocation();
+                
+                // Usamos la variable expuesta en lugar del 0.75f hardcodeado
+                KnockbackDirection.Z = KnockbackVerticalOffset; 
+                
+                KnockbackDirection.Normalize();
+
+                Enemy->GetCharacterMovement()->StopMovementImmediately();
+                Enemy->StopAnimMontage();
+                Enemy->LaunchCharacter(KnockbackDirection * Knockback, true, true);
+            }
+
+            // VFX y lógica de muerte
+            if (HitVFX) UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, Enemy->GetActorLocation());
             if (!Enemy->IsAlive())
             {
                 URPGHelper::TakeXP(this, Enemy->EsenciasAlMorir);
