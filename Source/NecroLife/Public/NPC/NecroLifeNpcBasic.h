@@ -7,6 +7,8 @@
 #include "GameFramework/Character.h"
 #include "Interface/NecroLifeInterface.h"
 #include "Data/NecroLifeDialogData.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 #include "NecroLifeNpcBasic.generated.h"
 
 class USphereComponent;
@@ -66,6 +68,19 @@ public:
 	void OnQuestAgregada(UQuestData* Quest);
 
 	void TeleportarA(AActor* Destino);
+	void EjecutarTeleportDespuesDeEfecto();
+
+
+	// La referencia al Niagara, asignable desde el BP del NPC
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FX")
+	UNiagaraSystem* TeleportFX = nullptr;
+
+	// Datos pendientes del teleport (los guardamos para usarlos después del timer)
+	FVector TeleportDestino;
+	FRotator TeleportRotacion;
+
+	// Funciones
+
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TArray<UQuestData*> Quests;
