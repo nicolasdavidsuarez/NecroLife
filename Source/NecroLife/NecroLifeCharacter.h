@@ -189,6 +189,20 @@ protected:
     UInputAction* MouseMiddleUp;
 
     // --- Habilidades ---
+
+    UPROPERTY(EditAnywhere, Category="Combat|Abilities")
+    TSubclassOf<AActor> PalaProjectileClass;
+
+    UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
+    void EjecutarLanzamientoPala();
+    
+    // Timer para el ataque cargado
+    FTimerHandle ChargeAttackTimer;
+
+    // Función que saca a la animación del loop y ejecuta el golpe
+    UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
+    void LiberarGolpePoderoso();
+    
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability")
     float AbilityPointerMaxDistance = 300.f;
 
@@ -259,6 +273,15 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat|State")
     int32 AttackCount;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Combat|State")
+    bool bCanRotateDuringAttack = false;
+
+    UFUNCTION(BlueprintCallable, Category="Combat|Movement")
+    void EnableAttackRotation();
+
+    UFUNCTION(BlueprintCallable, Category="Combat|Movement")
+    void DisableAttackRotation();
+    
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Animations")
     TArray<UAnimMontage*> ComboMontages;
 
@@ -333,10 +356,20 @@ public:
     bool ShowDialogue(FDialogLine CurrentLine);
 
     // --- Funciones de ataque ---
-    UFUNCTION(BlueprintCallable, Category="Combat")
+    UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
     void ExecuteAttackHit();
-    UFUNCTION(BlueprintCallable, Category="Combat")
+
+    // Elevación extra al empujar enemigos (0.0 = empuje plano, 1.0 = 45 grados hacia arriba)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Abilities")
+    float KnockbackVerticalOffset = 0.75f;
+
+    UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
     void ExecuteAbilityHit();
+    
+    // Función para atrapar enemigos en área (Habilidad 3)
+    UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
+    void ExecuteAreaRoot();
+
     UFUNCTION(BlueprintCallable, Category="Combat|State")
     void ResetAttackState();
     

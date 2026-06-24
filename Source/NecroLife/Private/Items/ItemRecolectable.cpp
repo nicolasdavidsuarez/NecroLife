@@ -24,8 +24,17 @@ void AItemRecolectable::NotifyActorBeginOverlap(AActor* OtherActor)
 // hacer que el otro actor tome los datos del item data
 	if (URPGHelper::PickUpItem(OtherActor, DatosDelItem))
 	{
-	//	Super::mostrarMensaje(mensaje);
-		Destroy();
+		FTimerHandle TimerHandle;
+		GetWorldTimerManager().SetTimer(
+			TimerHandle,
+			[this]()
+			{
+				if (IsValid(this))
+					Destroy();
+			},
+			0.5f,
+			false
+		);
 	}
 
 }

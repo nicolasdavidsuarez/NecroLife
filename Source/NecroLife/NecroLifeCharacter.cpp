@@ -242,13 +242,15 @@ void ANecroLifeCharacter::Look(const FInputActionValue& Value)
 
 void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
 {
-    // Reiniciamos el timer de auto-alineación y cancelamos centrado
-    TimeSinceLastCameraInput = 0.0f;
-    bIsCenteringCamera = false;
-
+    // Solo reiniciamos el timer y rotamos la cámara SI el clic derecho está presionado
     if (GetController() != nullptr && bMouseRightDown)
     {
+        // Reiniciamos el timer de auto-alineación y cancelamos centrado
+        TimeSinceLastCameraInput = 0.0f;
+        bIsCenteringCamera = false;
+
         AddControllerYawInput(Yaw);
+        
         if (CameraBoom->GetRelativeRotation().Pitch + Pitch >= MaxPitch &&
             CameraBoom->GetRelativeRotation().Pitch + Pitch <= MinPitch)
         {
@@ -283,8 +285,25 @@ void ANecroLifeCharacter::DoMove(float Right, float Forward)
         const FRotator YawRotation(0, Rotation.Yaw, 0);
         const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
         const FVector RightDirection   = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-        AddMovementInput(ForwardDirection, Forward);
-        AddMovementInput(RightDirection, Right);
+
+        // 1. Caminata Normal (Bloqueada si ataca, cae o castea)
+        if (!bIsAttacking && !bIsPlunging && !bEnabledAbility)
+        {
+            AddMovementInput(ForwardDirection, Forward);
+            AddMovementInput(RightDirection, Right);
+        }
+        // 2. Lógica de Redirección (Pivote en el lugar)
+        else if (bIsAttacking && bCanRotateDuringAttack && (Right != 0.0f || Forward != 0.0f))
+        {
+            // Calculamos hacia dónde apunta el joystick
+            FVector DesiredDirection = (ForwardDirection * Forward) + (RightDirection * Right);
+            DesiredDirection.Normalize();
+
+            // Interpolamos la rotación para que no sea robótica/instantánea
+            FRotator TargetRot = DesiredDirection.Rotation();
+            FRotator NewRot = FMath::RInterpTo(GetActorRotation(), TargetRot, GetWorld()->GetDeltaSeconds(), 15.0f); 
+            SetActorRotation(NewRot);
+        }
     }
 }
 
@@ -315,7 +334,8 @@ void ANecroLifeCharacter::RunActivated(const FInputActionValue& Value)
 
 void ANecroLifeCharacter::HandleCameraAutoAlignment(float DeltaTime)
 {
-    if (bEnabledAbility) return;
+    // Bloqueamos la auto-alineación de la cámara libre durante los ataques y habilidades
+    if (bEnabledAbility || bIsAttacking || bIsPlunging || AttackCount > 0) return;
 
     FVector Velocity = GetVelocity();
     if (Velocity.SizeSquared2D() < 10.0f) return;
@@ -614,30 +634,72 @@ void ANecroLifeCharacter::SwitchTargetLeft()
 
 void ANecroLifeCharacter::AbilityEnabled(const FInputActionValue& InputActionValue)
 {
-    // Bloqueamos el casteo de habilidades si estamos a mitad de un ataque
     if (bIsAttacking || bIsDashing || bIsPlunging) return;
-    
+
+    // pressedKeys vale 0 si apretás el "1", y vale 1 si apretás el "2"
     int32 pressedKeys = static_cast<int32>(InputActionValue.Get<float>()) - 1;
     Ability->SelectAbility(pressedKeys);
 
     if (!Ability->isCoolDownAply(Ability->CurrentAbility))
     {
-        GetCharacterMovement()->bOrientRotationToMovement = false;
-        bUseControllerRotationYaw = true;
-        FHitResult HitResult;
-        APlayerController* PC = Cast<APlayerController>(GetController());
-        if (PC && PC->GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
+        if (Ability->CurrentAbility && Ability->CurrentAbility->AbilityMontage)
         {
-            FVector TargetLocation = HitResult.Location;
-            Direction = TargetLocation - GetActorLocation();
-            Direction.Z = 0;
-            CurrentRotation = GetActorRotation();
-            TargetRotation  = Direction.Rotation();
-            if (Ability && Ability->CurrentAbility)
-                Ability->UpdateIndicator(HitResult.Location);
+            // Auto-apuntado (lo que ya teníamos)
+            if (bIsTargeting && CurrentTarget)
+            {
+                FVector TargetLoc = CurrentTarget->GetActorLocation();
+                TargetLoc.Z = GetActorLocation().Z;
+                SetActorRotation((TargetLoc - GetActorLocation()).Rotation());
+            }
+
+            // Reproduce la animación (Acá arranca la sección "Inicio" y se traba loopeando "Carga")
+            PlayAnimMontage(Ability->CurrentAbility->AbilityMontage);
+            Server_PlayCombatMontage(Ability->CurrentAbility->AbilityMontage); 
+            
+            Ability->AbilityAply();
+            bIsAttacking = true; 
+
+            // ==========================================
+            // NUEVO: Lógica específica para el Golpe Poderoso
+            // ==========================================
+            // Si apretó la tecla 2 (índice 1), iniciamos el contador
+            if (pressedKeys == 1)
+            {
+                GetWorldTimerManager().SetTimer(ChargeAttackTimer, this, &ANecroLifeCharacter::LiberarGolpePoderoso, 1.0f, false);
+            }
         }
-        bEnabledAbility = true;
-        Ability->InitPreview();
+    }
+}
+
+void ANecroLifeCharacter::EjecutarLanzamientoPala()
+{
+    if (PalaProjectileClass)
+    {
+        // Usamos el mismo socket que ya tenés creado para su mano derecha
+        FVector SpawnLocation = GetMesh()->GetSocketLocation(FName("Socket_Mango_Pala")); 
+        
+        // Hacemos que la pala salga disparada hacia el frente exacto del personaje
+        FRotator SpawnRotation = GetActorRotation(); 
+
+        FActorSpawnParameters SpawnParams;
+        SpawnParams.Owner = this;
+        SpawnParams.Instigator = GetInstigator();
+
+        GetWorld()->SpawnActor<AActor>(PalaProjectileClass, SpawnLocation, SpawnRotation, SpawnParams);
+    }
+}
+
+void ANecroLifeCharacter::LiberarGolpePoderoso()
+{
+    // Buscamos el motor de animaciones de Huesos
+    if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+    {
+        // Nos aseguramos de tener una habilidad válida
+        if (Ability && Ability->CurrentAbility && Ability->CurrentAbility->AbilityMontage)
+        {
+            // Magia pura: Le decimos a Unreal que salte instantáneamente a la sección "Golpe"
+            AnimInstance->Montage_JumpToSection(FName("Golpe"), Ability->CurrentAbility->AbilityMontage);
+        }
     }
 }
 
@@ -657,20 +719,8 @@ void ANecroLifeCharacter::AplyAction()
 {
     if (bShowInventory || CurrentInteractable) return;
 
-    if (bEnabledAbility)
-    {
-        GetCharacterMovement()->bOrientRotationToMovement = true;
-        bUseControllerRotationYaw = false;
-        bEnabledAbility = false;
-        Ability->ClearIndicator();
-
-        if (Ability->CurrentAbility && Ability->CurrentAbility->AbilityMontage)
-        {
-            PlayAnimMontage(Ability->CurrentAbility->AbilityMontage);
-            Server_PlayCombatMontage(Ability->CurrentAbility->AbilityMontage);
-        }
-    }
-    else if (bIsDashing)
+    // 1. Ataque en Dash
+    if (bIsDashing)
     {
         if (DashAttackMontage)
         {
@@ -681,15 +731,15 @@ void ANecroLifeCharacter::AplyAction()
             AttackCount = 0;
         }
     }
-    // NUEVO: Interceptamos el ataque si Huesos está en el aire
-    else if (GetCharacterMovement()->IsFalling())
+    // 2. Ataque aéreo en picada (con tu mejora para evitar spam)
+    else if (GetCharacterMovement()->IsFalling() || bIsPlunging)
     {
-        if (!bIsPlunging) // Semáforo para no espamear el ataque en el aire
+        if (!bIsPlunging && GetVelocity().Z < 0.0f) 
         {
             StartPlungingAttack();
         }
     }
-    // FIN NUEVO
+    // 3. Combo de ataques básicos
     else
     {
         if (bIsAttacking || ComboMontages.Num() == 0) return;
@@ -714,11 +764,13 @@ void ANecroLifeCharacter::ResetCombo()
 {
     AttackCount  = 0;
     bIsAttacking = false;
+    bCanRotateDuringAttack = false;
 }
 
 void ANecroLifeCharacter::ResetAttackState()
 {
     bIsAttacking = false;
+    bCanRotateDuringAttack = false;
 }
 
 void ANecroLifeCharacter::ExecuteAttackHit()
@@ -759,6 +811,7 @@ void ANecroLifeCharacter::ExecuteAttackHit()
 void ANecroLifeCharacter::StartPlungingAttack()
 {
     bIsPlunging = true;
+    bIsAttacking = true;
 
     // 1. Modificamos un poco la gravedad para que la caída se sienta más pesada que un salto normal
     GetCharacterMovement()->GravityScale = 2.0f; // Podés jugar con este valor (1.0 es lo normal)
@@ -871,7 +924,40 @@ void ANecroLifeCharacter::ExecuteAbilityHit()
 
         if (AngleToTarget <= AttackAngle)
         {
-            URPGHelper::ApplyDamage(Other, Attribute->Attack);
+            // 1. Calculamos el daño leyendo el multiplicador de la habilidad actual
+            float FinalDamage = Attribute->Attack;
+            float Knockback = 0.0f;
+
+            // Verificamos de forma segura que haya una habilidad equipada
+            if (Ability && Ability->CurrentAbility)
+            {
+                FinalDamage *= Ability->CurrentAbility->DamageMultiplier;
+                Knockback = Ability->CurrentAbility->KnockbackForce;
+            }
+
+            // Aplicamos el daño
+            URPGHelper::ApplyDamage(Other, FinalDamage);
+            
+            GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan, FString::Printf(TEXT("Fuerza de empuje: %f"), Knockback));
+            
+            // 2. Lógica de Empuje (Pushback)
+            if (Knockback > 0.0f)
+            {
+                FVector KnockbackDirection = ToTarget;
+                KnockbackDirection.Z = 0.5f; 
+                KnockbackDirection.Normalize();
+
+                // PASO CLAVE 1: Clavamos los frenos de la IA y cancelamos su navegación actual
+                EnemyBasic->GetCharacterMovement()->StopMovementImmediately();
+
+                // PASO CLAVE 2: Cortamos cualquier animación de ataque para anular el Root Motion
+                EnemyBasic->StopAnimMontage();
+
+                // PASO CLAVE 3: Ahora sí, sin resistencia de la IA, lo mandamos a volar
+                EnemyBasic->LaunchCharacter(KnockbackDirection * Knockback, true, true);
+            }
+
+            // 3. Lógica de muerte (queda igual)
             if (!EnemyBasic->IsAlive())
             {
                 URPGHelper::TakeXP(this, EnemyBasic->EsenciasAlMorir);
@@ -1316,28 +1402,93 @@ void ANecroLifeCharacter::ClearWeaponHitMemory()
 
 void ANecroLifeCharacter::ApplyWeaponHit(AActor* HitActor)
 {
-    // Validamos que toquemos algo válido y que no esté en la memoria
     if (HitActor && HitActor != this && !DamagedActors.Contains(HitActor))
     {
         if (ANecroLifeEnemyBasic* Enemy = Cast<ANecroLifeEnemyBasic>(HitActor))
         {
-            // Lo guardamos en la memoria para no volver a pegarle en este frame
             DamagedActors.Add(HitActor);
-
-            // Calculamos y aplicamos daño
             float FinalDamage = Attribute ? Attribute->Attack : 10.0f;
-            URPGHelper::ApplyDamage(Enemy, FinalDamage);
+            float Knockback = 0.0f;
 
-            if (HitVFX)
+            // Verificamos si estamos en medio de una habilidad para aplicar sus modificadores
+            if (Ability && Ability->CurrentAbility)
             {
-                UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, Enemy->GetActorLocation());
+                if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+                {
+                    if (AnimInstance->Montage_IsPlaying(Ability->CurrentAbility->AbilityMontage))
+                    {
+                        FinalDamage *= Ability->CurrentAbility->DamageMultiplier;
+                        Knockback = Ability->CurrentAbility->KnockbackForce;
+                    }
+                }
             }
 
+            // Aplicamos el daño final
+            URPGHelper::ApplyDamage(Enemy, FinalDamage);
+
+            // Ejecutamos el Pushback
+            // Ejecutamos el Pushback
+            if (Knockback > 0.0f)
+            {
+                FVector KnockbackDirection = Enemy->GetActorLocation() - GetActorLocation();
+                
+                // Usamos la variable expuesta en lugar del 0.75f hardcodeado
+                KnockbackDirection.Z = KnockbackVerticalOffset; 
+                
+                KnockbackDirection.Normalize();
+
+                Enemy->GetCharacterMovement()->StopMovementImmediately();
+                Enemy->StopAnimMontage();
+                Enemy->LaunchCharacter(KnockbackDirection * Knockback, true, true);
+            }
+
+            // VFX y lógica de muerte
+            if (HitVFX) UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, Enemy->GetActorLocation());
             if (!Enemy->IsAlive())
             {
                 URPGHelper::TakeXP(this, Enemy->EsenciasAlMorir);
                 Server_ActualizarProgresoMision(Enemy->GetTag(), 1);
             }
         }
+    }
+}
+
+void ANecroLifeCharacter::EnableAttackRotation()
+{
+    bCanRotateDuringAttack = true;
+}
+
+void ANecroLifeCharacter::DisableAttackRotation()
+{
+    bCanRotateDuringAttack = false;
+}
+
+void ANecroLifeCharacter::ExecuteAreaRoot()
+{
+    float RootRadius = 400.f; 
+    FVector Origin = GetActorLocation();
+    
+    // --- DEBUG VISUAL --- (La esfera verde durará 2 segundos en pantalla)
+    UKismetSystemLibrary::DrawDebugSphere(this, Origin, RootRadius, 12, FLinearColor::Green, 2.f, 2.f);
+
+    TArray<FOverlapResult> Overlaps;
+    FCollisionShape CollisionShape = FCollisionShape::MakeSphere(RootRadius);
+
+    bool bHit = GetWorld()->OverlapMultiByChannel(Overlaps, Origin, FQuat::Identity, ECC_Pawn, CollisionShape);
+    
+    Ability->AbilityAply(); 
+
+    if (!bHit) return;
+
+    for (auto& Result : Overlaps)
+    {
+        AActor* Other = Result.GetActor();
+        ANecroLifeEnemyBasic* EnemyBasic = Cast<ANecroLifeEnemyBasic>(Other);
+        
+        if (!EnemyBasic || Other == this || !EnemyBasic->IsAlive()) continue;
+
+        EnemyBasic->Immobilize(3.0f);
+        
+        GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Purple, FString::Printf(TEXT("¡Enemigo %s atrapado!"), *EnemyBasic->GetName()));
     }
 }

@@ -2,13 +2,17 @@
 
 
 #include "NPC/NecroLifeNpcBasic.h"
+
+#include "AIController.h"
 #include "NecroLifeCharacter.h"
 #include "NecroLifeGameState.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/QuestComponent.h"
 
 #include "Components/SphereComponent.h"
 
 
+class AAIController;
 // Sets default values
 ANecroLifeNpcBasic::ANecroLifeNpcBasic()
 {
@@ -43,7 +47,13 @@ void ANecroLifeNpcBasic::BeginPlay()
 		SphereCollision->OnComponentEndOverlap.AddDynamic(this, &ANecroLifeNpcBasic::OnOverlapEnd);
 	}
 	
-	
+	if (AGameStateBase* GS = GetWorld()->GetGameState())
+	{
+		if (UQuestComponent* QC = GS->FindComponentByClass<UQuestComponent>())
+		{
+			QC->OnQuestAdded.AddDynamic(this, &ANecroLifeNpcBasic::OnQuestAgregada);
+		}
+	}
 }
 
 // Called every frame
@@ -233,6 +243,93 @@ void ANecroLifeNpcBasic::NextAddQuest()
 		CurrentDialogIndex++;
 	}
 }
+
+//para mover por las misiones
+void ANecroLifeNpcBasic::OnQuestAgregada(UQuestData* Quest)
+{
+	if (!HasAuthority() || !Quest) return;
+
+	for (const FQuestTeleportEntry& Entry : TeleportsPorMision)
+	{
+		if (Entry.Mision == Quest && Entry.Destino)
+		{
+			if (AAIController* AIC = Cast<AAIController>(GetController()))
+				AIC->StopMovement();
+			FVector LocationAjustada = Entry.Destino->GetActorLocation() + FVector(200.0f, 0.f, 90.f);
+			Multicast_TeleportarA(
+				LocationAjustada,
+				Entry.Destino->GetActorRotation()
+			);
+			return; // una misión activa un solo teleport
+		}
+	}
+}
+
+
+void ANecroLifeNpcBasic::TeleportarA(AActor* Destino)
+{
+	if (!Destino) return;
+
+	if (AAIController* AIC = Cast<AAIController>(GetController()))
+		AIC->StopMovement();
+
+	SetActorLocationAndRotation(
+		Destino->GetActorLocation(),
+		Destino->GetActorRotation(),
+		false, nullptr, ETeleportType::TeleportPhysics
+	);
+}
+
+void ANecroLifeNpcBasic::Multicast_TeleportarA_Implementation(FVector Location, FRotator Rotation)
+{
+	TeleportDestino = Location;
+	TeleportRotacion = Rotation;
+
+	// Spawnear efecto en la posición actual del NPC
+	if (TeleportFX)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			TeleportFX,
+			GetActorLocation(),
+			GetActorRotation()
+		);
+	}
+
+	// Ocultar el mesh del NPC
+	if (USkeletalMeshComponent* NpcMesh = GetMesh())
+	{
+		NpcMesh->SetVisibility(false);
+	}
+		
+
+	// Timer: después de 1.5s ejecutar el teleport real
+	FTimerHandle TimerHandle;
+	GetWorldTimerManager().SetTimer(
+		TimerHandle,
+		this,
+		&ANecroLifeNpcBasic::EjecutarTeleportDespuesDeEfecto,
+		1.5f,
+		false
+	);
+}
+
+void ANecroLifeNpcBasic::EjecutarTeleportDespuesDeEfecto()
+{
+	FVector LocationAjustada = TeleportDestino;
+	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
+		LocationAjustada.Z += Capsule->GetScaledCapsuleHalfHeight()/2;
+
+	SetActorLocationAndRotation(
+		LocationAjustada, TeleportRotacion,
+		false, nullptr, ETeleportType::TeleportPhysics
+	);
+
+	// Volver a mostrar el mesh
+	if (USkeletalMeshComponent* NpcMesh = GetMesh())
+		NpcMesh->SetVisibility(true);
+}
+
 
 //net
 void ANecroLifeNpcBasic::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

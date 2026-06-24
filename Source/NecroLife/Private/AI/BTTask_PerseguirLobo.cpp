@@ -68,9 +68,14 @@ void UBTTask_PerseguirLobo::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* N
 			Lobo->bIsEAttacking = true;
 			Memory->AttackCooldown = Lobo->AttackCooldown;
 		}
+		else if (Lobo->bIsEAttacking && Memory->AttackCooldown < Lobo->AttackCooldown * 0.5f)
+		{
+			Lobo->bIsEAttacking = false;
+		}
 	}
 	else
 	{
+		Lobo->bIsEAttacking = false;
 		if (Memory->MoveUpdateTimer <= 0.f)
 		{
 			AIC->MoveToActor(Target, Lobo->AttackRange * 0.5f);

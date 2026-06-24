@@ -87,7 +87,7 @@ struct FQuestObjective
 	bool bObjetivoCumplido=false;
 };
 
-UCLASS()
+UCLASS(BlueprintType)
 class NECROLIFE_API UQuestData : public UDataAsset
 {
 	GENERATED_BODY()
