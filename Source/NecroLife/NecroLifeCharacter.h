@@ -196,6 +196,13 @@ protected:
     UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
     void EjecutarLanzamientoPala();
     
+    // Timer para el ataque cargado
+    FTimerHandle ChargeAttackTimer;
+
+    // Función que saca a la animación del loop y ejecuta el golpe
+    UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
+    void LiberarGolpePoderoso();
+    
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability")
     float AbilityPointerMaxDistance = 300.f;
 

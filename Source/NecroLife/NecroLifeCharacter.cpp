@@ -634,9 +634,9 @@ void ANecroLifeCharacter::SwitchTargetLeft()
 
 void ANecroLifeCharacter::AbilityEnabled(const FInputActionValue& InputActionValue)
 {
-    // 1. Bloqueamos si Huesos ya está ocupado
     if (bIsAttacking || bIsDashing || bIsPlunging) return;
 
+    // pressedKeys vale 0 si apretás el "1", y vale 1 si apretás el "2"
     int32 pressedKeys = static_cast<int32>(InputActionValue.Get<float>()) - 1;
     Ability->SelectAbility(pressedKeys);
 
@@ -644,23 +644,29 @@ void ANecroLifeCharacter::AbilityEnabled(const FInputActionValue& InputActionVal
     {
         if (Ability->CurrentAbility && Ability->CurrentAbility->AbilityMontage)
         {
-            // 2. Auto-apuntado: Si tenemos un target, Huesos lo mira de frente
+            // Auto-apuntado (lo que ya teníamos)
             if (bIsTargeting && CurrentTarget)
             {
                 FVector TargetLoc = CurrentTarget->GetActorLocation();
-                TargetLoc.Z = GetActorLocation().Z; // Ignoramos la altura para no inclinar a Huesos
+                TargetLoc.Z = GetActorLocation().Z;
                 SetActorRotation((TargetLoc - GetActorLocation()).Rotation());
             }
 
-            // 3. Ejecutamos la animación al instante
+            // Reproduce la animación (Acá arranca la sección "Inicio" y se traba loopeando "Carga")
             PlayAnimMontage(Ability->CurrentAbility->AbilityMontage);
-            Server_PlayCombatMontage(Ability->CurrentAbility->AbilityMontage); // Para el multiplayer
+            Server_PlayCombatMontage(Ability->CurrentAbility->AbilityMontage); 
             
-            // 4. Aplicamos el cooldown inmediatamente
             Ability->AbilityAply();
-            
-            // 5. Encendemos el semáforo para que no pueda caminar o saltar
             bIsAttacking = true; 
+
+            // ==========================================
+            // NUEVO: Lógica específica para el Golpe Poderoso
+            // ==========================================
+            // Si apretó la tecla 2 (índice 1), iniciamos el contador
+            if (pressedKeys == 1)
+            {
+                GetWorldTimerManager().SetTimer(ChargeAttackTimer, this, &ANecroLifeCharacter::LiberarGolpePoderoso, 1.0f, false);
+            }
         }
     }
 }
@@ -680,6 +686,20 @@ void ANecroLifeCharacter::EjecutarLanzamientoPala()
         SpawnParams.Instigator = GetInstigator();
 
         GetWorld()->SpawnActor<AActor>(PalaProjectileClass, SpawnLocation, SpawnRotation, SpawnParams);
+    }
+}
+
+void ANecroLifeCharacter::LiberarGolpePoderoso()
+{
+    // Buscamos el motor de animaciones de Huesos
+    if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+    {
+        // Nos aseguramos de tener una habilidad válida
+        if (Ability && Ability->CurrentAbility && Ability->CurrentAbility->AbilityMontage)
+        {
+            // Magia pura: Le decimos a Unreal que salte instantáneamente a la sección "Golpe"
+            AnimInstance->Montage_JumpToSection(FName("Golpe"), Ability->CurrentAbility->AbilityMontage);
+        }
     }
 }
 
@@ -904,7 +924,35 @@ void ANecroLifeCharacter::ExecuteAbilityHit()
 
         if (AngleToTarget <= AttackAngle)
         {
-            URPGHelper::ApplyDamage(Other, Attribute->Attack);
+            // 1. Calculamos el daño leyendo el multiplicador de la habilidad actual
+            float FinalDamage = Attribute->Attack;
+            float Knockback = 0.0f;
+
+            // Verificamos de forma segura que haya una habilidad equipada
+            if (Ability && Ability->CurrentAbility)
+            {
+                FinalDamage *= Ability->CurrentAbility->DamageMultiplier;
+                Knockback = Ability->CurrentAbility->KnockbackForce;
+            }
+
+            // Aplicamos el daño
+            URPGHelper::ApplyDamage(Other, FinalDamage);
+
+            // 2. Lógica de Empuje (Pushback)
+            if (Knockback > 0.0f)
+            {
+                // Usamos el vector 'ToTarget' que ya calculaste arriba, que es la dirección desde Huesos hacia el enemigo
+                FVector KnockbackDirection = ToTarget;
+                
+                // Le agregamos un poco de fuerza vertical para despegarlo del piso y anular la fricción
+                KnockbackDirection.Z = 0.5f; 
+                KnockbackDirection.Normalize();
+
+                // Lanzamos al enemigo (el true, true asegura que ignoremos su velocidad actual)
+                EnemyBasic->LaunchCharacter(KnockbackDirection * Knockback, true, true);
+            }
+
+            // 3. Lógica de muerte (queda igual)
             if (!EnemyBasic->IsAlive())
             {
                 URPGHelper::TakeXP(this, EnemyBasic->EsenciasAlMorir);
