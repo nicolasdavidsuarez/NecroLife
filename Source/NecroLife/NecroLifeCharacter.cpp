@@ -634,30 +634,52 @@ void ANecroLifeCharacter::SwitchTargetLeft()
 
 void ANecroLifeCharacter::AbilityEnabled(const FInputActionValue& InputActionValue)
 {
-    // Bloqueamos el casteo de habilidades si estamos a mitad de un ataque
+    // 1. Bloqueamos si Huesos ya está ocupado
     if (bIsAttacking || bIsDashing || bIsPlunging) return;
-    
+
     int32 pressedKeys = static_cast<int32>(InputActionValue.Get<float>()) - 1;
     Ability->SelectAbility(pressedKeys);
 
     if (!Ability->isCoolDownAply(Ability->CurrentAbility))
     {
-        GetCharacterMovement()->bOrientRotationToMovement = false;
-        bUseControllerRotationYaw = true;
-        FHitResult HitResult;
-        APlayerController* PC = Cast<APlayerController>(GetController());
-        if (PC && PC->GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
+        if (Ability->CurrentAbility && Ability->CurrentAbility->AbilityMontage)
         {
-            FVector TargetLocation = HitResult.Location;
-            Direction = TargetLocation - GetActorLocation();
-            Direction.Z = 0;
-            CurrentRotation = GetActorRotation();
-            TargetRotation  = Direction.Rotation();
-            if (Ability && Ability->CurrentAbility)
-                Ability->UpdateIndicator(HitResult.Location);
+            // 2. Auto-apuntado: Si tenemos un target, Huesos lo mira de frente
+            if (bIsTargeting && CurrentTarget)
+            {
+                FVector TargetLoc = CurrentTarget->GetActorLocation();
+                TargetLoc.Z = GetActorLocation().Z; // Ignoramos la altura para no inclinar a Huesos
+                SetActorRotation((TargetLoc - GetActorLocation()).Rotation());
+            }
+
+            // 3. Ejecutamos la animación al instante
+            PlayAnimMontage(Ability->CurrentAbility->AbilityMontage);
+            Server_PlayCombatMontage(Ability->CurrentAbility->AbilityMontage); // Para el multiplayer
+            
+            // 4. Aplicamos el cooldown inmediatamente
+            Ability->AbilityAply();
+            
+            // 5. Encendemos el semáforo para que no pueda caminar o saltar
+            bIsAttacking = true; 
         }
-        bEnabledAbility = true;
-        Ability->InitPreview();
+    }
+}
+
+void ANecroLifeCharacter::EjecutarLanzamientoPala()
+{
+    if (PalaProjectileClass)
+    {
+        // Usamos el mismo socket que ya tenés creado para su mano derecha
+        FVector SpawnLocation = GetMesh()->GetSocketLocation(FName("Socket_Mango_Pala")); 
+        
+        // Hacemos que la pala salga disparada hacia el frente exacto del personaje
+        FRotator SpawnRotation = GetActorRotation(); 
+
+        FActorSpawnParameters SpawnParams;
+        SpawnParams.Owner = this;
+        SpawnParams.Instigator = GetInstigator();
+
+        GetWorld()->SpawnActor<AActor>(PalaProjectileClass, SpawnLocation, SpawnRotation, SpawnParams);
     }
 }
 
@@ -677,20 +699,8 @@ void ANecroLifeCharacter::AplyAction()
 {
     if (bShowInventory || CurrentInteractable) return;
 
-    if (bEnabledAbility)
-    {
-        GetCharacterMovement()->bOrientRotationToMovement = true;
-        bUseControllerRotationYaw = false;
-        bEnabledAbility = false;
-        Ability->ClearIndicator();
-
-        if (Ability->CurrentAbility && Ability->CurrentAbility->AbilityMontage)
-        {
-            PlayAnimMontage(Ability->CurrentAbility->AbilityMontage);
-            Server_PlayCombatMontage(Ability->CurrentAbility->AbilityMontage);
-        }
-    }
-    else if (bIsDashing)
+    // 1. Ataque en Dash
+    if (bIsDashing)
     {
         if (DashAttackMontage)
         {
@@ -701,16 +711,15 @@ void ANecroLifeCharacter::AplyAction()
             AttackCount = 0;
         }
     }
-    // NUEVO: Interceptamos el ataque si Huesos está en el aire
+    // 2. Ataque aéreo en picada (con tu mejora para evitar spam)
     else if (GetCharacterMovement()->IsFalling() || bIsPlunging)
     {
-        // Solo iniciamos la picada si no estamos ya en una, Y si la velocidad vertical es negativa (está cayendo, no subiendo)
         if (!bIsPlunging && GetVelocity().Z < 0.0f) 
         {
             StartPlungingAttack();
         }
     }
-    // FIN NUEVO
+    // 3. Combo de ataques básicos
     else
     {
         if (bIsAttacking || ComboMontages.Num() == 0) return;

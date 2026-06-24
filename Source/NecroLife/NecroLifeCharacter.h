@@ -189,6 +189,13 @@ protected:
     UInputAction* MouseMiddleUp;
 
     // --- Habilidades ---
+
+    UPROPERTY(EditAnywhere, Category="Combat|Abilities")
+    TSubclassOf<AActor> PalaProjectileClass;
+
+    UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
+    void EjecutarLanzamientoPala();
+    
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability")
     float AbilityPointerMaxDistance = 300.f;
 
