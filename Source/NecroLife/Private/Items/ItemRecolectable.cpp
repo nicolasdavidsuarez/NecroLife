@@ -32,7 +32,7 @@ void AItemRecolectable::NotifyActorBeginOverlap(AActor* OtherActor)
 				if (IsValid(this))
 					Destroy();
 			},
-			1.5f,
+			0.5f,
 			false
 		);
 	}
