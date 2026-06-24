@@ -704,7 +704,8 @@ void ANecroLifeCharacter::AplyAction()
     // NUEVO: Interceptamos el ataque si Huesos está en el aire
     else if (GetCharacterMovement()->IsFalling() || bIsPlunging)
     {
-        if (!bIsPlunging) // Semáforo para no espamear el ataque en el aire
+        // Solo iniciamos la picada si no estamos ya en una, Y si la velocidad vertical es negativa (está cayendo, no subiendo)
+        if (!bIsPlunging && GetVelocity().Z < 0.0f) 
         {
             StartPlungingAttack();
         }
