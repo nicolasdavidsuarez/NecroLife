@@ -683,6 +683,7 @@ void ANecroLifeCharacter::AbilityEnabled(const FInputActionValue& InputActionVal
             Server_PlayCombatMontage(Ability->CurrentAbility->AbilityMontage); 
             
             Ability->AbilityAply();
+            SetCoolDownAbility(pressedKeys);
             bIsAttacking = true; 
 
             // ==========================================
