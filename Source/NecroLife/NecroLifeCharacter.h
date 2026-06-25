@@ -373,9 +373,39 @@ public:
     // Radio de efecto para la habilidad de inmovilización (Habilidad 3)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Abilities")
     float AbilityRootRadius = 400.0f;
+    
+    // --- Habilidad 4 (Ametralladora de Palas) ---
+    
+    // Nueva ranura exclusiva para la pala lanza (así no pisa a la shuriken)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Abilities")
+    TSubclassOf<AActor> PalaAmetralladoraClass;
+
+    UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
+    void StartSpadeMachineGun();
+
+    // Cantidad de palas a disparar durante la animación
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Abilities")
+    int32 PalasToSpawn = 10;
+
+    // Velocidad de disparo (0.1 = 10 palas por segundo)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Abilities")
+    float FireRate = 0.1f;
+
+    // Dispersión para que no salgan en línea recta perfecta
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Abilities")
+    float SpreadAngle = 5.0f;
+
+    // Variables internas del cronómetro
+    int32 PalasDisparadas = 0;
+    FTimerHandle MachineGunTimer;
+    
+    void FireSingleSpade();
 
     UFUNCTION(BlueprintCallable, Category="Combat|State")
     void ResetAttackState();
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Abilities")
+    FName AmetralladoraSocketName = FName("Socket_Torso");
     
     
     

@@ -4,9 +4,8 @@
 #include "GameFramework/Actor.h"
 #include "PalaProjectile.generated.h"
 
-class USphereComponent;
+class UBoxComponent;
 class UProjectileMovementComponent;
-class URotatingMovementComponent;
 
 UCLASS()
 class NECROLIFE_API APalaProjectile : public AActor
@@ -22,16 +21,14 @@ protected:
 public:	
 	// --- Componentes ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	USphereComponent* CollisionComp;
+	UBoxComponent* CollisionComp;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UStaticMeshComponent* MeshComp;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UProjectileMovementComponent* ProjectileMovement;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	URotatingMovementComponent* RotatingMovement;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    class USkeletalMeshComponent* PalaMesh;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	class UProjectileMovementComponent* ProjectileMovement;
+	
 
 	// --- Variables de Combate ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")

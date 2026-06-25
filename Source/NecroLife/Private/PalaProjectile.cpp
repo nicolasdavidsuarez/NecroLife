@@ -1,8 +1,7 @@
 #include "PalaProjectile.h"
-#include "Components/SphereComponent.h"
+#include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
-#include "GameFramework/RotatingMovementComponent.h"
 #include "NPC/NecroLifeEnemyBasic.h"
 #include "Public/Components/RPGHelper.h"
 
@@ -13,32 +12,35 @@ APalaProjectile::APalaProjectile()
 {
     PrimaryActorTick.bCanEverTick = false; // No necesitamos Tick, optimizamos rendimiento
 
-    // 1. Colisión Principal (Esfera)
-    CollisionComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
-    CollisionComp->InitSphereRadius(40.0f);
+    // 1. Colisión Principal (Caja)
+    CollisionComp = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComp"));
+    
+    // Le damos un tamaño inicial genérico (X=Largo, Y=Ancho, Z=Alto)
+    CollisionComp->InitBoxExtent(FVector(40.0f, 40.0f, 40.0f)); 
     CollisionComp->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
     RootComponent = CollisionComp;
 
-    // 2. Malla Visual (La pala)
-    MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
-    MeshComp->SetupAttachment(RootComponent);
-    MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision); // La malla es solo visual
-
-    // 3. Movimiento del Proyectil (Vuelo recto)
-    ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileComp"));
-    ProjectileMovement->UpdatedComponent = CollisionComp;
-    ProjectileMovement->InitialSpeed = 1500.f; // Velocidad de salida
-    ProjectileMovement->MaxSpeed = 1500.f;
-    ProjectileMovement->ProjectileGravityScale = 0.0f; // Cero gravedad para que no caiga
+    PalaMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("PalaMesh"));
+    PalaMesh->SetupAttachment(RootComponent);
     
-    // 4. Movimiento de Rotación (Giro estilo shuriken)
-    RotatingMovement = CreateDefaultSubobject<URotatingMovementComponent>(TEXT("RotatingComp"));
-    // Giramos sobre el eje Pitch, Yaw o Roll (dependerá de cómo esté orientada tu malla original)
-    // Probamos con Yaw (Z). Si la pala gira raro en el juego, cambiamos este vector a (1000, 0, 0) o (0, 1000, 0).
-    RotatingMovement->RotationRate = FRotator(0.f, 1500.f, 0.f); 
-
     // Destrucción automática a los 3 segundos para limpiar la memoria si no choca con nada
     InitialLifeSpan = 3.0f;
+    
+    // --- Configuración del Movimiento ---
+    ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
+    
+    // Le decimos que el componente que manda en las físicas es la esfera
+    ProjectileMovement->UpdatedComponent = CollisionComp;
+    
+    // Velocidad por defecto (podés cambiarla en los Blueprints)
+    ProjectileMovement->InitialSpeed = 2000.0f;
+    ProjectileMovement->MaxSpeed = 2000.0f;
+    
+    // TRUCO CLAVE: Esto hace que la punta de la lanza mire hacia donde viaja (ideal para el SpreadAngle)
+    ProjectileMovement->bRotationFollowsVelocity = true; 
+    
+    // Desactivamos la gravedad para que viajen en línea recta como un láser
+    ProjectileMovement->ProjectileGravityScale = 0.0f;
 }
 
 // ============================================================

@@ -1521,3 +1521,43 @@ void ANecroLifeCharacter::ExecuteAreaRoot()
         GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Purple, FString::Printf(TEXT("¡Enemigo %s atrapado!"), *EnemyBasic->GetName()));
     }
 }
+
+void ANecroLifeCharacter::StartSpadeMachineGun()
+{
+    if (!PalaAmetralladoraClass) return;
+    
+    PalasDisparadas = 0;
+    
+    // Iniciamos el bucle. El 0.0f del final hace que el primer tiro salga instantáneamente
+    GetWorldTimerManager().SetTimer(MachineGunTimer, this, &ANecroLifeCharacter::FireSingleSpade, FireRate, true, 0.0f);
+    
+    Ability->AbilityAply(); 
+}
+
+void ANecroLifeCharacter::FireSingleSpade()
+{
+    // Si ya llegamos al límite, apagamos la ametralladora
+    if (PalasDisparadas >= PalasToSpawn)
+    {
+        GetWorldTimerManager().ClearTimer(MachineGunTimer);
+        return;
+    }
+
+    // Usamos el socket del pecho (asegurate de crearlo en el esqueleto de Huesos)
+    // Ahora busca el socket que le digas en el Blueprint de Huesos
+    FVector SpawnLocation = GetMesh()->GetSocketLocation(AmetralladoraSocketName);
+    
+    // Rotación base + caos aleatorio (Spread)
+    FRotator SpawnRotation = GetActorRotation(); 
+    SpawnRotation.Yaw += FMath::RandRange(-SpreadAngle, SpreadAngle);
+    SpawnRotation.Pitch += FMath::RandRange(-SpreadAngle, SpreadAngle);
+
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.Owner = this;
+    SpawnParams.Instigator = GetInstigator();
+
+    // Spawneamos la Lanza
+    GetWorld()->SpawnActor<AActor>(PalaAmetralladoraClass, SpawnLocation, SpawnRotation, SpawnParams);
+
+    PalasDisparadas++;
+}
