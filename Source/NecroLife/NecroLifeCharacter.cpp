@@ -1465,7 +1465,9 @@ void ANecroLifeCharacter::DisableAttackRotation()
 
 void ANecroLifeCharacter::ExecuteAreaRoot()
 {
-    float RootRadius = 400.f; 
+    // Ahora toma el valor del Blueprint de Huesos
+    float RootRadius = AbilityRootRadius; 
+    
     FVector Origin = GetActorLocation();
     
     // --- DEBUG VISUAL --- (La esfera verde durará 2 segundos en pantalla)
