@@ -101,7 +101,7 @@ void ANecroLifeNpcBasic::OnRep_CurrentQuestIndex()
 {
 	///ejecutar aca que pasa en el cliente que no esta hablando con el character npc
 	
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, TEXT("mostrar si no es el que habla con npc"));
+	GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Yellow, TEXT("mostrar si no es el que habla con npc"));
 }
 
 
