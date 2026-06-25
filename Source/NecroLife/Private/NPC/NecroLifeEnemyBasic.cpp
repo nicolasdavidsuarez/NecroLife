@@ -7,6 +7,7 @@
 #include "Components/WidgetComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Camera/PlayerCameraManager.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 ANecroLifeEnemyBasic::ANecroLifeEnemyBasic()
@@ -64,6 +65,8 @@ void ANecroLifeEnemyBasic::Die()
 {
     if (bIsDead || !HasAuthority()) return;
     {
+        
+        GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         bIsDead = true;
         OnEnemyDied.Broadcast(this);
         BP_OnDie();
