@@ -49,8 +49,7 @@ public:
 	float VisionAngle = 180.f;
 
 	// --- Combate ---
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Melee|Combate")
-	float AttackRange = 150.f;
+	// AttackRange heredado de ANecroLifeEnemyBasic; el constructor lo setea a 200
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Melee|Combate")
 	float AttackCooldown = 1.5f;

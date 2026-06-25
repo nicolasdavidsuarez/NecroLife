@@ -88,6 +88,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combate")
 	float AttackRadius = 45.f;
 
+	// Distancia máxima del trace de ataque melee
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combate")
+	float AttackRange = 150.f;
+
 	// Daño unificado para todos los enemigos
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combate")
 	float AttackDamage = 20.f;

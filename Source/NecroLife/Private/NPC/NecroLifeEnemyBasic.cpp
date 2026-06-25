@@ -135,55 +135,37 @@ void ANecroLifeEnemyBasic::ExecuteMeleeAttack()
     // DEBUG VITAL: Si este texto no sale en pantalla, el Anim Notify está desconectado.
     UKismetSystemLibrary::PrintString(this, "C++: Disparando ataque", true, true, FLinearColor::Blue, 2.f);
 
-    // 2. Trayectoria para atravesar a la manada
-    FVector TraceStart = GetMesh()->GetSocketLocation(AttackSocketName);
-    FVector TraceEnd = TraceStart + (GetActorForwardVector() * 60.f); // Viaja 60 cm hacia adelante
-
     TArray<AActor*> ActorsToIgnore;
-    ActorsToIgnore.Add(this); // Que el lobo no se muerda a sí mismo
+    ActorsToIgnore.Add(this);
 
-    // 3. Buscamos específicamente por Tipo de Objeto (Peones)
     TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-    ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn)); // Atrapa a Huesos y otros lobos
+    ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));
     ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_PhysicsBody));
     ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldDynamic));
 
-    TArray<FHitResult> HitResults;
+    TArray<AActor*> OverlappedActors;
 
-    // 4. Usamos SphereTraceMultiForObjects
-    bool bHit = UKismetSystemLibrary::SphereTraceMultiForObjects(
+    // Radio extendido en Z para cubrir diferencias de altura (rampas, escalones).
+    // El filtro real usa Dist2D, igual que la IA para decidir cuándo atacar.
+    UKismetSystemLibrary::SphereOverlapActors(
         this,
-        TraceStart,
-        TraceEnd,
-        AttackRadius,
+        GetActorLocation(),
+        AttackRange * 1.5f,
         ObjectTypes,
-        false,
+        nullptr,
         ActorsToIgnore,
-        EDrawDebugTrace::ForDuration, // Dibuja la cápsula
-        HitResults,
-        true,
-        FLinearColor::Red,
-        FLinearColor::Green,
-        1.5f // La cápsula dura 1.5 segundos en pantalla
+        OverlappedActors
     );
 
-    // 5. Filtramos los impactos
-    if (bHit)
+    for (AActor* HitActor : OverlappedActors)
     {
-        for (const FHitResult& Hit : HitResults)
-        {
-            AActor* HitActor = Hit.GetActor();
+        if (!HitActor || HitActor->IsA<ANecroLifeEnemyBasic>()) continue;
 
-            // Si el objeto tocado es válido y NO es otro enemigo básico...
-            if (HitActor && !HitActor->IsA<ANecroLifeEnemyBasic>())
-            {
-                // DEBUG: Te avisa a quién le acaba de pegar
-                UKismetSystemLibrary::PrintString(this, "C++: Le pegue a " + HitActor->GetName(), true, true, FLinearColor::Yellow, 2.f);
-             
-                // Aplicamos daño y rompemos el ciclo
-                URPGHelper::ApplyDamage(HitActor, AttackDamage);
-                break; 
-            }
+        if (FVector::Dist2D(GetActorLocation(), HitActor->GetActorLocation()) <= AttackRange)
+        {
+            UKismetSystemLibrary::PrintString(this, "C++: Le pegue a " + HitActor->GetName(), true, true, FLinearColor::Yellow, 2.f);
+            URPGHelper::ApplyDamage(HitActor, AttackDamage);
+            break;
         }
     }
 }
