@@ -88,6 +88,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combate")
 	float AttackRadius = 45.f;
 
+	// Distancia máxima del trace de ataque melee
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combate")
+	float AttackRange = 150.f;
+
 	// Daño unificado para todos los enemigos
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combate")
 	float AttackDamage = 20.f;
@@ -128,4 +132,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+private:
+	// Widget components que deben mirar siempre a la cámara (health bars del BP)
+	TArray<UWidgetComponent*> BillboardWidgets;
 };

@@ -98,7 +98,9 @@ void UInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
+	// Solo el servidor recalcula — el cliente recibe los stats via replicación
+	if (!GetOwner()->HasAuthority()) return;
+
 	if (UAttributeComponent* Atributos = GetOwner()->FindComponentByClass<UAttributeComponent>())
 	{
 		Atributos->RecalcularEstadisticas(GemsInSlots);
