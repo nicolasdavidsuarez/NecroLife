@@ -77,12 +77,7 @@ void ANecroLifeEnemyBasic::Die()
 
 void ANecroLifeEnemyBasic::OnRep_IsDead()
 {
-    // Tu lógica de Ragdoll replicada
-    if (GetMesh())
-    {
-        GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
-        GetMesh()->SetSimulatePhysics(true);
-    }
+    // El ABP lee bIsDead y transiciona al estado de muerte.
 }
 
 void ANecroLifeEnemyBasic::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

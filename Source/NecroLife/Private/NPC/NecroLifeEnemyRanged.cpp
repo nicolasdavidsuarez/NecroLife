@@ -43,6 +43,19 @@ void ANecroLifeEnemyRanged::ShootProjectile(AActor* Target)
 {
 	if (!HasAuthority() || !ProjectileClass || !Target) return;
 
+	// Disparar la animación en todos los clientes como evento confiable
+	Multicast_TriggerAttackAnim();
+
+	// Guardar el target y spawnar el proyectil con delay para sincronizar con la anim
+	PendingTarget = Target;
+	GetWorldTimerManager().SetTimer(SpawnDelayTimer, this, &ANecroLifeEnemyRanged::SpawnProjectileDelayed, ProjectileSpawnDelay, false);
+}
+
+void ANecroLifeEnemyRanged::SpawnProjectileDelayed()
+{
+	AActor* Target = PendingTarget.Get();
+	if (!HasAuthority() || !Target || !ProjectileClass) return;
+
 	FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * 60.f;
 	FRotator SpawnRotation = (Target->GetActorLocation() - SpawnLocation).Rotation();
 
@@ -54,10 +67,17 @@ void ANecroLifeEnemyRanged::ShootProjectile(AActor* Target)
 		ProjectileClass, SpawnLocation, SpawnRotation, SpawnParams);
 
 	if (Projectile)
-	{
 		Projectile->Damage = AttackDamage;
-	}
+}
 
-	if (ShootMontage)
-		PlayAnimMontage(ShootMontage);
+void ANecroLifeEnemyRanged::Multicast_TriggerAttackAnim_Implementation()
+{
+	BP_OnAttack();
+	bIsEAttacking = true;
+	GetWorldTimerManager().SetTimer(AttackAnimResetTimer, this, &ANecroLifeEnemyRanged::ResetAttackState, AttackAnimDuration, false);
+}
+
+void ANecroLifeEnemyRanged::ResetAttackState()
+{
+	bIsEAttacking = false;
 }
