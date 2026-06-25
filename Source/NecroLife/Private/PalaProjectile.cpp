@@ -10,7 +10,7 @@
 // ============================================================
 APalaProjectile::APalaProjectile()
 {
-    PrimaryActorTick.bCanEverTick = false; // No necesitamos Tick, optimizamos rendimiento
+    PrimaryActorTick.bCanEverTick = true; // AHORA ES TRUE
 
     // 1. Colisión Principal (Caja)
     CollisionComp = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComp"));
@@ -50,7 +50,10 @@ void APalaProjectile::BeginPlay()
 {
     Super::BeginPlay();
     
-    // Conectamos el evento de impacto
+    // Guardamos la dirección en la que fue apuntado al nacer
+    InitialForwardDir = GetActorForwardVector();
+    InitialRightDir = GetActorRightVector();
+    
     CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &APalaProjectile::OnProjectileOverlap);
 }
 
@@ -71,6 +74,27 @@ void APalaProjectile::OnProjectileOverlap(UPrimitiveComponent* OverlappedCompone
             // Aplicamos el daño
             URPGHelper::ApplyDamage(Enemy, DamageAmount);
         }
+    }
+}
+
+void APalaProjectile::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+
+    // Solo afectamos el vuelo si marcaste el Checkbox en el Blueprint
+    if (bIsSinusoidal && ProjectileMovement)
+    {
+        float Time = GetGameTimeSinceCreation();
+        
+        // MATEMÁTICA DE JUEGOS: Para que la trayectoria trace un Seno perfecto, 
+        // le aplicamos la función Coseno a su Velocidad Lateral (la derivada).
+        float LateralVelocity = FMath::Cos(Time * SineFrequency) * SineAmplitude;
+        
+        // Combinamos la velocidad hacia adelante base con el zig-zag lateral
+        FVector NewVelocity = (InitialForwardDir * ProjectileMovement->InitialSpeed) + (InitialRightDir * LateralVelocity);
+        
+        // Sobrescribimos la velocidad del motor
+        ProjectileMovement->Velocity = NewVelocity;
     }
 }
 
