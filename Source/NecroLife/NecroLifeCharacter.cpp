@@ -111,13 +111,15 @@ void ANecroLifeCharacter::BeginPlay()
         }
     }
 
-    // Bind del delegate y recálculo inicial de stats (de los compañeros)
-    if (Attribute)
+    // Las gemas van por el InventoryComponent del PlayerState → CachedAttributeComponent es la
+    // fuente autoritativa de stats. No bindeamos Attribute del personaje para evitar que
+    // sobreescriba MaxWalkSpeed con Velocidad base (sin gemas) después de que CachedAttribute lo
+    // seteó correctamente con el bonus de gemas.
+    // El recálculo inicial en servidor usa el Inventory del personaje (vacío al inicio; el del
+    // PlayerState se encarga de los stats reales en su propio BeginPlay).
+    if (HasAuthority() && Attribute)
     {
-        Attribute->OnAtributosActualizados.AddDynamic(this, &ANecroLifeCharacter::OnAtributosActualizados);
         Attribute->RecalcularEstadisticas(Inventory->GemsInSlots);
-       
-        
     }
 }
 
@@ -147,6 +149,27 @@ void ANecroLifeCharacter::PossessedBy(AController* NewController)
         if (CachedAttributeComponent)
         {
             CachedAttributeComponent->OnAtributosActualizados.AddDynamic(this, &ANecroLifeCharacter::OnAtributosActualizados);
+
+            // Copiar los valores base del Attribute del personaje (configurados en BP_Huesos)
+            // al CachedAttributeComponent del PlayerState, que es el que recalcula con gemas.
+            // Esto permite que BaseVelocity, BaseLife, etc. se configuren desde el Blueprint
+            // del personaje y se reflejen correctamente en el sistema de stats.
+            if (HasAuthority() && Attribute)
+            {
+                CachedAttributeComponent->BaseVelocity      = Attribute->BaseVelocity;
+                CachedAttributeComponent->BaseLife          = Attribute->BaseLife;
+                CachedAttributeComponent->BaseAttack        = Attribute->BaseAttack;
+                CachedAttributeComponent->DefenseBase       = Attribute->DefenseBase;
+                CachedAttributeComponent->BaseEnergy        = Attribute->BaseEnergy;
+                CachedAttributeComponent->VelocityAttackBase = Attribute->VelocityAttackBase;
+                CachedAttributeComponent->BaseRegenVida     = Attribute->BaseRegenVida;
+                CachedAttributeComponent->BaseRegenEnergia  = Attribute->BaseRegenEnergia;
+
+                const TArray<FDatosGema>& Gemas = CachedInventoryComponent
+                    ? CachedInventoryComponent->GemsInSlots
+                    : TArray<FDatosGema>();
+                CachedAttributeComponent->RecalcularEstadisticas(Gemas);
+            }
         }
     }
     else
@@ -326,9 +349,12 @@ void ANecroLifeCharacter::RunActivated(const FInputActionValue& Value)
     if (Value.Get<bool>())
     {
         bIsRunning = !bIsRunning;
-        GetCharacterMovement()->MaxWalkSpeed = bIsRunning
-            ? Attribute->Velocity * 200.0f
-            : Attribute->Velocity * 50.0f;
+        // Usar CachedAttributeComponent (PlayerState) que tiene el bonus de gemas aplicado.
+        // Fallback al Attribute del personaje si todavía no está disponible.
+        const float V = (CachedAttributeComponent && CachedAttributeComponent->StatsSincronizadas.Velocidad > 0.f)
+            ? CachedAttributeComponent->StatsSincronizadas.Velocidad
+            : Attribute->StatsSincronizadas.Velocidad;
+        GetCharacterMovement()->MaxWalkSpeed = bIsRunning ? V * 200.0f : V * 50.0f;
     }
 }
 
@@ -1311,11 +1337,12 @@ bool ANecroLifeCharacter::ShowDialogue(FDialogLine CurrentLine)
 
 void ANecroLifeCharacter::OnAtributosActualizados(const FEstadisticasPersonaje& NuevosAtributos)
 {
-    // Actualizamos la velocidad de movimiento según los atributos recalculados
+    // Ignorar broadcasts con Velocidad = 0 (struct no inicializado / componente secundario vacío)
+    if (NuevosAtributos.Velocidad <= 0.f) return;
+
     GetCharacterMovement()->MaxWalkSpeed = bIsRunning
         ? NuevosAtributos.Velocidad * 200.0f
         : NuevosAtributos.Velocidad * 50.0f;
-    // TODO: actualizar HUD con NuevosAtributos si es necesario
 }
 
 void ANecroLifeCharacter::SetUIState(bool bIsTalking)

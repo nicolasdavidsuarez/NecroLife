@@ -37,12 +37,12 @@ void UAttributeComponent::BeginPlay()
 {
     Super::BeginPlay();
 
+    // Solo el servidor recalcula — el cliente recibe los stats correctos via replicación.
+    // Mandar Server_RecalcularEstadisticas([]) desde el cliente causaba una race condition:
+    // el RPC llegaba al servidor después de que el jugador equipó gemas y reseteaba los stats.
     if (GetOwner()->HasAuthority())
-    { 
-        RecalcularEstadisticas(TArray<FDatosGema>());     
-    }else
     {
-        Server_RecalcularEstadisticas(TArray<FDatosGema>());
+        RecalcularEstadisticas(TArray<FDatosGema>());
     }
 }
 
@@ -127,15 +127,15 @@ void UAttributeComponent::RecalcularEstadisticas(const TArray<FDatosGema>& Gemas
                 break;
 
             case ETipoEstadisticaGema::VidaMaximaPorcentaje:
-                BonoVidaPorcentaje += (Gema.ValorMejora - 1.0f);
+                BonoVidaPorcentaje += Gema.ValorMejora / 100.0f;
                 break;
 
             case ETipoEstadisticaGema::AtaqueFisicoPorcentaje:
-                BonoAtaquePorcentaje += (Gema.ValorMejora - 1.0f);
+                BonoAtaquePorcentaje += Gema.ValorMejora / 100.0f;
                 break;
 
             case ETipoEstadisticaGema::DefensaPorcentaje:
-                BonoDefensaPorcentaje += (Gema.ValorMejora - 1.0f);
+                BonoDefensaPorcentaje += Gema.ValorMejora / 100.0f;
                 break;
 
             case ETipoEstadisticaGema::Velocidad:
@@ -143,7 +143,7 @@ void UAttributeComponent::RecalcularEstadisticas(const TArray<FDatosGema>& Gemas
                 break;
 
             case ETipoEstadisticaGema::VelocidadAtaquePorcentaje:
-                BonoVelocidadAttack += (Gema.ValorMejora - 1.0f);
+                BonoVelocidadAttack += Gema.ValorMejora / 100.0f;
                 break;
 
             case ETipoEstadisticaGema::RegeneracionVida:
@@ -189,21 +189,19 @@ void UAttributeComponent::RecalcularEstadisticas(const TArray<FDatosGema>& Gemas
         StatsSincronizadas.VelocidadRegeneracion = velocidadEnergyReg;
         StatsSincronizadas.RegenVida = RegenVida;
         StatsSincronizadas.RegenEnergia = RegenEnergia;
+        OnRep_StatsActualizadas();
     }
     else
     {
         // Cliente: delega al servidor
         Server_RecalcularEstadisticas(GemasEquipadas);
     }
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red,
-        FString::Printf(TEXT("BaseVelocity al recalcular: %.1f"), BaseVelocity));
-    OnRep_StatsActualizadas();
 }
 
 void UAttributeComponent::Server_RecalcularEstadisticas_Implementation(const TArray<FDatosGema>& GemasEquipadas)
 {
     RecalcularEstadisticas(GemasEquipadas);
-    OnRep_StatsActualizadas();
+    // OnRep_StatsActualizadas ya se llama dentro de RecalcularEstadisticas cuando HasAuthority
 }
 
 FEstadisticasPersonaje UAttributeComponent::GetStatsSincronizadas()

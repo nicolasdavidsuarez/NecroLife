@@ -30,8 +30,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lobo|Vision")
 	float VisionAngle = 60.f;
 
-		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lobo|Combate")
-	float AttackRange = 150.f;
+	// AttackRange heredado de ANecroLifeEnemyBasic (default 150)
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lobo|Combate")
 	float AttackCooldown = 1.2f;
