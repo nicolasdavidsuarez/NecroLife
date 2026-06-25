@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Public/NPC/NecroLifeEnemyBasic.h"
+#include "Perception/PawnSensingComponent.h"
 #include "NecroLifeEnemyRanged.generated.h"
 
 class ANecroLifeProjectile;
@@ -16,6 +17,15 @@ class NECROLIFE_API ANecroLifeEnemyRanged : public ANecroLifeEnemyBasic
 
 public:
 	ANecroLifeEnemyRanged();
+
+	UPROPERTY(VisibleAnywhere, Category="AI")
+	UPawnSensingComponent* PawnSensing;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ranged|Vision")
+	float SightRadius = 1500.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ranged|Vision")
+	float VisionAngle = 180.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ranged")
 	TSubclassOf<ANecroLifeProjectile> ProjectileClass;
@@ -31,4 +41,11 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Ranged")
 	void ShootProjectile(AActor* Target);
+
+protected:
+	virtual void BeginPlay() override;
+
+private:
+	UFUNCTION()
+	void OnSeePawn(APawn* Pawn);
 };

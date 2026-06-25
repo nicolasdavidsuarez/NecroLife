@@ -16,12 +16,12 @@ ANecroLifeEnemyMelee::ANecroLifeEnemyMelee()
 
 	EsenciasAlMorir = 50.f;
 
-	// Bug 3: rango suficiente para que no requiera estar encima del jugador
 	AttackRange = 200.f;
-
-	// Bug 4: radio más grande y sin depender de un socket que puede no existir
 	AttackSocketName = FName("hand_r");
 	AttackRadius = 80.f;
+
+	GetCharacterMovement()->bUseRVOAvoidance = true;
+	GetCharacterMovement()->AvoidanceConsiderationRadius = 100.f;
 }
 
 void ANecroLifeEnemyMelee::BeginPlay()
@@ -149,7 +149,7 @@ void ANecroLifeEnemyMelee::TickChasing()
 	if (ChasePathTimer <= 0.f)
 	{
 		if (AAIController* AIC = Cast<AAIController>(GetController()))
-			AIC->MoveToActor(Target, AttackRange * 0.9f);
+			AIC->MoveToActor(Target, AttackRange * 0.5f);
 		ChasePathTimer = 0.25f;
 	}
 }

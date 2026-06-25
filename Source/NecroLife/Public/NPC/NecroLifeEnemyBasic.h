@@ -128,4 +128,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+private:
+	// Widget components que deben mirar siempre a la cámara (health bars del BP)
+	TArray<UWidgetComponent*> BillboardWidgets;
 };

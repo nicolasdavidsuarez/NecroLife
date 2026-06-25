@@ -1,10 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Public/NPC/NecroLifeEnemyBasic.h"
-#include "Net/UnrealNetwork.h" // Necesario para tu replicación
+#include "Net/UnrealNetwork.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Public/Components/RPGHelper.h"
 #include "Components/WidgetComponent.h"
+#include "GameFramework/PlayerController.h"
+#include "Camera/PlayerCameraManager.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 ANecroLifeEnemyBasic::ANecroLifeEnemyBasic()
 {
@@ -28,11 +31,14 @@ void ANecroLifeEnemyBasic::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Tu suscripción al delegado de salud
     if (HealthComponent)
     {
         HealthComponent->OnHealthChanged.AddDynamic(this, &ANecroLifeEnemyBasic::HandleOnHealthChange);
     }
+
+    // Cachear todos los widget components del BP excepto el TargetWidget (targeting indicator)
+    GetComponents<UWidgetComponent>(BillboardWidgets);
+    BillboardWidgets.Remove(TargetWidget);
 }
 
 void ANecroLifeEnemyBasic::HandleOnHealthChange(float Health, float HealthMax)
@@ -88,6 +94,24 @@ void ANecroLifeEnemyBasic::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 void ANecroLifeEnemyBasic::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+
+    // Rotar health bars hacia la cámara local — corre en todos los clientes
+    if (BillboardWidgets.Num() > 0)
+    {
+        APlayerController* PC = GetWorld()->GetFirstPlayerController();
+        if (PC && PC->PlayerCameraManager)
+        {
+            FVector CamLoc = PC->PlayerCameraManager->GetCameraLocation();
+            for (UWidgetComponent* W : BillboardWidgets)
+            {
+                if (W)
+                {
+                    FVector Dir = (CamLoc - W->GetComponentLocation()).GetSafeNormal();
+                    W->SetWorldRotation(Dir.Rotation());
+                }
+            }
+        }
+    }
 }
 
 void ANecroLifeEnemyBasic::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

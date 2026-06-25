@@ -369,6 +369,10 @@ public:
     // Función para atrapar enemigos en área (Habilidad 3)
     UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
     void ExecuteAreaRoot();
+    
+    // Radio de efecto para la habilidad de inmovilización (Habilidad 3)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Abilities")
+    float AbilityRootRadius = 400.0f;
 
     UFUNCTION(BlueprintCallable, Category="Combat|State")
     void ResetAttackState();
