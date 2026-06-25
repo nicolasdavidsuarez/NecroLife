@@ -8,7 +8,6 @@
 #include "NecroLifeEnemyRanged.generated.h"
 
 class ANecroLifeProjectile;
-class UAnimMontage;
 
 UCLASS()
 class NECROLIFE_API ANecroLifeEnemyRanged : public ANecroLifeEnemyBasic
@@ -36,16 +35,35 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ranged")
 	float FleeDistance = 300.f;
 
+	// Delay desde que empieza la animación hasta que spawnea el proyectil
 	UPROPERTY(EditAnywhere, Category="Animations")
-	UAnimMontage* ShootMontage;
+	float ProjectileSpawnDelay = 0.3f;
+
+	// Cuánto tiempo dura bIsEAttacking en true (largo de la anim de ataque)
+	UPROPERTY(EditAnywhere, Category="Animations")
+	float AttackAnimDuration = 0.8f;
 
 	UFUNCTION(BlueprintCallable, Category="Ranged")
 	void ShootProjectile(AActor* Target);
+
+	// Implementar en BP_EnemyRanged para reproducir la animación de ataque (Play Anim Montage)
+	UFUNCTION(BlueprintImplementableEvent, Category="Animations")
+	void BP_OnAttack();
 
 protected:
 	virtual void BeginPlay() override;
 
 private:
+	FTimerHandle SpawnDelayTimer;
+	FTimerHandle AttackAnimResetTimer;
+	TWeakObjectPtr<AActor> PendingTarget;
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_TriggerAttackAnim();
+
 	UFUNCTION()
 	void OnSeePawn(APawn* Pawn);
+
+	void SpawnProjectileDelayed();
+	void ResetAttackState();
 };
