@@ -26,6 +26,7 @@ ANecroLifeEnemyBasic::ANecroLifeEnemyBasic()
     TargetWidget->SetWidgetSpace(EWidgetSpace::Screen);
     TargetWidget->SetDrawSize(FVector2D(64.0f, 64.0f));
     TargetWidget->SetVisibility(false);
+
 }
 
 void ANecroLifeEnemyBasic::BeginPlay()
