@@ -225,11 +225,13 @@ void ANecroLifeCharacter::Tick(float DeltaTime)
         // MODO LIBRE: auto-alineación suave
         HandleCameraAutoAlignment(DeltaTime);
     }
+
 }
 
 // ============================================================
 // Cámara y movimiento
 // ============================================================
+
 
 void ANecroLifeCharacter::SetBoomLength(const FInputActionValue& Value)
 {
