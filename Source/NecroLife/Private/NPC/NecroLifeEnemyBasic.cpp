@@ -8,6 +8,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Components/CapsuleComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 ANecroLifeEnemyBasic::ANecroLifeEnemyBasic()
@@ -49,14 +50,19 @@ void ANecroLifeEnemyBasic::HandleOnHealthChange(float Health, float HealthMax)
         float percent = Health / HealthMax;
         BP_SetHealthBar(percent);
     }
+
+    // NUEVO: La muerte ocurre de forma automática apenas la vida toca 0
+    if (Health <= 0.0f && !bIsDead)
+    {
+        Die();
+    }
 }
 
 bool ANecroLifeEnemyBasic::IsAlive()
 {
+    // Solo responde la pregunta. Ya no ejecuta Die()
     if (HealthComponent && HealthComponent->IsDead())
     {
-        Die(); // Mantenemos tu llamada a la lógica de muerte
-        
         return false;
     }
     return true;
@@ -175,23 +181,25 @@ void ANecroLifeEnemyBasic::Immobilize(float Duration)
 
     bIsStunned = true;
 
-    // Guardamos su velocidad original (si es la primera vez que lo aturden)
     if (DefaultWalkSpeed == 0.0f)
     {
         DefaultWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
     }
 
-    // PASO CLAVE: Le robamos las piernas. La IA intentará moverse pero su velocidad será 0
     GetCharacterMovement()->MaxWalkSpeed = 0.0f;
     GetCharacterMovement()->StopMovementImmediately();
+    StopAnimMontage();
 
+    // NUEVO: Inyectamos el estado al cerebro de la IA
     if (AController* AIController = GetController())
     {
         AIController->StopMovement();
+        
+        if (UBlackboardComponent* BB = AIController->FindComponentByClass<UBlackboardComponent>())
+        {
+            BB->SetValueAsBool(FName("IsStunned"), true);
+        }
     }
-
-    // Cortamos la animación de ataque si estaba en medio de una
-    StopAnimMontage();
 
     GetWorldTimerManager().SetTimer(StunTimerHandle, this, &ANecroLifeEnemyBasic::ClearImmobilize, Duration, false);
 }
@@ -200,9 +208,17 @@ void ANecroLifeEnemyBasic::ClearImmobilize()
 {
     bIsStunned = false;
 
-    // Le devolvemos su velocidad original para que vuelva a perseguirte
     if (DefaultWalkSpeed > 0.0f)
     {
         GetCharacterMovement()->MaxWalkSpeed = DefaultWalkSpeed;
+    }
+
+    // NUEVO: Le devolvemos el control a la IA
+    if (AController* AIController = GetController())
+    {
+        if (UBlackboardComponent* BB = AIController->FindComponentByClass<UBlackboardComponent>())
+        {
+            BB->SetValueAsBool(FName("IsStunned"), false);
+        }
     }
 }
