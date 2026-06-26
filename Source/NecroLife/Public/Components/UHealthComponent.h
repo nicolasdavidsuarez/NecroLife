@@ -10,6 +10,7 @@
 #include "UHealthComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHealthChanged, float, NewHealth, float, MaxHealth);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDie);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class NECROLIFE_API UUHealthComponent : public UActorComponent
@@ -30,6 +31,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category="Health")
 	FOnHealthChanged OnHealthChanged;
+	
+	UPROPERTY(BlueprintAssignable, Category="Health")
+	FOnDie OnDie;
 
 	// Replicado para que todos los clientes vean el MaxHealth correcto.
 	// BlueprintReadWrite para poder configurarlo desde Blueprint/editor.

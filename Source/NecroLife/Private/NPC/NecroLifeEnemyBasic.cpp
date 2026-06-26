@@ -56,6 +56,7 @@ bool ANecroLifeEnemyBasic::IsAlive()
     if (HealthComponent && HealthComponent->IsDead())
     {
         Die(); // Mantenemos tu llamada a la lógica de muerte
+        
         return false;
     }
     return true;

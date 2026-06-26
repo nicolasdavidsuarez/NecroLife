@@ -31,6 +31,7 @@ struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMostrarInventario);
+//DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDie);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMostrarNuevaGema, FDatosGema, DatosGema);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnShowForgeInventory, const TArray<FDatosGema>&, GemasDisponibles);
 
@@ -51,7 +52,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Components")
     TObjectPtr<UBoxComponent> BoxCollision;
     
-
+   // UPROPERTY(BlueprintAssignable, Category="Muerte")
+    //FOnDie OnDied;
+    
     UPROPERTY(BlueprintAssignable, Category="Mostrar Inventario|UI")
     FMostrarInventario ShowInventory;
     
@@ -150,6 +153,19 @@ public:
     
     UFUNCTION(BlueprintImplementableEvent)
     void Bp_SpawnReward();
+    
+    //Logica de muerte
+    UFUNCTION()
+    void Die();
+    
+    UPROPERTY(ReplicatedUsing = OnRep_IsDead)
+    bool bIsDead = false;    
+    
+    UFUNCTION()
+    void OnRep_IsDead();
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void BP_OnDie();
 
 protected:
     // --- Inputs ---
@@ -507,7 +523,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
     class UInputMappingContext* InputMapping;
     
-    
+    virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
     
     
 

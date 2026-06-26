@@ -176,6 +176,7 @@ void ANecroLifeCharacter::PossessedBy(AController* NewController)
     {
         UE_LOG(LogTemp, Error, TEXT("Character %s possessed but failed to get PlayerState."), *GetName());
     }
+    HealthComponent->OnDie.AddDynamic(this,&ANecroLifeCharacter::Die);
 }
 
 // ============================================================
@@ -1130,6 +1131,29 @@ void ANecroLifeCharacter::Local_DashFX()
     }
 }
 
+
+
+void ANecroLifeCharacter::Die()
+{
+    if (bIsDead || !HasAuthority()) return;
+    {
+        
+        GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        bIsDead = true;
+        //OnDied.Broadcast();
+        BP_OnDie();
+        OnRep_IsDead(); // El servidor también ejecuta la visual localmente
+        SetLifeSpan(3.0f);
+    }
+}
+
+void ANecroLifeCharacter::OnRep_IsDead()
+{
+    // lo que quieras que pase en el cliente cuando el personaje muere
+    //cosas que se replican en los clientes fuera del bp_isdied
+    //no se si es necesario
+}
+
 void ANecroLifeCharacter::Multicast_DashFX_Implementation()
 {
     // Solo reproducimos en espectadores, el dueño ya lo hizo localmente
@@ -1561,4 +1585,12 @@ void ANecroLifeCharacter::FireSingleSpade()
     GetWorld()->SpawnActor<AActor>(PalaAmetralladoraClass, SpawnLocation, SpawnRotation, SpawnParams);
 
     PalasDisparadas++;
+}
+
+
+void ANecroLifeCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(ANecroLifeCharacter,bIsDead);
+    
 }
