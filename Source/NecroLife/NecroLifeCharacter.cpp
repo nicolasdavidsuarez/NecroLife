@@ -1138,13 +1138,14 @@ void ANecroLifeCharacter::Die()
     if (bIsDead || !HasAuthority()) return;
     {
         bIsDead = true;       
-        BP_OnDie();
+        BP_OnDie();        
         OnRep_IsDead(); // El servidor también ejecuta la visual localmente
         FTimerHandle TimerHandle;
         GetWorldTimerManager().SetTimer(TimerHandle, [this]()
         {
             bIsDead = false;
         }, 3.0f, false);
+        HealthComponent->ApplyHealing(HealthComponent->MaxHealth);
     }
 }
 
