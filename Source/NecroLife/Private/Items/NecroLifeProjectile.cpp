@@ -35,6 +35,9 @@ void ANecroLifeProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedCompon
 	if (!HasAuthority()) return;
 	if (!OtherActor || OtherActor == GetInstigator()) return;
 
+	APawn* HitPawn = Cast<APawn>(OtherActor);
+	if (!HitPawn || !HitPawn->IsPlayerControlled()) return;
+
 	URPGHelper::ApplyDamage(OtherActor, Damage);
 	Multicast_DestroyProjectile();
 }

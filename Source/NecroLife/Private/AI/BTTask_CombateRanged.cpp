@@ -62,7 +62,7 @@ void UBTTask_CombateRanged::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* N
 	FVector ToPlayer = PlayerTarget->GetActorLocation() - Enemy->GetActorLocation();
 	Enemy->SetActorRotation(FRotator(0.f, ToPlayer.Rotation().Yaw, 0.f));
 
-	float Distance = FVector::Dist(Enemy->GetActorLocation(), PlayerTarget->GetActorLocation());
+	float Distance = FVector::Dist2D(Enemy->GetActorLocation(), PlayerTarget->GetActorLocation());
 
 	FBTCombateRangedMemory* Memory = reinterpret_cast<FBTCombateRangedMemory*>(NodeMemory);
 	Memory->ShootCooldown -= DeltaSeconds;
