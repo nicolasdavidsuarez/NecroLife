@@ -1133,7 +1133,15 @@ void ANecroLifeCharacter::Local_DashFX()
     }
 }
 
+void ANecroLifeCharacter::Server_SpawnReward_Implementation()
+{
+    Multicast_SpawnReward();
+}
 
+void ANecroLifeCharacter::Multicast_SpawnReward_Implementation()
+{
+    Bp_SpawnReward(); // ← igual que el .h
+}
 
 void ANecroLifeCharacter::Die()
 {
@@ -1142,12 +1150,20 @@ void ANecroLifeCharacter::Die()
         bIsDead = true;       
         BP_OnDie();        
         OnRep_IsDead(); // El servidor también ejecuta la visual localmente
+        CameraBoom->SetRelativeRotation(FRotator(-90.0f, 0.0f, 0.0f));        
+
         FTimerHandle TimerHandle;
         GetWorldTimerManager().SetTimer(TimerHandle, [this]()
         {
             bIsDead = false;
         }, 3.0f, false);
         HealthComponent->ApplyHealing(HealthComponent->MaxHealth);
+        /*CameraBoom->bUsePawnControlRotation = false;
+        CameraBoom->bInheritPitch = false;
+        CameraBoom->bInheritYaw = false;
+        CameraBoom->bInheritRoll = false;*/
+        CameraBoom->SetRelativeRotation(FRotator(-90.0f, 0.0f, 0.0f));        
+        
     }
 }
 

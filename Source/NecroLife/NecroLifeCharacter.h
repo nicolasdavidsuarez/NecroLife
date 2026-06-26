@@ -154,6 +154,12 @@ public:
     UFUNCTION(BlueprintImplementableEvent)
     void Bp_SpawnReward();
     
+    UFUNCTION(Server, Reliable)
+    void Server_SpawnReward();
+    
+    UFUNCTION(NetMulticast, Reliable)
+    void Multicast_SpawnReward();
+    
     //Logica de muerte
     UFUNCTION()
     void Die();

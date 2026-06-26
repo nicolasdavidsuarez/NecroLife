@@ -146,7 +146,8 @@ void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 				2.5f, // segundos que dura el diálogo
 				false
 			);
-			MyCharacter->Bp_SpawnReward();
+			MyCharacter->Server_SpawnReward();
+			//MyCharacter->Bp_SpawnReward();
 		}
 	
 		bool bObjetivoCompletado = GS->QuestComponent->IsStageComplete(CurrentLine.RequiredStage);
