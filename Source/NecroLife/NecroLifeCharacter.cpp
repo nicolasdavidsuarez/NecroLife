@@ -225,11 +225,13 @@ void ANecroLifeCharacter::Tick(float DeltaTime)
         // MODO LIBRE: auto-alineación suave
         HandleCameraAutoAlignment(DeltaTime);
     }
+
 }
 
 // ============================================================
 // Cámara y movimiento
 // ============================================================
+
 
 void ANecroLifeCharacter::SetBoomLength(const FInputActionValue& Value)
 {
@@ -1131,7 +1133,15 @@ void ANecroLifeCharacter::Local_DashFX()
     }
 }
 
+void ANecroLifeCharacter::Server_SpawnReward_Implementation()
+{
+    Multicast_SpawnReward();
+}
 
+void ANecroLifeCharacter::Multicast_SpawnReward_Implementation()
+{
+    Bp_SpawnReward(); // ← igual que el .h
+}
 
 void ANecroLifeCharacter::Die()
 {
@@ -1140,20 +1150,45 @@ void ANecroLifeCharacter::Die()
         bIsDead = true;       
         BP_OnDie();        
         OnRep_IsDead(); // El servidor también ejecuta la visual localmente
+    
+        
         FTimerHandle TimerHandle;
         GetWorldTimerManager().SetTimer(TimerHandle, [this]()
         {
             bIsDead = false;
         }, 3.0f, false);
-        HealthComponent->ApplyHealing(HealthComponent->MaxHealth);
     }
+    
+ 
 }
 
 void ANecroLifeCharacter::OnRep_IsDead()
+    {/*
+    if (!bIsDead) return;
+    if (!IsLocallyControlled()) return;
+
+    CameraBoom->bUsePawnControlRotation = false;
+    CameraBoom->bInheritPitch = false;
+    CameraBoom->TargetArmLength = 800.0f;
+    CameraBoom->SetRelativeRotation(FRotator(-80.0f, 0.0f, 0.0f));
+
+    FTimerHandle CameraTimerHandle;
+    GetWorldTimerManager().SetTimer(CameraTimerHandle, [this]()
 {
-    // lo que quieras que pase en el cliente cuando el personaje muere
-    //cosas que se replican en los clientes fuera del bp_isdied
-    //no se si es necesario
+    CameraBoom->bUsePawnControlRotation = true;
+    CameraBoom->bInheritPitch = true;
+    CameraBoom->SetRelativeRotation(FRotator(-40.0f, 0.0f, 0.0f)); // ← pitch normal
+}, 3.0f, false);
+
+    FTimerHandle TimerHandle;
+    GetWorldTimerManager().SetTimer(TimerHandle, [this]()
+    {
+        bIsDead = false;
+    }, 4.0f, false);
+    
+    HealthComponent->ApplyHealing(HealthComponent->MaxHealth);
+    bMouseRightDown = true;
+    */
 }
 
 void ANecroLifeCharacter::Multicast_DashFX_Implementation()
