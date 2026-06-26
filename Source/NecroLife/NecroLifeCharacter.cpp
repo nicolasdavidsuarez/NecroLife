@@ -688,15 +688,6 @@ void ANecroLifeCharacter::AbilityEnabled(const FInputActionValue& InputActionVal
             Ability->AbilityAply();
             SetCoolDownAbility(pressedKeys);
             bIsAttacking = true; 
-
-            // ==========================================
-            // NUEVO: Lógica específica para el Golpe Poderoso
-            // ==========================================
-            // Si apretó la tecla 2 (índice 1), iniciamos el contador
-            if (pressedKeys == 1)
-            {
-                GetWorldTimerManager().SetTimer(ChargeAttackTimer, this, &ANecroLifeCharacter::LiberarGolpePoderoso, 1.0f, false);
-            }
         }
     }
 }
@@ -719,19 +710,6 @@ void ANecroLifeCharacter::EjecutarLanzamientoPala()
     }
 }
 
-void ANecroLifeCharacter::LiberarGolpePoderoso()
-{
-    // Buscamos el motor de animaciones de Huesos
-    if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
-    {
-        // Nos aseguramos de tener una habilidad válida
-        if (Ability && Ability->CurrentAbility && Ability->CurrentAbility->AbilityMontage)
-        {
-            // Magia pura: Le decimos a Unreal que salte instantáneamente a la sección "Golpe"
-            AnimInstance->Montage_JumpToSection(FName("Golpe"), Ability->CurrentAbility->AbilityMontage);
-        }
-    }
-}
 
 void ANecroLifeCharacter::AbilityDisambled(const FInputActionValue& InputActionValue)
 {
