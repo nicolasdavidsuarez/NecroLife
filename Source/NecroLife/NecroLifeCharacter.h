@@ -115,11 +115,7 @@ public:
     void Server_AgregarMision(UQuestData* QuestData);
     void Server_AgregarMision_Implementation(UQuestData* QuestData);
 
-    UFUNCTION(Server, Reliable, WithValidation)
-    void Server_AplyAction();
 
-    UFUNCTION(Server, Reliable, WithValidation)
-    void Server_AplyAbility();
 
     UFUNCTION(Server, Reliable)
     void Server_TakePosion();
@@ -371,9 +367,6 @@ public:
     UFUNCTION(BlueprintCallable, Category="Interact")
     bool ShowDialogue(FDialogLine CurrentLine);
 
-    // --- Funciones de ataque ---
-    UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
-    void ExecuteAttackHit();
 
     // Elevación extra al empujar enemigos (0.0 = empuje plano, 1.0 = 45 grados hacia arriba)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Abilities")

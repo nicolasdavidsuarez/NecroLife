@@ -73,18 +73,24 @@ void ANecroLifeEnemyBasic::Die()
 {
     if (bIsDead || !HasAuthority()) return;
     {
-        
         GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         bIsDead = true;
+
+        // EL FIX: Cortamos el hit react (o cualquier ataque) para que caiga al instante
+        StopAnimMontage();
+
         OnEnemyDied.Broadcast(this);
         BP_OnDie();
-        OnRep_IsDead(); // El servidor también ejecuta la visual localmente
+        OnRep_IsDead(); 
         SetLifeSpan(3.0f);
     }
 }
 
 void ANecroLifeEnemyBasic::OnRep_IsDead()
 {
+    // EL FIX PARA EL CLIENTE: Si la red avisa que murió, cortamos la animación local
+    StopAnimMontage();
+    
     // El ABP lee bIsDead y transiciona al estado de muerte.
 }
 

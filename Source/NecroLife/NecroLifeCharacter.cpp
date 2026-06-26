@@ -393,73 +393,6 @@ void ANecroLifeCharacter::HandleCameraAutoAlignment(float DeltaTime)
 // RPCs de networking (tuyas)
 // ============================================================
 
-void ANecroLifeCharacter::Server_AplyAbility_Implementation()
-{
-    TArray<FOverlapResult> Overlaps;
-    FVector Origin = GetActorLocation();
-    FCollisionShape CollisionShape = FCollisionShape::MakeSphere(300.f);
-
-    bool bHit = GetWorld()->OverlapMultiByChannel(Overlaps, Origin, FQuat::Identity, ECC_Pawn, CollisionShape);
-    if (!bHit) return;
-
-    FVector Forward = GetActorForwardVector();
-
-    for (auto& Result : Overlaps)
-    {
-        AActor* Other = Result.GetActor();
-        ANecroLifeEnemyBasic* EnemyBasic = Cast<ANecroLifeEnemyBasic>(Other);
-        if (!EnemyBasic || Other == this) continue;
-
-        FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
-        float Dot = FVector::DotProduct(Forward, ToTarget);
-        float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
-
-        if (AngleToTarget <= 45.f)
-        {
-            URPGHelper::ApplyDamage(Other, 100);
-            if (!EnemyBasic->IsAlive())
-            {
-                URPGHelper::TakeXP(this, EnemyBasic->EsenciasAlMorir);
-                Server_ActualizarProgresoMision(EnemyBasic->GetTag(), 1);
-            }
-        }
-    }
-}
-bool ANecroLifeCharacter::Server_AplyAbility_Validate() { return true; }
-
-void ANecroLifeCharacter::Server_AplyAction_Implementation()
-{
-    TArray<FOverlapResult> Overlaps;
-    FVector Origin = GetActorLocation();
-    FCollisionShape CollisionShape = FCollisionShape::MakeBox(FVector(100, 100, 100));
-
-    bool bHit = GetWorld()->OverlapMultiByChannel(Overlaps, Origin, FQuat::Identity, ECC_Pawn, CollisionShape);
-    if (!bHit) return;
-
-    FVector Forward = GetActorForwardVector();
-
-    for (auto& Result : Overlaps)
-    {
-        AActor* Other = Result.GetActor();
-        ANecroLifeEnemyBasic* EnemyBasic = Cast<ANecroLifeEnemyBasic>(Other);
-        if (!EnemyBasic || Other == this) continue;
-
-        FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
-        float Dot = FVector::DotProduct(Forward, ToTarget);
-        float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
-
-        if (AngleToTarget <= 45.f)
-        {
-            URPGHelper::ApplyDamage(Other, 10);
-            if (!EnemyBasic->IsAlive())
-            {
-                URPGHelper::TakeXP(this, EnemyBasic->EsenciasAlMorir);
-                Server_ActualizarProgresoMision(EnemyBasic->GetTag(), 1);
-            }
-        }
-    }
-}
-bool ANecroLifeCharacter::Server_AplyAction_Validate() { return true; }
 
 void ANecroLifeCharacter::Server_ActualizarProgresoMision_Implementation(FGameplayTag ObjectiveID, int32 Amount)
 {
@@ -781,40 +714,6 @@ void ANecroLifeCharacter::ResetAttackState()
     bCanRotateDuringAttack = false;
 }
 
-void ANecroLifeCharacter::ExecuteAttackHit()
-{
-    TArray<FOverlapResult> Overlaps;
-    FVector Origin = GetActorLocation();
-    FCollisionShape CollisionShape = FCollisionShape::MakeBox(FVector(100, 100, 100));
-
-    bool bHit = GetWorld()->OverlapMultiByChannel(Overlaps, Origin, FQuat::Identity, ECC_Pawn, CollisionShape);
-    if (!bHit) return;
-
-    FVector Forward = GetActorForwardVector();
-    for (auto& Result : Overlaps)
-    {
-        AActor* Other = Result.GetActor();
-        ANecroLifeEnemyBasic* EnemyBasic = Cast<ANecroLifeEnemyBasic>(Other);
-        if (!EnemyBasic || Other == this) continue;
-
-        FVector ToTarget = (EnemyBasic->GetActorLocation() - Origin).GetSafeNormal();
-        float Dot = FVector::DotProduct(Forward, ToTarget);
-        float AngleToTarget = FMath::RadiansToDegrees(FMath::Acos(Dot));
-
-        if (AngleToTarget <= 45.f)
-        {
-            URPGHelper::ApplyDamage(Other, Attribute->Attack);
-            if (HitVFX)
-                UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), HitVFX, Other->GetActorLocation());
-
-            if (!EnemyBasic->IsAlive())
-            {
-                URPGHelper::TakeXP(this, EnemyBasic->EsenciasAlMorir);
-                Server_ActualizarProgresoMision(EnemyBasic->GetTag(), 1);
-            }
-        }
-    }
-}
 
 void ANecroLifeCharacter::StartPlungingAttack()
 {
