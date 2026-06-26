@@ -68,7 +68,7 @@ void UNecroLifeHud::HandleOnPotionChange(int CantPosiones)
 	if (TxtPosiones)
 	{
 		GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Red,"Potion: "+FString::FromInt(CantPosiones));
-		FString TextoFormateado = FString::Printf(TEXT("Posions: %d"), CantPosiones);        
+		FString TextoFormateado = FString::Printf(TEXT(": %d"), CantPosiones);        
 		TxtPosiones->SetText(FText::FromString(TextoFormateado));
 	}
 }
