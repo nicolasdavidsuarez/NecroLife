@@ -57,12 +57,16 @@ private:
 	FTimerHandle SpawnDelayTimer;
 	FTimerHandle AttackAnimResetTimer;
 	TWeakObjectPtr<AActor> PendingTarget;
+	float PreviousHealth = 0.f;
 
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_TriggerAttackAnim();
 
 	UFUNCTION()
 	void OnSeePawn(APawn* Pawn);
+
+	UFUNCTION()
+	void OnRangedHealthChanged(float Health, float HealthMax);
 
 	void SpawnProjectileDelayed();
 	void ResetAttackState();

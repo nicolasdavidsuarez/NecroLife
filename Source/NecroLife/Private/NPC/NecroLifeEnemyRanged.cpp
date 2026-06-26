@@ -23,7 +23,21 @@ void ANecroLifeEnemyRanged::BeginPlay()
 	PawnSensing->SetPeripheralVisionAngle(VisionAngle);
 
 	if (HasAuthority())
+	{
 		PawnSensing->OnSeePawn.AddDynamic(this, &ANecroLifeEnemyRanged::OnSeePawn);
+		if (HealthComponent)
+		{
+			PreviousHealth = HealthComponent->CurrentHealth;
+			HealthComponent->OnHealthChanged.AddDynamic(this, &ANecroLifeEnemyRanged::OnRangedHealthChanged);
+		}
+	}
+}
+
+void ANecroLifeEnemyRanged::OnRangedHealthChanged(float Health, float HealthMax)
+{
+	if (!bIsDead && Health < PreviousHealth)
+		bIsEDamaged = true;
+	PreviousHealth = Health;
 }
 
 void ANecroLifeEnemyRanged::OnSeePawn(APawn* Pawn)

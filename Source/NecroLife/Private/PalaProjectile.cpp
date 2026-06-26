@@ -62,17 +62,15 @@ void APalaProjectile::BeginPlay()
 // ============================================================
 void APalaProjectile::OnProjectileOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-    // Verificamos que toquemos algo válido, que no seamos nosotros mismos, que no sea Huesos (el instigador) y que no lo hayamos golpeado ya
+    if (!HasAuthority()) return;
+
     if (OtherActor && OtherActor != this && OtherActor != GetInstigator() && !DamagedActors.Contains(OtherActor))
     {
-        // Si el objeto tocado es un enemigo...
         if (ANecroLifeEnemyBasic* Enemy = Cast<ANecroLifeEnemyBasic>(OtherActor))
         {
-            // Lo guardamos en memoria para atravesarlo y no volver a dañarlo
             DamagedActors.Add(OtherActor);
-
-            // Aplicamos el daño
             URPGHelper::ApplyDamage(Enemy, DamageAmount);
+            Enemy->IsAlive(); // dispara Die() si la salud llegó a 0
         }
     }
 }
