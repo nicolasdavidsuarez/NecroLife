@@ -1137,13 +1137,14 @@ void ANecroLifeCharacter::Die()
 {
     if (bIsDead || !HasAuthority()) return;
     {
-        
-        GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        bIsDead = true;
-        //OnDied.Broadcast();
+        bIsDead = true;       
         BP_OnDie();
         OnRep_IsDead(); // El servidor también ejecuta la visual localmente
-        SetLifeSpan(3.0f);
+        FTimerHandle TimerHandle;
+        GetWorldTimerManager().SetTimer(TimerHandle, [this]()
+        {
+            bIsDead = false;
+        }, 3.0f, false);
     }
 }
 

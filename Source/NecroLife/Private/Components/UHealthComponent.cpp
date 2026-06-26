@@ -60,7 +60,7 @@ void UUHealthComponent::TakeDamage(float Amount)
 	CurrentHealth -= Amount;
 	if (CurrentHealth <= 0.f)
 	{
-		OnDie.Broadcast();
+		OnDie.Broadcast();		
 		CurrentHealth = 0.f;
 		// TODO: disparar evento para cuando muere
 	}

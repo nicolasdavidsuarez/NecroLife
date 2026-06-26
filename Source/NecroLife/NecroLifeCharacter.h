@@ -158,7 +158,7 @@ public:
     UFUNCTION()
     void Die();
     
-    UPROPERTY(ReplicatedUsing = OnRep_IsDead)
+    UPROPERTY(BlueprintReadWrite,ReplicatedUsing = OnRep_IsDead)
     bool bIsDead = false;    
     
     UFUNCTION()
