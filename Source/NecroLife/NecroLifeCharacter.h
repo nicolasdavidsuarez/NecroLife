@@ -115,11 +115,7 @@ public:
     void Server_AgregarMision(UQuestData* QuestData);
     void Server_AgregarMision_Implementation(UQuestData* QuestData);
 
-    UFUNCTION(Server, Reliable, WithValidation)
-    void Server_AplyAction();
 
-    UFUNCTION(Server, Reliable, WithValidation)
-    void Server_AplyAbility();
 
     UFUNCTION(Server, Reliable)
     void Server_TakePosion();
@@ -218,12 +214,6 @@ protected:
     UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
     void EjecutarLanzamientoPala();
     
-    // Timer para el ataque cargado
-    FTimerHandle ChargeAttackTimer;
-
-    // Función que saca a la animación del loop y ejecuta el golpe
-    UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
-    void LiberarGolpePoderoso();
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability")
     float AbilityPointerMaxDistance = 300.f;
@@ -377,9 +367,6 @@ public:
     UFUNCTION(BlueprintCallable, Category="Interact")
     bool ShowDialogue(FDialogLine CurrentLine);
 
-    // --- Funciones de ataque ---
-    UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
-    void ExecuteAttackHit();
 
     // Elevación extra al empujar enemigos (0.0 = empuje plano, 1.0 = 45 grados hacia arriba)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Abilities")
