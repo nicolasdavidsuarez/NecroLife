@@ -10,6 +10,7 @@
 #include "Components/QuestComponent.h"
 
 #include "Components/SphereComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 
 class AAIController;
@@ -169,6 +170,15 @@ void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 		}else
 		{
 				CurrentDialogIndex++;
+			if (CurrentDialogIndex >= DialogueData->DialogLines.Num())
+			{
+				GetWorldTimerManager().SetTimer(TalkingTimerHandle, [this]()
+	{
+		UGameplayStatics::OpenLevel(this, FName("LvlLan"));
+	}, 2.5f, false);
+			}
+			
+			
 				if (CurrentDialogIndex >= DialogueData->DialogLines.Num()) return;
 				CurrentLine = DialogueData->DialogLines[CurrentDialogIndex];
 				MyCharacter->SetUIState(true);
