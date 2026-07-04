@@ -237,6 +237,10 @@ protected:
     float AutoAlignSpeed = 2.0f;
     float TimeSinceLastCameraInput = 0.0f;
     void HandleCameraAutoAlignment(float DeltaTime);
+    
+    // --- Cámara Top Down - Indica si los controles deben ser relativos a la pantalla Top-Down
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+    bool bIsTopDownMode = false;
 
     // --- Targeting/Lock-on (de los compañeros) ---
     UPROPERTY(BlueprintReadOnly, Category="Combat|Targeting")

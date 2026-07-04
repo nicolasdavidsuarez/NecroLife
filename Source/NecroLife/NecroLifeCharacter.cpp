@@ -307,10 +307,32 @@ void ANecroLifeCharacter::DoMove(float Right, float Forward)
 {
     if (GetController() != nullptr)
     {
-        const FRotator Rotation = GetController()->GetControlRotation();
-        const FRotator YawRotation(0, Rotation.Yaw, 0);
-        const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-        const FVector RightDirection   = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+        FVector ForwardDirection;
+        FVector RightDirection;
+
+        if (bIsTopDownMode)
+        {
+            // MODO LABERINTO: Controles relativos a la cámara del nivel.
+            APlayerCameraManager* CamManager = UGameplayStatics::GetPlayerCameraManager(this, 0);
+            if (CamManager)
+            {
+                // Obtenemos hacia dónde está mirando el Director de Cámara
+                const FRotator CamRotation = CamManager->GetCameraRotation();
+                const FRotator YawRotation(0, CamRotation.Yaw, 0);
+
+                // "Arriba" y "Derecha" ahora se calculan visualmente según tu monitor
+                ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+                RightDirection   = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+            }
+        }
+        else
+        {
+            // MODO NORMAL: Controles relativos a Huesos (tu código original)
+            const FRotator Rotation = GetController()->GetControlRotation();
+            const FRotator YawRotation(0, Rotation.Yaw, 0);
+            ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+            RightDirection   = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+        }
 
         // 1. Caminata Normal (Bloqueada si ataca, cae o castea)
         if (!bIsAttacking && !bIsPlunging && !bEnabledAbility)
@@ -321,11 +343,9 @@ void ANecroLifeCharacter::DoMove(float Right, float Forward)
         // 2. Lógica de Redirección (Pivote en el lugar)
         else if (bIsAttacking && bCanRotateDuringAttack && (Right != 0.0f || Forward != 0.0f))
         {
-            // Calculamos hacia dónde apunta el joystick
             FVector DesiredDirection = (ForwardDirection * Forward) + (RightDirection * Right);
             DesiredDirection.Normalize();
 
-            // Interpolamos la rotación para que no sea robótica/instantánea
             FRotator TargetRot = DesiredDirection.Rotation();
             FRotator NewRot = FMath::RInterpTo(GetActorRotation(), TargetRot, GetWorld()->GetDeltaSeconds(), 15.0f); 
             SetActorRotation(NewRot);
