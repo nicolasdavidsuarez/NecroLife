@@ -1451,13 +1451,23 @@ void ANecroLifeCharacter::DisableAttackRotation()
 
 void ANecroLifeCharacter::ExecuteAreaRoot()
 {
-    // Ahora toma el valor del Blueprint de Huesos
     float RootRadius = AbilityRootRadius; 
-    
     FVector Origin = GetActorLocation();
     
-    // --- DEBUG VISUAL --- (La esfera verde durará 2 segundos en pantalla)
-    UKismetSystemLibrary::DrawDebugSphere(this, Origin, RootRadius, 12, FLinearColor::Green, 2.f, 2.f);
+    // --- VFX DINÁMICO ---
+    if (RootVFX)
+    {
+        // Spawneamos el sistema en los pies de Huesos
+        UNiagaraComponent* NiagaraComp = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+            GetWorld(), RootVFX, Origin - FVector(0.f, 0.f, 96.0f)); // Restamos 96 para que salga al ras del piso
+            
+        if (NiagaraComp)
+        {
+            // Le pasamos las variables exactas a Niagara
+            NiagaraComp->SetFloatParameter(FName("User.Radius"), RootRadius);
+            NiagaraComp->SetFloatParameter(FName("User.Duration"), AbilityRootDuration);
+        }
+    }
 
     TArray<FOverlapResult> Overlaps;
     FCollisionShape CollisionShape = FCollisionShape::MakeSphere(RootRadius);
@@ -1475,9 +1485,8 @@ void ANecroLifeCharacter::ExecuteAreaRoot()
         
         if (!EnemyBasic || Other == this || !EnemyBasic->IsAlive()) continue;
 
-        EnemyBasic->Immobilize(3.0f);
-        
-        GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Purple, FString::Printf(TEXT("¡Enemigo %s atrapado!"), *EnemyBasic->GetName()));
+        // Reemplazamos el 3.0f quemado por la nueva variable dinámica
+        EnemyBasic->Immobilize(AbilityRootDuration);
     }
 }
 

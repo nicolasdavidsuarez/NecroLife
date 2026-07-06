@@ -379,6 +379,8 @@ public:
     UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
     void ExecuteAbilityHit();
     
+    
+    // --- Habilidad 3 (Bone Root) ---
     // Función para atrapar enemigos en área (Habilidad 3)
     UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
     void ExecuteAreaRoot();
@@ -386,6 +388,14 @@ public:
     // Radio de efecto para la habilidad de inmovilización (Habilidad 3)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Abilities")
     float AbilityRootRadius = 400.0f;
+    
+    // VFX para la Habilidad 3
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Abilities")
+    class UNiagaraSystem* RootVFX;
+
+    // Duración del aturdimiento de la Habilidad 3
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Abilities")
+    float AbilityRootDuration = 3.0f;
     
     // --- Habilidad 4 (Ametralladora de Palas) ---
     
