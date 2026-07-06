@@ -307,10 +307,32 @@ void ANecroLifeCharacter::DoMove(float Right, float Forward)
 {
     if (GetController() != nullptr)
     {
-        const FRotator Rotation = GetController()->GetControlRotation();
-        const FRotator YawRotation(0, Rotation.Yaw, 0);
-        const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-        const FVector RightDirection   = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+        FVector ForwardDirection;
+        FVector RightDirection;
+
+        if (bIsTopDownMode)
+        {
+            // MODO LABERINTO: Controles relativos a la cámara del nivel.
+            APlayerCameraManager* CamManager = UGameplayStatics::GetPlayerCameraManager(this, 0);
+            if (CamManager)
+            {
+                // Obtenemos hacia dónde está mirando el Director de Cámara
+                const FRotator CamRotation = CamManager->GetCameraRotation();
+                const FRotator YawRotation(0, CamRotation.Yaw, 0);
+
+                // "Arriba" y "Derecha" ahora se calculan visualmente según tu monitor
+                ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+                RightDirection   = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+            }
+        }
+        else
+        {
+            // MODO NORMAL: Controles relativos a Huesos (tu código original)
+            const FRotator Rotation = GetController()->GetControlRotation();
+            const FRotator YawRotation(0, Rotation.Yaw, 0);
+            ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+            RightDirection   = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+        }
 
         // 1. Caminata Normal (Bloqueada si ataca, cae o castea)
         if (!bIsAttacking && !bIsPlunging && !bEnabledAbility)
@@ -321,11 +343,9 @@ void ANecroLifeCharacter::DoMove(float Right, float Forward)
         // 2. Lógica de Redirección (Pivote en el lugar)
         else if (bIsAttacking && bCanRotateDuringAttack && (Right != 0.0f || Forward != 0.0f))
         {
-            // Calculamos hacia dónde apunta el joystick
             FVector DesiredDirection = (ForwardDirection * Forward) + (RightDirection * Right);
             DesiredDirection.Normalize();
 
-            // Interpolamos la rotación para que no sea robótica/instantánea
             FRotator TargetRot = DesiredDirection.Rotation();
             FRotator NewRot = FMath::RInterpTo(GetActorRotation(), TargetRot, GetWorld()->GetDeltaSeconds(), 15.0f); 
             SetActorRotation(NewRot);
@@ -1431,13 +1451,23 @@ void ANecroLifeCharacter::DisableAttackRotation()
 
 void ANecroLifeCharacter::ExecuteAreaRoot()
 {
-    // Ahora toma el valor del Blueprint de Huesos
     float RootRadius = AbilityRootRadius; 
-    
     FVector Origin = GetActorLocation();
     
-    // --- DEBUG VISUAL --- (La esfera verde durará 2 segundos en pantalla)
-    UKismetSystemLibrary::DrawDebugSphere(this, Origin, RootRadius, 12, FLinearColor::Green, 2.f, 2.f);
+    // --- VFX DINÁMICO ---
+    if (RootVFX)
+    {
+        // Spawneamos el sistema en los pies de Huesos
+        UNiagaraComponent* NiagaraComp = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+            GetWorld(), RootVFX, Origin - FVector(0.f, 0.f, 96.0f)); // Restamos 96 para que salga al ras del piso
+            
+        if (NiagaraComp)
+        {
+            // Le pasamos las variables exactas a Niagara
+            NiagaraComp->SetFloatParameter(FName("User.Radius"), RootRadius);
+            NiagaraComp->SetFloatParameter(FName("User.Duration"), AbilityRootDuration);
+        }
+    }
 
     TArray<FOverlapResult> Overlaps;
     FCollisionShape CollisionShape = FCollisionShape::MakeSphere(RootRadius);
@@ -1455,9 +1485,8 @@ void ANecroLifeCharacter::ExecuteAreaRoot()
         
         if (!EnemyBasic || Other == this || !EnemyBasic->IsAlive()) continue;
 
-        EnemyBasic->Immobilize(3.0f);
-        
-        GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Purple, FString::Printf(TEXT("¡Enemigo %s atrapado!"), *EnemyBasic->GetName()));
+        // Reemplazamos el 3.0f quemado por la nueva variable dinámica
+        EnemyBasic->Immobilize(AbilityRootDuration);
     }
 }
 
