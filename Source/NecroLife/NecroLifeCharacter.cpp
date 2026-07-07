@@ -1411,8 +1411,7 @@ void ANecroLifeCharacter::ApplyWeaponHit(AActor* HitActor)
 
             // Aplicamos el daño final
             URPGHelper::ApplyDamage(Enemy, FinalDamage);
-
-            // Ejecutamos el Pushback
+            
             // Ejecutamos el Pushback
             if (Knockback > 0.0f)
             {
