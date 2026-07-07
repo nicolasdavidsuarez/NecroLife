@@ -115,11 +115,7 @@ public:
     void Server_AgregarMision(UQuestData* QuestData);
     void Server_AgregarMision_Implementation(UQuestData* QuestData);
 
-    UFUNCTION(Server, Reliable, WithValidation)
-    void Server_AplyAction();
 
-    UFUNCTION(Server, Reliable, WithValidation)
-    void Server_AplyAbility();
 
     UFUNCTION(Server, Reliable)
     void Server_TakePosion();
@@ -153,6 +149,12 @@ public:
     
     UFUNCTION(BlueprintImplementableEvent)
     void Bp_SpawnReward();
+    
+    UFUNCTION(Server, Reliable)
+    void Server_SpawnReward();
+    
+    UFUNCTION(NetMulticast, Reliable)
+    void Multicast_SpawnReward();
     
     //Logica de muerte
     UFUNCTION()
@@ -212,12 +214,6 @@ protected:
     UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
     void EjecutarLanzamientoPala();
     
-    // Timer para el ataque cargado
-    FTimerHandle ChargeAttackTimer;
-
-    // Función que saca a la animación del loop y ejecuta el golpe
-    UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
-    void LiberarGolpePoderoso();
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability")
     float AbilityPointerMaxDistance = 300.f;
@@ -241,6 +237,10 @@ protected:
     float AutoAlignSpeed = 2.0f;
     float TimeSinceLastCameraInput = 0.0f;
     void HandleCameraAutoAlignment(float DeltaTime);
+    
+    // --- Cámara Top Down - Indica si los controles deben ser relativos a la pantalla Top-Down
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+    bool bIsTopDownMode = false;
 
     // --- Targeting/Lock-on (de los compañeros) ---
     UPROPERTY(BlueprintReadOnly, Category="Combat|Targeting")
@@ -371,9 +371,6 @@ public:
     UFUNCTION(BlueprintCallable, Category="Interact")
     bool ShowDialogue(FDialogLine CurrentLine);
 
-    // --- Funciones de ataque ---
-    UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
-    void ExecuteAttackHit();
 
     // Elevación extra al empujar enemigos (0.0 = empuje plano, 1.0 = 45 grados hacia arriba)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Abilities")
@@ -382,6 +379,8 @@ public:
     UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
     void ExecuteAbilityHit();
     
+    
+    // --- Habilidad 3 (Bone Root) ---
     // Función para atrapar enemigos en área (Habilidad 3)
     UFUNCTION(BlueprintCallable, Category="Combat|Abilities")
     void ExecuteAreaRoot();
@@ -389,6 +388,14 @@ public:
     // Radio de efecto para la habilidad de inmovilización (Habilidad 3)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Abilities")
     float AbilityRootRadius = 400.0f;
+    
+    // VFX para la Habilidad 3
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Abilities")
+    class UNiagaraSystem* RootVFX;
+
+    // Duración del aturdimiento de la Habilidad 3
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat|Abilities")
+    float AbilityRootDuration = 3.0f;
     
     // --- Habilidad 4 (Ametralladora de Palas) ---
     

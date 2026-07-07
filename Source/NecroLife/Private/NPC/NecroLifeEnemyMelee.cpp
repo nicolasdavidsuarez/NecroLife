@@ -104,6 +104,21 @@ void ANecroLifeEnemyMelee::Tick(float DeltaTime)
 
 	if (!HasAuthority() || bIsDead) return;
 
+	// ---> EL FRENO C++: El patovica en la puerta del cerebro
+	if (bIsStunned)
+	{
+		// TRUCO DE ANIMACIÓN: Si lo aturdimos justo cuando estaba pegando, su variable MeleeState
+		// se queda trabada en "Attacking", por lo que tu AnimBP seguiría reproduciendo la animación de ataque.
+		// Al forzarlo a "Chasing" mientras tiene velocidad 0, engañamos al AnimBP para que reproduzca el "Idle".
+		if (MeleeState == EEnemyMeleeState::Attacking)
+		{
+			SetState(EEnemyMeleeState::Chasing);
+		}
+		
+		// Abortamos el Tick. No piensa, no persigue, no rota.
+		return; 
+	}
+
 	ChasePathTimer = FMath::Max(0.f, ChasePathTimer - DeltaTime);
 
 	switch (MeleeState)
