@@ -276,7 +276,7 @@ void UQuestComponent::CheckObjetivoComplete(FActiveQuestData& QuestToCheck, FGam
 	}
 	
 	// 3. Comparar
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red,
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
 		FString::Printf(TEXT("Cantidad/Necesario: %d / %d"),	CurrentAmount, RequiredAmount));
 		
 	if (CurrentAmount >= RequiredAmount)
@@ -315,7 +315,7 @@ bool bFaltaObjetivo = false;
 		if (!bFaltaObjetivo)
 		{
 			QuestToCheck.CurrentStage++;
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue,
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
 				FString::Printf(TEXT("¡Objetivo Completado! Nueva etapa: %d"), QuestToCheck.CurrentStage));
 
 			// Verificar si ya no hay más stages (quest completa)
@@ -332,7 +332,7 @@ bool bFaltaObjetivo = false;
 			if (!bHayMasObjetivos)
 			{
 				QuestToCheck.bIsDone = true;
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("¡Quest completada!"));
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("¡Quest completada!"));
 			}
 		}
 		
