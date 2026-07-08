@@ -376,13 +376,15 @@ void ANecroLifeCharacter::RunActivated(const FInputActionValue& Value)
 {
     if (Value.Get<bool>())
     {
-        bIsRunning = !bIsRunning;
-        // Usar CachedAttributeComponent (PlayerState) que tiene el bonus de gemas aplicado.
-        // Fallback al Attribute del personaje si todavía no está disponible.
+        bIsRunning = !bIsRunning; // Funciona como un "Toggle"
+        
         const float V = (CachedAttributeComponent && CachedAttributeComponent->StatsSincronizadas.Velocidad > 0.f)
             ? CachedAttributeComponent->StatsSincronizadas.Velocidad
             : Attribute->StatsSincronizadas.Velocidad;
-        GetCharacterMovement()->MaxWalkSpeed = bIsRunning ? V * 200.0f : V * 50.0f;
+            
+        // ACÁ ESTÁ EL CAMBIO:
+        // Si está activo, lo multiplicamos por 25 (lento). Si está inactivo, por 50 (normal).
+        GetCharacterMovement()->MaxWalkSpeed = bIsRunning ? V * 25.0f : V * 50.0f;
     }
 }
 
@@ -1310,11 +1312,11 @@ bool ANecroLifeCharacter::ShowDialogue(FDialogLine CurrentLine)
 
 void ANecroLifeCharacter::OnAtributosActualizados(const FEstadisticasPersonaje& NuevosAtributos)
 {
-    // Ignorar broadcasts con Velocidad = 0 (struct no inicializado / componente secundario vacío)
     if (NuevosAtributos.Velocidad <= 0.f) return;
 
+    // ACÁ ESTÁ EL CAMBIO (usando los mismos valores que arriba):
     GetCharacterMovement()->MaxWalkSpeed = bIsRunning
-        ? NuevosAtributos.Velocidad * 200.0f
+        ? NuevosAtributos.Velocidad * 25.0f
         : NuevosAtributos.Velocidad * 50.0f;
 }
 
