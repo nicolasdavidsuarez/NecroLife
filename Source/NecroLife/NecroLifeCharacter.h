@@ -160,6 +160,8 @@ public:
     UFUNCTION()
     void Die();
     
+    
+    
     UPROPERTY(BlueprintReadWrite,ReplicatedUsing = OnRep_IsDead)
     bool bIsDead = false;    
     
@@ -508,10 +510,22 @@ public:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
 
+    // --- Daño Recibido
     // Override de TakeDamage de Unreal (de los compañeros, para invencibilidad)
     virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
                              class AController* EventInstigator, AActor* DamageCauser) override;
+    
+    // Función que va a escuchar al HealthComponent
+    UFUNCTION()
+    void OnHealthChangedCallback(float NewHealth, float MaxHealth);
 
+    // Memoria para saber si la vida subió o bajó
+    float VidaAnterior = 100.0f;
+    
+    // Camera Shake
+    UPROPERTY(EditDefaultsOnly, Category = "VFX|Camara")
+    TSubclassOf<UCameraShakeBase> ShakeDanioRecibido;
+    
     void ShowMsg(FString Msg);
     void UpdateAbilityPointer();
     void LookToCastAbility();

@@ -28,6 +28,7 @@
 #include "Engine/EngineTypes.h"
 #include "Engine/OverlapResult.h"
 #include "GameFramework/PlayerState.h"
+#include "GameFramework/PlayerController.h"
 #include "Interface/NecroLifeInterface.h"
 #include "NPC/NecroLifeEnemyBasic.h"
 #include "NPC/NecroLifeNpcBasic.h"
@@ -177,6 +178,10 @@ void ANecroLifeCharacter::PossessedBy(AController* NewController)
         UE_LOG(LogTemp, Error, TEXT("Character %s possessed but failed to get PlayerState."), *GetName());
     }
     HealthComponent->OnDie.AddDynamic(this,&ANecroLifeCharacter::Die);
+    
+    HealthComponent->OnHealthChanged.AddDynamic(this, &ANecroLifeCharacter::OnHealthChangedCallback);
+    VidaAnterior = HealthComponent->MaxHealth;
+    
 }
 
 // ============================================================
@@ -897,7 +902,10 @@ void ANecroLifeCharacter::ExecuteAbilityHit()
 float ANecroLifeCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
                                        AController* EventInstigator, AActor* DamageCauser)
 {
+    // Si somos invencibles (ej: durante el dash), anulamos el daño
     if (bIsInvincible) return 0.0f;
+
+    // Calculamos y aplicamos el daño estándar de Unreal
     return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 }
 
@@ -1535,4 +1543,23 @@ void ANecroLifeCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimePrope
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(ANecroLifeCharacter,bIsDead);
     
+}
+
+void ANecroLifeCharacter::OnHealthChangedCallback(float NewHealth, float MaxHealth)
+{
+    // 1. Comparamos si la vida nueva es MENOR que la anterior (hubo daño real)
+    if (NewHealth < VidaAnterior)
+    {
+        // 2. Nos aseguramos de que este código solo sacuda la cámara del dueño de este Huesos
+        if (IsLocallyControlled() && ShakeDanioRecibido)
+        {
+            if (APlayerController* PC = Cast<APlayerController>(GetController()))
+            {
+                PC->ClientStartCameraShake(ShakeDanioRecibido);
+            }
+        }
+    }
+
+    // 3. Actualizamos la memoria para el próximo golpe o curación
+    VidaAnterior = NewHealth;
 }
