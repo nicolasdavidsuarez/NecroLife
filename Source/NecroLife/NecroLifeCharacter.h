@@ -526,6 +526,10 @@ public:
     UPROPERTY(EditDefaultsOnly, Category = "VFX|Camara")
     TSubclassOf<UCameraShakeBase> ShakeDanioRecibido;
     
+    // VFX al recibir daño
+    UPROPERTY(EditDefaultsOnly, Category = "VFX|Daño")
+    class UNiagaraSystem* VFX_DanioRecibido;
+    
     // --- Daño Generado
     // Camera Shake al Causar Daño
     UPROPERTY(EditDefaultsOnly, Category = "VFX|Camara")

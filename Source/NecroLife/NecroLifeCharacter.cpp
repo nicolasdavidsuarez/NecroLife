@@ -1556,10 +1556,18 @@ void ANecroLifeCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimePrope
 
 void ANecroLifeCharacter::OnHealthChangedCallback(float NewHealth, float MaxHealth)
 {
-    // 1. Comparamos si la vida nueva es MENOR que la anterior (hubo daño real)
     if (NewHealth < VidaAnterior)
     {
-        // 2. Nos aseguramos de que este código solo sacuda la cámara del dueño de este Huesos
+        // 1. Spawneamos los huesos saltando por los aires (Se ve en todos los clientes)
+        if (VFX_DanioRecibido)
+        {
+            // Buscamos la altura exacta del pecho usando tu socket
+            FVector SpawnLocation = GetMesh()->GetSocketLocation(FName("Socket_Torso"));
+            
+            UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), VFX_DanioRecibido, SpawnLocation);
+        }
+
+        // 2. Temblor de cámara (Solo para el jugador que recibe el daño)
         if (IsLocallyControlled() && ShakeDanioRecibido)
         {
             if (APlayerController* PC = Cast<APlayerController>(GetController()))
@@ -1569,7 +1577,6 @@ void ANecroLifeCharacter::OnHealthChangedCallback(float NewHealth, float MaxHeal
         }
     }
 
-    // 3. Actualizamos la memoria para el próximo golpe o curación
     VidaAnterior = NewHealth;
 }
 
