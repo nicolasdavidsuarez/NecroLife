@@ -29,7 +29,10 @@
       "Bash(awk '{print $2}')",
       "Bash(xargs -d '\\\\n' git rm --force)",
       "Bash(xargs -d '\\\\n' git add)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(xargs grep -l \"WaveSpawner\\\\|SpawnerEnemigos\")",
+      "Bash(xargs grep -l \"Spawner\\\\|Wave\")",
+      "WebFetch(domain:forums.unrealengine.com)"
     ]
   }
 }
