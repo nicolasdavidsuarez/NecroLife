@@ -526,6 +526,15 @@ public:
     UPROPERTY(EditDefaultsOnly, Category = "VFX|Camara")
     TSubclassOf<UCameraShakeBase> ShakeDanioRecibido;
     
+    // --- Daño Generado
+    // Camera Shake al Causar Daño
+    UPROPERTY(EditDefaultsOnly, Category = "VFX|Camara")
+    TSubclassOf<UCameraShakeBase> ShakeDanioCausado;
+
+    // Función auxiliar para disparar el temblor
+    UFUNCTION(BlueprintCallable, Category="Combat|Camera")
+    void DispararShakeDanioCausado();
+    
     void ShowMsg(FString Msg);
     void UpdateAbilityPointer();
     void LookToCastAbility();

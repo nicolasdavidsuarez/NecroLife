@@ -824,6 +824,9 @@ void ANecroLifeCharacter::ExecutePlungeHit()
                 {
                     // 3. Aplicamos el daño calculado dinámicamente
                     URPGHelper::ApplyDamage(HitActor, FinalPlungeDamage);
+                    
+                    // Disparamos el temblor de cámara
+                    DispararShakeDanioCausado();
                 }
             }
         }
@@ -869,6 +872,9 @@ void ANecroLifeCharacter::ExecuteAbilityHit()
 
             // Aplicamos el daño
             URPGHelper::ApplyDamage(Other, FinalDamage);
+            
+            // Disparamos el temblor de cámara
+            DispararShakeDanioCausado();
             
             GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan, FString::Printf(TEXT("Fuerza de empuje: %f"), Knockback));
             
@@ -1420,6 +1426,9 @@ void ANecroLifeCharacter::ApplyWeaponHit(AActor* HitActor)
             // Aplicamos el daño final
             URPGHelper::ApplyDamage(Enemy, FinalDamage);
             
+            // Disparamos el temblor de cámara
+            DispararShakeDanioCausado();
+            
             // Ejecutamos el Pushback
             if (Knockback > 0.0f)
             {
@@ -1562,4 +1571,15 @@ void ANecroLifeCharacter::OnHealthChangedCallback(float NewHealth, float MaxHeal
 
     // 3. Actualizamos la memoria para el próximo golpe o curación
     VidaAnterior = NewHealth;
+}
+
+void ANecroLifeCharacter::DispararShakeDanioCausado()
+{
+    if (IsLocallyControlled() && ShakeDanioCausado)
+    {
+        if (APlayerController* PC = Cast<APlayerController>(GetController()))
+        {
+            PC->ClientStartCameraShake(ShakeDanioCausado);
+        }
+    }
 }
