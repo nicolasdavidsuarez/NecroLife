@@ -135,23 +135,24 @@ void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 		ANecroLifeGameState* GS = GetWorld()->GetGameState<ANecroLifeGameState>();
 		if (!GS || !GS->QuestComponent) return;
 
-		if(GS->QuestComponent->UpdateQuestProgress(FGameplayTag::RequestGameplayTag("Necro_Tags.Npc.ViejoSabio"), 1))
+		if (CurrentLine.RequiredObjectiveTag.IsValid())
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Yellow,TEXT("viva peron"));
-			//aca deberia spawnear el premio por la mision
-			MyCharacter->ShowDialogue(CurrentLine);
-			bIsTalking = true;
-			GetWorldTimerManager().SetTimer(
-				TalkingTimerHandle,
-				[this]() { bIsTalking = false; },
-				2.5f, // segundos que dura el diálogo
-				false
-			);
-			MyCharacter->Server_SpawnReward();
-			//MyCharacter->Bp_SpawnReward();
+			if (GS->QuestComponent->UpdateQuestProgress(CurrentLine.RequiredObjectiveTag, 1))
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Yellow, TEXT("viva peron"));
+				MyCharacter->ShowDialogue(CurrentLine);
+				bIsTalking = true;
+				GetWorldTimerManager().SetTimer(
+					TalkingTimerHandle,
+					[this]() { bIsTalking = false; },
+					2.5f,
+					false
+				);
+				MyCharacter->Server_SpawnReward();
+			}
 		}
-	
-		bool bObjetivoCompletado = GS->QuestComponent->IsStageComplete(CurrentLine.RequiredStage);
+
+		bool bObjetivoCompletado = GS->QuestComponent->IsStageComplete(CurrentLine.RequiredQuest, CurrentLine.RequiredStage);
 		
 
 		if (!bObjetivoCompletado)
@@ -170,13 +171,13 @@ void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 		}else
 		{
 				CurrentDialogIndex++;
-			if (CurrentDialogIndex >= DialogueData->DialogLines.Num())
+			/*if (CurrentDialogIndex >= DialogueData->DialogLines.Num())
 			{
 				GetWorldTimerManager().SetTimer(TalkingTimerHandle, [this]()
 	{
 		UGameplayStatics::OpenLevel(this, FName("LvlLan"));
 	}, 2.5f, false);
-			}
+			}*/
 			
 			
 				if (CurrentDialogIndex >= DialogueData->DialogLines.Num()) return;
@@ -191,8 +192,8 @@ void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 				false
 			);
     
-				if (CurrentDialogIndex < DialogueData->DialogLines.Num() - 1)
-					CurrentDialogIndex++;
+				/*if (CurrentDialogIndex < DialogueData->DialogLines.Num() - 1)
+					CurrentDialogIndex++;*/
     
 				return;
 			
