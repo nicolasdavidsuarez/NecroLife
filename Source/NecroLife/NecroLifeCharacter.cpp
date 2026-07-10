@@ -1536,7 +1536,7 @@ void ANecroLifeCharacter::FireSingleSpade()
     // Rotación base + caos aleatorio (Spread)
     FRotator SpawnRotation = GetActorRotation(); 
     SpawnRotation.Yaw += FMath::RandRange(-SpreadAngle, SpreadAngle);
-    SpawnRotation.Pitch += FMath::RandRange(-SpreadAngle, SpreadAngle);
+    SpawnRotation.Pitch += FMath::RandRange(-SpreadAngle-5.0f, SpreadAngle-10.0f);
 
     FActorSpawnParameters SpawnParams;
     SpawnParams.Owner = this;
