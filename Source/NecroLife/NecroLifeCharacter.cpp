@@ -1533,7 +1533,7 @@ void ANecroLifeCharacter::FireSingleSpade()
     // Ahora busca el socket que le digas en el Blueprint de Huesos
     FVector SpawnLocation = GetMesh()->GetSocketLocation(AmetralladoraSocketName);
     //corregi un poco para que le pegara a los lobos, hablar con los pibes
-    SpawnLocation.Z -= 100.0f;
+    //SpawnLocation.Z -= 100.0f;
     // Rotación base + caos aleatorio (Spread)
     FRotator SpawnRotation = GetActorRotation(); 
     SpawnRotation.Yaw += FMath::RandRange(-SpreadAngle, SpreadAngle);
