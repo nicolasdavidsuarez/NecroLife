@@ -1532,11 +1532,13 @@ void ANecroLifeCharacter::FireSingleSpade()
     // Usamos el socket del pecho (asegurate de crearlo en el esqueleto de Huesos)
     // Ahora busca el socket que le digas en el Blueprint de Huesos
     FVector SpawnLocation = GetMesh()->GetSocketLocation(AmetralladoraSocketName);
-    
+    //corregi un poco para que le pegara a los lobos, hablar con los pibes
+    SpawnLocation.Z -= 100.0f;
     // Rotación base + caos aleatorio (Spread)
     FRotator SpawnRotation = GetActorRotation(); 
     SpawnRotation.Yaw += FMath::RandRange(-SpreadAngle, SpreadAngle);
-    SpawnRotation.Pitch += FMath::RandRange(-SpreadAngle, SpreadAngle);
+    //incline un poco para que le pegara, hablar con los pibes
+    SpawnRotation.Pitch += FMath::RandRange(-SpreadAngle-5.0f, SpreadAngle-10.0f);
 
     FActorSpawnParameters SpawnParams;
     SpawnParams.Owner = this;

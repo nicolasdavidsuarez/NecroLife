@@ -116,6 +116,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	bool IsObjectiveComplete(FGameplayTag ObjectiveID);
+	bool IsStageComplete(UQuestData* QuestData, int32 Stage);
 	bool IsStageComplete(int32 Stage);
 
 	// Función para actualizar progreso (cuando matas algo)

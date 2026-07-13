@@ -363,6 +363,29 @@ bool UQuestComponent::IsObjectiveComplete(FGameplayTag ObjectiveID)
 	return false;
 }
 
+bool UQuestComponent::IsStageComplete(UQuestData* QuestData, int32 Stage)
+{
+	for (const FActiveQuestData& Quest : ActiveQuests)
+	{
+		if (Quest.QuestDataAsset != QuestData) continue;
+
+		if (Quest.bIsDone) return true;
+
+		bool bHayObjetivosEnStage = false;
+		for (const FQuestObjective& Objective : Quest.QuestDataAsset->Objectives)
+		{
+			if (Objective.Stage == Stage)
+			{
+				bHayObjetivosEnStage = true;
+				if (!Quest.ObjetivosCompletados.Contains(Objective.TargetID))
+					return false;
+			}
+		}
+		if (bHayObjetivosEnStage) return true;
+	}
+	return false; // esta quest ni siquiera está activa
+}
+
 bool UQuestComponent::IsStageComplete(int32 Stage)
 {
 	for (const FActiveQuestData& Quest : ActiveQuests)
