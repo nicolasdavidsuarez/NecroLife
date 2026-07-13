@@ -192,8 +192,8 @@ void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 				false
 			);
     
-				/*if (CurrentDialogIndex < DialogueData->DialogLines.Num() - 1)
-					CurrentDialogIndex++;*/
+				if (CurrentDialogIndex < DialogueData->DialogLines.Num() - 1)
+					CurrentDialogIndex++;
     
 				return;
 			
