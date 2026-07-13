@@ -273,15 +273,17 @@ void ANecroLifeCharacter::Look(const FInputActionValue& Value)
 
 void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
 {
-    // Solo reiniciamos el timer y rotamos la cámara SI el clic derecho está presionado
-    if (GetController() != nullptr && bMouseRightDown)
+    if (GetController() != nullptr)
     {
         // Reiniciamos el timer de auto-alineación y cancelamos centrado
         TimeSinceLastCameraInput = 0.0f;
         bIsCenteringCamera = false;
 
+        // Eje X (Izquierda / Derecha)
         AddControllerYawInput(Yaw);
         
+        
+        // Eje Y (Aplicamos la rotación con tus límites de MaxPitch y MinPitch)
         if (CameraBoom->GetRelativeRotation().Pitch + Pitch >= MaxPitch &&
             CameraBoom->GetRelativeRotation().Pitch + Pitch <= MinPitch)
         {
@@ -289,6 +291,7 @@ void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
         }
         else
         {
+            // (Mantenemos tu lógica original para los bordes del ángulo)
             if (Pitch != 0)
             {
                 Pitch *= -1.0f;
