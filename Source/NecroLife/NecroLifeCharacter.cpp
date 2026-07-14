@@ -243,16 +243,15 @@ void ANecroLifeCharacter::SetBoomLength(const FInputActionValue& Value)
     FVector2D InputVector = Value.Get<FVector2D>();
     float armLength = CameraBoom->TargetArmLength;
 
-    if (InputVector.X > 0 && armLength < MaxArmLenght)
+    // Solo calculamos si realmente se movió la rueda del mouse
+    if (InputVector.X != 0.0f)
     {
-        armLength += CameraBoom->TargetArmLength * 0.05f;
-        CameraBoom->TargetArmLength = armLength;
-    }
-    else
-    {
-        armLength -= CameraBoom->TargetArmLength * 0.05f;
-        if (armLength > MinArmLenght)
-            CameraBoom->TargetArmLength = armLength;
+        // El 0.05f mantiene tu velocidad de zoom original. 
+        // Multiplicar por InputVector.X decide si suma (1) o resta (-1).
+        armLength += (armLength * 0.05f) * InputVector.X;
+        
+        // El Clamp restringe el valor final para que jamás pase de tus topes
+        CameraBoom->TargetArmLength = FMath::Clamp(armLength, MinArmLenght, MaxArmLenght);
     }
 }
 
@@ -282,6 +281,8 @@ void ANecroLifeCharacter::DoLook(float Yaw, float Pitch)
         // Eje X (Izquierda / Derecha)
         AddControllerYawInput(Yaw);
         
+        // Invertimos el eje "Y"
+        Pitch = Pitch * -1.0f;
         
         // Eje Y (Aplicamos la rotación con tus límites de MaxPitch y MinPitch)
         if (CameraBoom->GetRelativeRotation().Pitch + Pitch >= MaxPitch &&

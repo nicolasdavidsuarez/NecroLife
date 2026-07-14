@@ -229,9 +229,9 @@ protected:
     UPROPERTY(EditAnywhere, Category="Camera in game")
     float MinPitch = -25;
     UPROPERTY(EditAnywhere, Category="Camera in game")
-    float MaxArmLenght = 1200;
+    float MaxArmLenght = 800;
     UPROPERTY(EditAnywhere, Category="Camera in game")
-    float MinArmLenght = 200;
+    float MinArmLenght = 400;
 
     UPROPERTY(EditAnywhere, Category="Camera in game")
     float AutoAlignDelay = 1.5f;
