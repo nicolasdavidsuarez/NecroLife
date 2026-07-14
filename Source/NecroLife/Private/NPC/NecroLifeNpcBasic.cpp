@@ -82,7 +82,7 @@ void ANecroLifeNpcBasic::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AAc
 		ANecroLifeCharacter* Character = Cast<ANecroLifeCharacter>(OtherActor);
 		if (Character)
 		{
-			Character->LookAt(GetActorLocation());
+			//Character->LookAt(GetActorLocation());
 		}
 	}
 }
