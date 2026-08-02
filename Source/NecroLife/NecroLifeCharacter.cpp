@@ -961,7 +961,7 @@ void ANecroLifeCharacter::LookToCastAbility()
 
 void ANecroLifeCharacter::Dash()
 {
-    if (!bCanDash || bIsDashing || bIsAttacking || !Attribute) return;
+    if (!bCanDash || bIsDashing || bIsAttacking || !Attribute||!bCanMove) return;
 
     ResetCombo();
     StopAnimMontage();
