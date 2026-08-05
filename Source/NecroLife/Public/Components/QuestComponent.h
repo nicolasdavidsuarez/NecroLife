@@ -103,6 +103,11 @@ public:
 	
 	UPROPERTY(BlueprintAssignable, Category = "Quests")
 	FOnQuestAdded OnQuestAdded;
+	
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnQuestCompleted, UQuestData*, Quest);
+	
+	UPROPERTY(BlueprintAssignable, Category = "Quests")
+	FOnQuestCompleted OnQuestCompleted;
 
 	// Función para actualizar listas de completadas y listas
 	UFUNCTION(BlueprintCallable, Category = "Quests")

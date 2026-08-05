@@ -333,6 +333,8 @@ bool bFaltaObjetivo = false;
 			{
 				QuestToCheck.bIsDone = true;
 				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("¡Quest completada!"));
+				
+				OnQuestCompleted.Broadcast(QuestToCheck.QuestDataAsset);
 			}
 		}
 		
