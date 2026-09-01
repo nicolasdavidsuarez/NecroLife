@@ -2,12 +2,18 @@
 
 
 #include "NPC/NecroLifeNpcBasic.h"
+
+#include "AIController.h"
 #include "NecroLifeCharacter.h"
+#include "NecroLifeGameState.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/QuestComponent.h"
 
 #include "Components/SphereComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 
+class AAIController;
 // Sets default values
 ANecroLifeNpcBasic::ANecroLifeNpcBasic()
 {
@@ -23,8 +29,7 @@ ANecroLifeNpcBasic::ANecroLifeNpcBasic()
 	// 2. Crear el Mesh
 	NPCMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("NPCMesh"));
 
-	// 3. ¡ESTO ES LO QUE TE FALTA! 
-	// Atamos el Mesh a la Raíz para que se mueva con el Actor
+	 	// Atamos el Mesh a la Raíz para que se mueva con el Actor
 	NPCMesh->SetupAttachment(RootComponent);
 
 	// Configuración básica de colisión
@@ -43,7 +48,13 @@ void ANecroLifeNpcBasic::BeginPlay()
 		SphereCollision->OnComponentEndOverlap.AddDynamic(this, &ANecroLifeNpcBasic::OnOverlapEnd);
 	}
 	
-	
+	if (AGameStateBase* GS = GetWorld()->GetGameState())
+	{
+		if (UQuestComponent* QC = GS->FindComponentByClass<UQuestComponent>())
+		{
+			QC->OnQuestAdded.AddDynamic(this, &ANecroLifeNpcBasic::OnQuestAgregada);
+		}
+	}
 }
 
 // Called every frame
@@ -71,8 +82,7 @@ void ANecroLifeNpcBasic::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AAc
 		ANecroLifeCharacter* Character = Cast<ANecroLifeCharacter>(OtherActor);
 		if (Character)
 		{
-			// El personaje entró en el rango, que empiece a mirar
-			Character->LookAt(GetActorLocation());
+			//Character->LookAt(GetActorLocation());
 		}
 	}
 }
@@ -92,127 +102,146 @@ void ANecroLifeNpcBasic::OnRep_CurrentQuestIndex()
 {
 	///ejecutar aca que pasa en el cliente que no esta hablando con el character npc
 	
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, TEXT("mostrar si no es el que habla con npc"));
+	GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Yellow, TEXT("mostrar si no es el que habla con npc"));
 }
+
 
 void ANecroLifeNpcBasic::OnInteract_Implementation(AActor* Interactor)
 {
-	//ACA se implementa la interface, muestra las lineas de dialogo que tiene el npc hasta que pregunta}
-	// Si acepta la mision
-	UE_LOG(LogTemp, Warning, TEXT("implementa on interact"));
-	UE_LOG(LogTemp, Warning, TEXT("CurrentDialogIndex: %d"),CurrentDialogIndex);
-	
-	if (bIsWaitingForResponse)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, TEXT("Esperando que el jugador responda en la UI..."));
-		return; 
-	}
-	
-	ANecroLifeCharacter* MyCharacter = Cast<ANecroLifeCharacter>(Interactor);
+    if (bIsWaitingForResponse) return;
 
+    ANecroLifeCharacter* MyCharacter = Cast<ANecroLifeCharacter>(Interactor);
+    if (!MyCharacter) return;
 
-	// --- 1. NUEVA VALIDACIÓN DE COOLDOWN ---
-	float CurrentTime = GetWorld()->GetTimeSeconds();
-	if (CurrentTime - LastInteractTime < InteractCooldown)
-	{
-		// Si no ha pasado el tiempo suficiente, ignoramos el input
-		return; 
-	}
-	// Actualizamos el tiempo de la última interacción válida
-	LastInteractTime = CurrentTime;
-	
-	// 1. Verificamos si tenemos datos asignados
-	if (!DialogueData || DialogueData->DialogLines.Num() == 0) return;
-//CurrentDialogIndex=LastDialogIndex;
-	// 2. Comprobamos si todavía quedan líneas por leer
-	if (CurrentDialogIndex < DialogueData->DialogLines.Num())
-	{
-		//la linea siguienete updatea el Hablar con npc, pero tiene que hacerlo solo cuando sea ese tipo de mision
-		
-		MyCharacter->SetUIState(true);
-		// Obtenemos la línea actual
-		FDialogLine CurrentLine = DialogueData->DialogLines[CurrentDialogIndex];
+    // Cooldown
+    float CurrentTime = GetWorld()->GetTimeSeconds();
+    if (CurrentTime - LastInteractTime < InteractCooldown) return;
+    LastInteractTime = CurrentTime;
 
-		
-		//la linea siguienete updatea el Hablar con npc, pero tiene que hacerlo solo cuando sea ese tipo de mision
-		/*if (MyCharacter->QuestComponent->UpdateQuestProgress(NpcTag,1))
+    if (!DialogueData || DialogueData->DialogLines.Num() == 0) return;
+
+    // Clamp defensivo
+    CurrentDialogIndex = FMath::Clamp(CurrentDialogIndex, 0, DialogueData->DialogLines.Num() - 1);
+
+    FDialogLine CurrentLine = DialogueData->DialogLines[CurrentDialogIndex];
+	// Después del clamp defensivo
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::White,
+		FString::Printf(TEXT("Index al entrar: %d | Total lineas: %d"),
+		CurrentDialogIndex, DialogueData->DialogLines.Num()));
+
+    // --- Caso 1: línea que requiere objetivo completado ---
+	if (CurrentLine.bRequiresPreviousObjective)
+	{
+		ANecroLifeGameState* GS = GetWorld()->GetGameState<ANecroLifeGameState>();
+		if (!GS || !GS->QuestComponent) return;
+
+		if (CurrentLine.RequiredObjectiveTag.IsValid())
 		{
-			CurrentDialogIndex++;	
-		}*/
-		// --- AQUÍ VA LA COMUNICACIÓN CON LA UI ---
-		// Por ahora, lo mostramos en pantalla para debuguear
-		
-		FString DialogMsg = FString::Printf(TEXT("%s: %s Aca si o ni tiene linea de dialogos!!!"), 
-			*CurrentLine.SpeakerName.ToString(), 
-			*CurrentLine.DialogueText.ToString());
-		if (CurrentLine.bRequiresPreviousObjective)
-		{
-			// Si el jugador cumplió el objetivo y la quest se actualiza
-			if (MyCharacter->QuestComponent->UpdateQuestProgress(NpcTag, 1))
+			if (GS->QuestComponent->UpdateQuestProgress(CurrentLine.RequiredObjectiveTag, 1))
 			{
-				// Avanzamos el índice al diálogo de "¡Gracias por ayudarme!"
+				GEngine->AddOnScreenDebugMessage(-1, 20.f, FColor::Yellow, TEXT("viva peron"));
+				MyCharacter->ShowDialogue(CurrentLine);
+				bIsTalking = true;
+				GetWorldTimerManager().SetTimer(
+					TalkingTimerHandle,
+					[this]() { bIsTalking = false; },
+					2.5f,
+					false
+				);
+				MyCharacter->Server_SpawnReward();
+			}
+		}
+
+		bool bObjetivoCompletado = GS->QuestComponent->IsStageComplete(CurrentLine.RequiredQuest, CurrentLine.RequiredStage);
+		
+
+		if (!bObjetivoCompletado)
+		{
+			// Objetivo no completado, mostramos la línea de bloqueo y no avanzamos
+			MyCharacter->SetUIState(true);
+			MyCharacter->ShowDialogue(CurrentLine);
+			bIsTalking = true;
+			GetWorldTimerManager().SetTimer(
+				TalkingTimerHandle,
+				[this]() { bIsTalking = false; },
+				2.5f, // segundos que dura el diálogo
+				false
+			);
+			return;
+		}else
+		{
 				CurrentDialogIndex++;
-				CurrentLine = DialogueData->DialogLines[CurrentDialogIndex];
-				UE_LOG(LogTemp, Warning, TEXT("MANDA A IMPRIMIR MENSAJE LUEGO DEL UPDATEQUESTPROGRESS"));
-				//MyCharacter->ShowDialogue(CurrentLine);
-			
-			}
-			// Si UpdateQuestProgress dio false, CurrentDialogIndex no avanza, 
-			// y CurrentLine sigue siendo la de "Aún no terminaste, ve a buscar eso".
-
-			// Ahora sí, mandamos a la UI la línea (ya sea la nueva o la vieja)
-			MyCharacter->ShowDialogue(CurrentLine);
-		
-		}
-		else
-		{
-			// Si no requiere objetivo, mostramos y avanzamos normalmente
-			MyCharacter->ShowDialogue(CurrentLine);
-			CurrentDialogIndex++;
-		}
-		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Cyan, DialogMsg);
-
-		// 3. Si tiene animación asociada, la reproducimos
-		if (CurrentLine.SpeakerAnim && GetMesh())
-		{
-			PlayAnimMontage(CurrentLine.SpeakerAnim);
-		}
-
-		if (CurrentLine.bIsMissionChoice)
-		{
-			bIsWaitingForResponse = true;
-	QuestActual=Quests[CurrentQuestIndex];
-			if (QuestActual == nullptr)
+			/*if (CurrentDialogIndex >= DialogueData->DialogLines.Num())
 			{
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ERROR: El elemento en el array Quests es NULO en C++"));
-			}
-			else
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("ÉXITO: QuestActual se asignó correctamente en C++"));
-			}
-		}
-			// 4. Incrementamos el índice para la próxima vez que el jugador apriete la "T"
-
-		
-		
-	}
-	else
+				GetWorldTimerManager().SetTimer(TalkingTimerHandle, [this]()
 	{
-		// Se terminaron las líneas de diálogo
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red,
-			TEXT("Fin de la charla. deberia repetir el ultimo mensaje"));
-      MyCharacter->SetUIState(true);
-		FDialogLine CurrentLine = DialogueData->DialogLines.Last();
-		//CurrentDialogIndex = DialogueData->DialogLines.Num() - 1;
-		MyCharacter->ShowDialogue(CurrentLine);
-
-		// Aquí es donde llamarías a Character->SetUIState(false) para liberar el movimiento
+		UGameplayStatics::OpenLevel(this, FName("LvlLan"));
+	}, 2.5f, false);
+			}*/
+			
+			
+				if (CurrentDialogIndex >= DialogueData->DialogLines.Num()) return;
+				CurrentLine = DialogueData->DialogLines[CurrentDialogIndex];
+				MyCharacter->SetUIState(true);
+				MyCharacter->ShowDialogue(CurrentLine);
+			bIsTalking = true;
+			GetWorldTimerManager().SetTimer(
+				TalkingTimerHandle,
+				[this]() { bIsTalking = false; },
+				2.5f, // segundos que dura el diálogo
+				false
+			);
+    
+				if (CurrentDialogIndex < DialogueData->DialogLines.Num() - 1)
+					CurrentDialogIndex++;
+    
+				return;
+			
+		}
+	
 	}
+
+	// Flujo normal (aplica también después del bloque de arriba)
+	MyCharacter->SetUIState(true);
+	MyCharacter->ShowDialogue(CurrentLine);
+	bIsTalking = true;
+	GetWorldTimerManager().SetTimer(
+		TalkingTimerHandle,
+		[this]() { bIsTalking = false; },
+		2.5f, // segundos que dura el diálogo
+		false
+	);
+	
+	
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange,
+	FString::Printf(TEXT("Flujo normal - Index: %d | Linea: %s"),
+	CurrentDialogIndex,
+	*DialogueData->DialogLines[CurrentDialogIndex].DialogueText.ToString()));
+
+	if (CurrentLine.bIsMissionChoice)
+	{
+		bIsWaitingForResponse = true;
+		QuestActual = Quests[CurrentQuestIndex];
+	
+		return;
+	}
+
+	if (CurrentDialogIndex < DialogueData->DialogLines.Num() - 1)
+	{
+		CurrentDialogIndex++;
+	}
+
+	if (CurrentLine.SpeakerAnim && GetMesh())
+	{
+		PlayAnimMontage(CurrentLine.SpeakerAnim);
+	}
+	
+	
 }
 
 void ANecroLifeNpcBasic::CancelAddQuest()
 {
-	CurrentDialogIndex = LastDialogIndex;
+	//CurrentDialogIndex = LastDialogIndex;
 	bIsWaitingForResponse = false;
 }
 
@@ -221,7 +250,98 @@ void ANecroLifeNpcBasic::NextAddQuest()
 	LastDialogIndex=CurrentDialogIndex;
 	CurrentQuestIndex++;
 	bIsWaitingForResponse = false;
+	if (CurrentDialogIndex < DialogueData->DialogLines.Num() - 1)
+	{
+		CurrentDialogIndex++;
+	}
 }
+
+//para mover por las misiones
+void ANecroLifeNpcBasic::OnQuestAgregada(UQuestData* Quest)
+{
+	if (!HasAuthority() || !Quest) return;
+
+	for (const FQuestTeleportEntry& Entry : TeleportsPorMision)
+	{
+		if (Entry.Mision == Quest && Entry.Destino)
+		{
+			if (AAIController* AIC = Cast<AAIController>(GetController()))
+				AIC->StopMovement();
+			FVector LocationAjustada = Entry.Destino->GetActorLocation() + FVector(200.0f, 0.f, 90.f);
+			Multicast_TeleportarA(
+				LocationAjustada,
+				Entry.Destino->GetActorRotation()
+			);
+			return; // una misión activa un solo teleport
+		}
+	}
+}
+
+
+void ANecroLifeNpcBasic::TeleportarA(AActor* Destino)
+{
+	if (!Destino) return;
+
+	if (AAIController* AIC = Cast<AAIController>(GetController()))
+		AIC->StopMovement();
+
+	SetActorLocationAndRotation(
+		Destino->GetActorLocation(),
+		Destino->GetActorRotation(),
+		false, nullptr, ETeleportType::TeleportPhysics
+	);
+}
+
+void ANecroLifeNpcBasic::Multicast_TeleportarA_Implementation(FVector Location, FRotator Rotation)
+{
+	TeleportDestino = Location;
+	TeleportRotacion = Rotation;
+
+	// Spawnear efecto en la posición actual del NPC
+	if (TeleportFX)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			TeleportFX,
+			GetActorLocation(),
+			GetActorRotation()
+		);
+	}
+
+	// Ocultar el mesh del NPC
+	if (USkeletalMeshComponent* NpcMesh = GetMesh())
+	{
+		NpcMesh->SetVisibility(false);
+	}
+		
+
+	// Timer: después de 1.5s ejecutar el teleport real
+	FTimerHandle TimerHandle;
+	GetWorldTimerManager().SetTimer(
+		TimerHandle,
+		this,
+		&ANecroLifeNpcBasic::EjecutarTeleportDespuesDeEfecto,
+		1.5f,
+		false
+	);
+}
+
+void ANecroLifeNpcBasic::EjecutarTeleportDespuesDeEfecto()
+{
+	FVector LocationAjustada = TeleportDestino;
+	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
+		LocationAjustada.Z += Capsule->GetScaledCapsuleHalfHeight()/2;
+
+	SetActorLocationAndRotation(
+		LocationAjustada, TeleportRotacion,
+		false, nullptr, ETeleportType::TeleportPhysics
+	);
+
+	// Volver a mostrar el mesh
+	if (USkeletalMeshComponent* NpcMesh = GetMesh())
+		NpcMesh->SetVisibility(true);
+}
+
 
 //net
 void ANecroLifeNpcBasic::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -230,4 +350,6 @@ void ANecroLifeNpcBasic::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 
 	// Registramos la variable para que viaje por internet
 	DOREPLIFETIME(ANecroLifeNpcBasic, CurrentQuestIndex);
+	DOREPLIFETIME(ANecroLifeNpcBasic, bIsWaitingForResponse);
+
 }

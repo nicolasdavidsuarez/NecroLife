@@ -4,9 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/AttributeComponent.h"
+#include "Components/InventoryComponent.h"
+#include "Data/QuestData.h"
+#include "Types/NecroLifeTypes.h"
 #include "NecroLifeHud.generated.h"
 
 class UItemData;
+
 /**
  * 
  */
@@ -20,11 +25,22 @@ protected:
 
 private:
 	bool bBindeo = false;
+	bool bBindeoHealth=false;
+	bool bBindeoAtribute = false;
+	bool bBindeoMisiones=false;
+	bool bBindeoAbility = false;
+	bool bBindeoCharacter=false;
+    FTimerHandle TimerHandleBind;
 	
 	public:
+
+	
 	
 	UPROPERTY(BlueprintReadWrite,meta = (BindWidget))
 	class UProgressBar* HealthBar;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* TxtPosiones;
 	
 	UFUNCTION(BlueprintCallable)
 	void HandleHealthChanged(float CurrentHealth, float MaxHealth);
@@ -40,9 +56,53 @@ private:
 
 	// En tu clase de UI (donde recibes el evento)
 	UFUNCTION()
-	void ActualizarInventario(const TArray<UItemData*>& ItemsRecibidos);
+	void ActualizarInventario(const TArray<FDatosGema>& ItemsRecibidos);
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "Inventory")
-	void BP_UpdateInventoryUI(const TArray<UItemData*>& ItemsToShow);
+	UFUNCTION()
+	void HandleCoolDown(int32 AbilitySlot);
+
+	UFUNCTION()
+	void HandleOnPotionChange(int CantPosiones);
+
+	UFUNCTION()
+	void ActualizarGemasInSlots(const TArray<FDatosGema>& DatosGemas);
 	
+	UFUNCTION(BlueprintImplementableEvent)
+	void BP_MostrarItems(const TArray<UItemData*>& Array);
+	
+	UFUNCTION()
+	void HandleOnPickUpItem(const TArray<UItemData*>& ItemDatas);
+	
+	UFUNCTION()
+	void BindDelegate();
+
+	UFUNCTION()
+	void ActualizarStats(const FEstadisticasPersonaje& EstadisticasPersonaje);
+	
+	UFUNCTION()
+	void MostrarForgeInventory(const TArray<FDatosGema>& GemsToShow);
+	
+	UFUNCTION()
+	void MostrarNuevaGema(FDatosGema gema);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Inventory")
+	void BP_UpdateInventoryUI(const TArray<FDatosGema>& GemsToShow);
+
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Inventory")
+	void BP_UpdateForgeInventoryUI(const TArray<FDatosGema>& GemsToShow);
+
+
+
+	UFUNCTION()
+	void ActualizarQuestList(const TArray<FQuestUIData>& QuestUi);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Quest")
+	void BP_UpdateMisionesUI(const TArray<FQuestUIData>& QuestUi);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Attribute")
+	void BP_UpdateEstadisticas(const FEstadisticasPersonaje& EstadisticasPersonaje);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void BP_ShowNewGem(FDatosGema gemToShow);	
 };

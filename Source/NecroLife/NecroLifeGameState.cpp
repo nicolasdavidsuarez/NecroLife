@@ -11,7 +11,7 @@ ANecroLifeGameState::ANecroLifeGameState()
 	// [PARA PRODUCTORES Y DISEÑADORES]: 
 	// Aquí le decimos al motor: "Apenas arranque la partida, creá y enganchá un administrador de misiones al nivel".
 	// CreateDefaultSubobject es la función de C++ que "fabrica" el componente.
-	QuestManager = CreateDefaultSubobject<UQuestComponent>(TEXT("GestorDeMisionesCooperativo"));
+	QuestComponent = CreateDefaultSubobject<UQuestComponent>(TEXT("GestorDeMisionesCooperativo"));
 
 	// [PARA ARTISTAS 3D]: 
 	// Ojo, este componente es 100% lógica invisible. No tiene malla 3D (Static Mesh), 

@@ -3,53 +3,25 @@
 
 #include "Widgets/NecroLifeHud.h"
 
+#include "NecroLifeCharacter.h"
+#include "NecroLifeGameState.h"
 #include "NecroLifePlayerState.h"
+#include "Components/AbilityComponent.h"
 #include "Components/AttributeComponent.h"
 #include "Components/InventoryComponent.h"
 #include "Components/ProgressBar.h"
+#include "Components/QuestComponent.h"
 #include "Components/TextBlock.h"
 #include "Components/UHealthComponent.h"
 
 void UNecroLifeHud::NativeConstruct()
 {
-	Super::NativeConstruct();
+	Super::NativeConstruct();	
 
-	APawn* PlayerPawn = GetOwningPlayerPawn();
-	if (!PlayerPawn) return;
-
-	// 2. Buscamos el componente de salud (usa el nombre exacto de tu clase en C++)
-	UUHealthComponent* HealthComp = PlayerPawn->FindComponentByClass<UUHealthComponent>();
-
-	if (HealthComp)
+	if (UWorld* World=GetWorld())
 	{
-		HealthComp->OnHealthChanged.AddDynamic(this, &UNecroLifeHud::HandleHealthChanged);
-
-	}
-	UAttributeComponent* Attributes = PlayerPawn->FindComponentByClass<UAttributeComponent>();
-
-	if (Attributes)
-	{
-
-		Attributes->OnXPChanged.AddDynamic(this, &UNecroLifeHud::HandleXPChanged);
-
-	}
-
-	
-	ANecroLifePlayerState* MyPS = Cast<ANecroLifePlayerState>(GetOwningPlayerState());
-	if (MyPS )
-	{
-			
-		UInventoryComponent* Inventory= MyPS->FindComponentByClass<UInventoryComponent>();
-		if (Inventory)
-		{
-			Inventory->OnShowItem.AddDynamic(this, &UNecroLifeHud::ActualizarInventario);
-			bBindeo = true;
-		}
-		GEngine->AddOnScreenDebugMessage(-1,5.0f, FColor::Green, "ActualizarInventario pero no bindeo y tiene player state");	
-	
-	}
-	GEngine->AddOnScreenDebugMessage(-1,5.0f, FColor::Red, "ActualizarInventario pero no bindeo");	
-
+		World->GetTimerManager().SetTimer(TimerHandleBind,this,&UNecroLifeHud::BindDelegate,0.5f,true);	
+	}	
 }
 
 void UNecroLifeHud::HandleHealthChanged(float CurrentHealth, float MaxHealth)
@@ -72,20 +44,160 @@ void UNecroLifeHud::HandleXPChanged(float CurrentXP, float XPToNextLevel, int32 
 	if (LevelText)
 	{
 		FString LevelString = FString::Printf(TEXT("Nivel: %d"), CurrentLevel);
-		LevelText->SetText(FText::FromString(LevelString));
-		
+		LevelText->SetText(FText::FromString(LevelString));		
 	}
 }
 
-void UNecroLifeHud::ActualizarInventario(const TArray<UItemData*>& ItemsRecibidos)
+void UNecroLifeHud::ActualizarInventario(const TArray<FDatosGema>& ItemsRecibidos)
 {
+		BP_UpdateInventoryUI(ItemsRecibidos);	
+}
 
+void UNecroLifeHud::HandleCoolDown(int32 AbilitySlot)
+{
+	ANecroLifeCharacter* Player = Cast<ANecroLifeCharacter>(GetOwningPlayerPawn());
+	if (Player)
+	{
+		Player->SetCoolDownAbility(AbilitySlot);
+		bBindeoAbility=true;
+	}
+}
+
+void UNecroLifeHud::HandleOnPotionChange(int CantPosiones)
+{
+	if (TxtPosiones)
+	{
+		GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Red,"Potion: "+FString::FromInt(CantPosiones));
+		FString TextoFormateado = FString::Printf(TEXT(": %d"), CantPosiones);        
+		TxtPosiones->SetText(FText::FromString(TextoFormateado));
+	}
+}
+
+void UNecroLifeHud::ActualizarGemasInSlots(const TArray<FDatosGema>& DatosGemas)
+{
+	ANecroLifePlayerState* MyPS = Cast<ANecroLifePlayerState>(GetOwningPlayerState());
+	if (MyPS )
+	{
+		UAttributeComponent* AttributeComponent=MyPS->GetAttributeComponent();
+		if (AttributeComponent)
+		{
+			AttributeComponent->RecalcularEstadisticas(DatosGemas);
+		}
+	}
+}
+
+void UNecroLifeHud::HandleOnPickUpItem(const TArray<UItemData*>& ItemDatas)
+{
+	GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Red,TEXT("hANDLE OnPickUpItem"));
+	BP_MostrarItems(ItemDatas);
+}
+
+void UNecroLifeHud::BindDelegate()
+{
 	if (!bBindeo)
 	{
-		GEngine->AddOnScreenDebugMessage(-1,5.0f, FColor::Red, "ActualizarInventario pero no bindeo");	
-
-	}else
-	{		
-		BP_UpdateInventoryUI(ItemsRecibidos);	
+		ANecroLifePlayerState* MyPS = Cast<ANecroLifePlayerState>(GetOwningPlayerState());
+		if (MyPS )
+		{			
+			UInventoryComponent* Inventory= MyPS->FindComponentByClass<UInventoryComponent>();
+			if (Inventory)
+			{
+				Inventory->GemsToShow.AddDynamic(this, &UNecroLifeHud::ActualizarInventario);
+				Inventory->GemsToShowInSlots.AddDynamic(this,&UNecroLifeHud::ActualizarGemasInSlots);
+				Inventory->OnPotionChange.AddDynamic(this,&UNecroLifeHud::HandleOnPotionChange);
+				Inventory->OnShowItem.AddDynamic(this,&UNecroLifeHud::HandleOnPickUpItem);
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, 
+	   TEXT("OnShowItem BINDEADO correctamente"));
+				bBindeo = true;
+			}
+		}
 	}
+	APawn* PlayerPawn = GetOwningPlayerPawn();
+	if (!bBindeoCharacter)
+	{
+		
+		if (!PlayerPawn) return;
+		ANecroLifeCharacter* character = Cast <ANecroLifeCharacter>(PlayerPawn->GetController()->GetCharacter());
+		character->OnShowForgeInventory.AddDynamic(this, &UNecroLifeHud::MostrarForgeInventory);
+		character->ShowNuevaGema.AddDynamic(this,&UNecroLifeHud::MostrarNuevaGema);
+	
+		bBindeoCharacter=true;
+	}
+	
+	
+	if (!bBindeoHealth)
+	{
+		
+		UUHealthComponent* HealthComp = PlayerPawn->FindComponentByClass<UUHealthComponent>();
+		if (HealthComp)
+		{
+			HealthComp->OnHealthChanged.AddDynamic(this, &UNecroLifeHud::HandleHealthChanged);
+			bBindeoHealth=true;
+		}
+	
+	}
+	if (!bBindeoAtribute)
+	{
+		ANecroLifePlayerState* MyPS = Cast<ANecroLifePlayerState>(GetOwningPlayerState());
+		UAttributeComponent* Attributes = MyPS->FindComponentByClass<UAttributeComponent>();
+		if (Attributes)
+		{
+			Attributes->OnXPChanged.AddDynamic(this, &UNecroLifeHud::HandleXPChanged);
+			Attributes->OnAtributosActualizados.AddDynamic(this, &UNecroLifeHud::ActualizarStats);
+			bBindeoAtribute=true;
+		}
+	}
+
+	if (!bBindeoAbility)
+	{
+		UAbilityComponent* AbilityComp =Cast<UAbilityComponent>(PlayerPawn->FindComponentByClass<UAbilityComponent>());
+		if (AbilityComp)
+		{
+			AbilityComp->AbilitySlot.AddDynamic(this,&UNecroLifeHud::HandleCoolDown);			
+			bBindeoAbility=true;
+		}
+	}
+if (!bBindeoMisiones)
+{
+	if (ANecroLifeGameState* GS = Cast<ANecroLifeGameState>(GetWorld()->GetGameState()))
+	{
+		if (UQuestComponent* QuestComp = GS->FindComponentByClass<UQuestComponent>())
+		{
+			// Bindeamos el evento (asegúrate de que el nombre OnUpdateObjectiveList coincida con el tuyo)
+			QuestComp->OnUpdateObjectiveList.AddDynamic(this, &UNecroLifeHud::ActualizarQuestList);
+			bBindeoMisiones = true;
+			QuestComp->ActualizarQuests(); 
+		}
+	}
+}
+	
+
+	if (bBindeoAtribute&&bBindeoHealth&&bBindeo&&bBindeoMisiones&&bBindeoAbility&&bBindeoCharacter)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(TimerHandleBind);
+		GEngine->AddOnScreenDebugMessage(-1,5.0f, FColor::Red, "cLeAr tImEr");			
+
+	}
+
+}
+
+void UNecroLifeHud::ActualizarStats(const FEstadisticasPersonaje& EstadisticasPersonaje)
+{
+	BP_UpdateEstadisticas(EstadisticasPersonaje);
+}
+
+void UNecroLifeHud::MostrarForgeInventory(const TArray<FDatosGema>& GemsToShow)
+{
+	GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Blue,
+		  FString(TEXT("llamo al forge inventario")));
+	BP_UpdateForgeInventoryUI(GemsToShow);
+}
+void UNecroLifeHud::MostrarNuevaGema(FDatosGema gema)
+{
+	BP_ShowNewGem(gema);
+}
+
+void UNecroLifeHud::ActualizarQuestList(const TArray<FQuestUIData>& QuestUi)
+{
+	BP_UpdateMisionesUI(QuestUi);
 }

@@ -1,154 +1,229 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-//clase atributos, basado en GAS game abitlity system
-//
-// GAS organiza la lógica de las acciones en 3 pasos:
-//   Input -> Ability -> Outcome
-// - Input: la entrada del jugador (ej: tecla Q, click).
-// - Ability: la lógica que valida costos, cooldowns y condiciones.
-// - Outcome: el resultado en el juego (daño, curación, animación).
-//
-// Este componente maneja los atributos del personaje,
-// Las habilidades consultan este componente para verificar costos y aplicar efectos.
-
 
 #include "Public/Components/AttributeComponent.h"
-
 #include "Components/InventoryComponent.h"
+#include "Net/UnrealNetwork.h"
 
+const float UAttributeComponent::XPTable[UAttributeComponent::MaxLevel] = {
+    100.f,    // 0 → 1  (~2 kills)
+    160.f,    // 1 → 2  (~3 kills)
+    220.f,    // 2 → 3  (~4 kills)
+    280.f,    // 3 → 4  (~5 kills)
+    500.f,    // 4 → 5
+    750.f,    // 5 → 6
+    1000.f,   // 6 → 7
+    1400.f,   // 7 → 8
+    1900.f,   // 8 → 9
+    2500.f,   // 9 → 10
+    3200.f,   // 10 → 11
+    4000.f,   // 11 → 12
+    4900.f,   // 12 → 13
+    5900.f,   // 13 → 14
+    7000.f,   // 14 → 15
+    8200.f,   // 15 → 16
+    9500.f,   // 16 → 17
+    11000.f,  // 17 → 18
+    12500.f,  // 18 → 19
+    14000.f,  // 19 → 20
+};
 
-// Sets default values for this component's properties
 UAttributeComponent::UAttributeComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
-	
-}
-	// ...
-
-
-
-void UAttributeComponent::TakeXP(float Amount)
-{
-	
-	if (XP+Amount>XPtoNextLevel)
-	{
-		Level++;
-		XP=XPtoNextLevel+Amount-XPtoNextLevel;
-	}else
-	{
-		XP += Amount;
-	}
-	OnXPChanged.Broadcast(XP,XPtoNextLevel,Level);
+    PrimaryComponentTick.bCanEverTick = true;
+    SetIsReplicatedByDefault(true);
 }
 
-// Called when the game starts
 void UAttributeComponent::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 
-	// ...
-	
+    // Solo el servidor recalcula — el cliente recibe los stats correctos via replicación.
+    // Mandar Server_RecalcularEstadisticas([]) desde el cliente causaba una race condition:
+    // el RPC llegaba al servidor después de que el jugador equipó gemas y reseteaba los stats.
+    if (GetOwner()->HasAuthority())
+    {
+        RecalcularEstadisticas(TArray<FDatosGema>());
+    }
 }
 
-
-// Called every frame
 void UAttributeComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                         FActorComponentTickFunction* ThisTickFunction)
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ...
+    // Regeneración de energía por frame (de los compañeros).
+    // Solo corre en el servidor para evitar desync.
+    if (GetOwner()->HasAuthority() && RegenEnergia > 0.f && Energy < EnergyMax)
+    {
+        Energy = FMath::Min(EnergyMax, FMath::RoundToInt(Energy + EnergyMax * RegenEnergia * DeltaTime));
+    }
+}
+
+void UAttributeComponent::TakeXP(float Amount)
+{
+    if (!GetOwner()->HasAuthority()) return;
+    if (Level >= MaxLevel) return;
+
+    XP += Amount;
+
+    while (XP >= XPtoNextLevel && Level < MaxLevel)
+    {
+        XP -= XPtoNextLevel;
+        Level++;
+
+        BaseLife    += VidaPorNivel;
+        BaseAttack  += AtaquePorNivel;
+        DefenseBase += DefensaPorNivel;
+
+        if (Level < MaxLevel)
+            XPtoNextLevel = XPTable[Level];
+        else
+            XPtoNextLevel = 0.f;
+    }
+
+    OnXPChanged.Broadcast(XP, XPtoNextLevel, Level);
 }
 
 void UAttributeComponent::RecalcularEstadisticas(const TArray<FDatosGema>& GemasEquipadas)
 {
-	// 1. Resetear las estadísticas a los valores "desnudos"
-	LifeMax = BaseLife;
-	Attack = BaseAttack;
-	VelocityAttack=VelocityAttackBase;
-	Defense=DefenseBase;
-	// ... resetear el resto ...
+    if (GetOwner()->HasAuthority())
+    {
+        // 1. Resetear a valores base
+        LifeMax = BaseLife;
+        Attack = BaseAttack;
+        VelocityAttack = VelocityAttackBase;
+        Defense = DefenseBase;
+        Velocity = BaseVelocity;
+        EnergyMax = BaseEnergy;
+        RegenVida = BaseRegenVida;
+        RegenEnergia = BaseRegenEnergia;
 
-	// Variables temporales para acumular los porcentajes y aplicarlos al final
-	float BonoVidaPorcentaje = 0.0f;
-	float BonoAtaquePorcentaje = 0.0f;
-	float BonoVelocidadAttack=0.0f;
-	float BonoDefense=0.0f;
+        // Acumuladores porcentuales
+        float BonoVidaPorcentaje = 0.0f;
+        float BonoAtaquePorcentaje = 0.0f;
+        float BonoVelocidadAttack = 0.0f;
+        float BonoDefensaPorcentaje = 0.0f;
+        float BonoVelocidadPorcentaje = 0.0f;
 
-	// 2. Iterar por todas las gemas que están físicamente en los slots
-	for (const FDatosGema& Gema : GemasEquipadas)
-	{
-		switch (Gema.AtributoAMejorar)
-		{
-		case ETipoEstadisticaGema::VidaMaxima:
-			LifeMax += FMath::RoundToInt(Gema.ValorMejora);
-			break;
-                
-		case ETipoEstadisticaGema::AtaqueFisico:
-			Attack += FMath::RoundToInt(Gema.ValorMejora);
-			break;
+        // 2. Iterar gemas
+        for (const FDatosGema& Gema : GemasEquipadas)
+        {
+            switch (Gema.AtributoAMejorar)
+            {
+            case ETipoEstadisticaGema::VidaMaxima:
+                LifeMax += FMath::RoundToInt(Gema.ValorMejora);
+                break;
 
-		case ETipoEstadisticaGema::VidaMaximaPorcentaje:
-			// Sumamos el porcentaje (ej: si tiene dos gemas de 10%, esto acumula 20%)
-			BonoVidaPorcentaje += Gema.ValorMejora;
-			break;
+            case ETipoEstadisticaGema::AtaqueFisico:
+                Attack += FMath::RoundToInt(Gema.ValorMejora);
+                break;
 
-		case ETipoEstadisticaGema::AtaqueFisicoPorcentaje:
-			BonoAtaquePorcentaje += Gema.ValorMejora;
-			break;
+            case ETipoEstadisticaGema::Defensa:
+                Defense += Gema.ValorMejora;
+                break;
 
-		case ETipoEstadisticaGema::VelocidadAtaquePorcentaje:
-			BonoVelocidadAttack+=Gema.ValorMejora;
-			break;
+            case ETipoEstadisticaGema::EnergiaMaxima:
+                EnergyMax += FMath::RoundToInt(Gema.ValorMejora);
+                break;
 
-		case ETipoEstadisticaGema::Defensa:
-			Defense+=Gema.ValorMejora;
-			break;
-        case ETipoEstadisticaGema::DefensaPorcentaje:
-			BonoDefense+=Gema.ValorMejora;
-			break;
-		
-		default:
-			break;
+            case ETipoEstadisticaGema::VidaMaximaPorcentaje:
+                BonoVidaPorcentaje += Gema.ValorMejora / 100.0f;
+                break;
 
-			// ... agregar los demás casos del Enum ...
-		}
-	}
+            case ETipoEstadisticaGema::AtaqueFisicoPorcentaje:
+                BonoAtaquePorcentaje += Gema.ValorMejora / 100.0f;
+                break;
 
-	// 3. Aplicar los bonos porcentuales al final (para que matemáticamente sea correcto)
-	//aca hay que ponerse de acuerdo, o ponemos 1.1x o 10%
-	//lo dejo mal para tener las dos opciones
-	if (BonoVidaPorcentaje > 0.0f)
-	{
-		LifeMax += LifeMax * BonoVidaPorcentaje;
-	}
-	if (BonoVelocidadAttack>0.0f)
-	{
-		VelocityAttack=FMath::RoundToInt(VelocityAttack*BonoVelocidadAttack);
-	}
-	if(BonoAtaquePorcentaje>0.0f)
-	{
-	Attack=Attack*BonoAtaquePorcentaje;	
-	}
+            case ETipoEstadisticaGema::DefensaPorcentaje:
+                BonoDefensaPorcentaje += Gema.ValorMejora / 100.0f;
+                break;
 
-	// Opcional: Asegurarse de que la Vida actual no supere la nueva Vida Máxima
-	if (Life > LifeMax)
-	{
-		Life = LifeMax;
-	}
+            case ETipoEstadisticaGema::Velocidad:
+                BonoVelocidadPorcentaje += Gema.ValorMejora / 100.0f;
+                break;
 
-	// Al final de la función, armamos el struct para la UI
-	FEstadisticasPersonaje StatsParaUI;
-	StatsParaUI.VidaMaxima = LifeMax;
-	StatsParaUI.Ataque = Attack;
-	StatsParaUI.Velocidad = Velocity;
-	StatsParaUI.Nivel = Level;
-	StatsParaUI.EnergiaMaxima=EnergyMax;
-	StatsParaUI.VelocidadRegeneracion=velocidadEnergyReg;
-	StatsParaUI.Defensa=Defense;
+            case ETipoEstadisticaGema::VelocidadAtaquePorcentaje:
+                BonoVelocidadAttack += Gema.ValorMejora / 100.0f;
+                break;
 
-	// Disparamos el único delegado
-	OnAtributosActualizados.Broadcast(StatsParaUI);
+            case ETipoEstadisticaGema::RegeneracionVida:
+                RegenVida += Gema.ValorMejora;
+                break;
+
+            case ETipoEstadisticaGema::RegeneracionEnergia:
+                RegenEnergia += Gema.ValorMejora;
+                break;
+
+            default:
+                break;
+            }
+        }
+
+        // 3. Aplicar bonos porcentuales
+        if (BonoVidaPorcentaje > 0.0f)
+            LifeMax *= (1.0f + BonoVidaPorcentaje);
+
+        if (BonoAtaquePorcentaje > 0.0f)
+            Attack = Attack * (1 + BonoAtaquePorcentaje);
+
+        if (BonoVelocidadAttack > 0.0f)
+            VelocityAttack = VelocityAttack * (1.0f + BonoVelocidadAttack);
+
+        if (BonoDefensaPorcentaje > 0.0f)
+            Defense += FMath::RoundToInt(Defense * BonoDefensaPorcentaje);
+
+        Velocity += Velocity * BonoVelocidadPorcentaje;
+
+        if (Life > LifeMax)
+            Life = LifeMax;
+
+        // Armar struct para replicación y UI
+        StatsSincronizadas.VidaMaxima = LifeMax;
+        StatsSincronizadas.Ataque = Attack;
+        GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Emerald,
+            FString::Printf(TEXT("Attack: %d  |  Velocity: %.2f  |  MaxWalkSpeed aprox: %.0f"), Attack, Velocity, Velocity * 50.f));
+        StatsSincronizadas.Defensa = Defense;
+        StatsSincronizadas.Velocidad = Velocity;
+        StatsSincronizadas.Nivel = Level;
+        StatsSincronizadas.EnergiaMaxima = EnergyMax;
+        StatsSincronizadas.VelocidadRegeneracion = velocidadEnergyReg;
+        StatsSincronizadas.RegenVida = RegenVida;
+        StatsSincronizadas.RegenEnergia = RegenEnergia;
+        OnRep_StatsActualizadas();
+    }
+    else
+    {
+        // Cliente: delega al servidor
+        Server_RecalcularEstadisticas(GemasEquipadas);
+    }
 }
 
+void UAttributeComponent::Server_RecalcularEstadisticas_Implementation(const TArray<FDatosGema>& GemasEquipadas)
+{
+    RecalcularEstadisticas(GemasEquipadas);
+    // OnRep_StatsActualizadas ya se llama dentro de RecalcularEstadisticas cuando HasAuthority
+}
+
+FEstadisticasPersonaje UAttributeComponent::GetStatsSincronizadas()
+{
+    return StatsSincronizadas;
+}
+
+void UAttributeComponent::OnRep_StatsActualizadas()
+{
+    
+    OnAtributosActualizados.Broadcast(StatsSincronizadas);
+}
+
+void UAttributeComponent::OnRep_XPChanged()
+{
+    OnXPChanged.Broadcast(XP, XPtoNextLevel, Level);
+}
+
+void UAttributeComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(UAttributeComponent, StatsSincronizadas);
+    DOREPLIFETIME(UAttributeComponent, XP);
+    DOREPLIFETIME(UAttributeComponent, Level);
+}

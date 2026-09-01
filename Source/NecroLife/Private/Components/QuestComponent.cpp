@@ -7,6 +7,7 @@
 
 #include "Data/QuestData.h"
 #include "Engine/NetworkObjectList.h"
+#include "Net/UnrealNetwork.h" 
 
 
 // Sets default values for this component's properties
@@ -32,7 +33,10 @@ void UQuestComponent::OnRep_ActiveQuests()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Cyan, TEXT("CLIENTE: Recibí la actualización de misiones por red!"));
 	ActualizarQuests();
-	
+	if (!Quests.IsEmpty())
+	{
+		OnQuestAdded.Broadcast(Quests.Last());
+	}
 }
 
 
@@ -47,6 +51,14 @@ void UQuestComponent::AddQuest(UQuestData* QuestData)
 {
 
 	if (!GetOwner()->HasAuthority()) return;
+	FActiveQuestData tempQuest;
+	for (int i = 0; i < QuestData->Objectives.Num(); i++)
+	{
+		FProgresoObjetivo NuevoProgreso;
+		NuevoProgreso.TargetID = QuestData->Objectives[i].TargetID;
+		NuevoProgreso.CantidadActual = 0;    
+		tempQuest.ObjectiveProgress.Add(NuevoProgreso); // Ahora es un TArray
+	}
 	
 //La lista quets, tiene todas las que han sido cargadas, pueden estar completadas o no
     if (Quests.Contains(QuestData))
@@ -55,21 +67,29 @@ void UQuestComponent::AddQuest(UQuestData* QuestData)
 	FString::Printf(TEXT("Ya contenia el data Asset")));	
 	
 	}else{
-	Quests.Add(QuestData);
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green,
+		Quests.Add(QuestData);
+		OnQuestAdded.Broadcast(QuestData);//para las misiones que deben hacer algo al empezar, se suscriben aca los objetos del mundo
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green,
     	FString::Printf(TEXT("Se agrego el data Asset. %s"), *QuestData->Description.ToString()));
-		FActiveQuestData tempQuest;
+		//FActiveQuestData tempQuest;
 		tempQuest.CurrentStage=0;
 		tempQuest.QuestDataAsset=QuestData;
 		tempQuest.bIsDone=false;
 		tempQuest.ObjectiveProgress.Empty();
 		for (int i=0;i<QuestData->Objectives.Num();i++)//inicializacion del los objetivos
 		{
-			//GEngine->AddOnScreenDebugMessage(i+1, 50.f, FColor::Yellow,
-		//QuestData->Objectives[i].Description.ToString());
-			tempQuest.ObjectiveProgress.Add(QuestData->Objectives[i].TargetID,0);
+		
+			// 1. Creamos la "caja" (la estructura)
+			FProgresoObjetivo NuevoProgreso;    
+			// 2. La rellenamos con el ID y el progreso inicial en 0
+			NuevoProgreso.TargetID = QuestData->Objectives[i].TargetID;
+			NuevoProgreso.CantidadActual = 0;    
+			// 3. Metemos la caja completa al Array
+			tempQuest.ObjectiveProgress.Add(NuevoProgreso);
 		}
 		ActiveQuests.Add(tempQuest);
+		
+		//OnRep_MisionesActualizadas();
 	ActualizarQuests();
 	}
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green,
@@ -77,24 +97,28 @@ void UQuestComponent::AddQuest(UQuestData* QuestData)
 		//CurrentQuest = QuestData;		
 }
 
+void UQuestComponent::OnRep_MisionesActualizadas()
+{
+	ActualizarQuests();
+}
+
 void UQuestComponent::ActualizarQuests()
 {
-	//if (Quests.Num() == 0) return;
-
-	// 1. Arreglo principal que enviaremos a la UI
+	
 	TArray<FQuestUIData> ListaQuestsParaUI;
 
 	for (const auto& ActiveQuestTemp : ActiveQuests)  
 	{
-		// 2. Creamos el contenedor para ESTA misión específica
+		if (ActiveQuestTemp.bIsDone) continue;
+		
 		FQuestUIData NuevaQuestUI;
 		NuevaQuestUI.QuestName = FText::FromName(ActiveQuestTemp.QuestDataAsset->QuestName);
 
 		// 3. Buscamos los objetivos de la etapa actual
 		for (int i = 0; i < ActiveQuestTemp.QuestDataAsset->Objectives.Num(); i++)
 		{
-			if (ActiveQuestTemp.QuestDataAsset->Objectives[i].Stage == ActiveQuestTemp.CurrentStage)
-			{
+			//if (ActiveQuestTemp.QuestDataAsset->Objectives[i].Stage == ActiveQuestTemp.CurrentStage)
+			//{
 				FQuestObjectiveListEntry NuevoObjetivo;
 				NuevoObjetivo.EntryText = ActiveQuestTemp.QuestDataAsset->Objectives[i].Description;
 				NuevoObjetivo.img = nullptr; 
@@ -102,7 +126,7 @@ void UQuestComponent::ActualizarQuests()
 
 				// Agregamos el objetivo a la lista de esta misión
 				NuevaQuestUI.Objectives.Add(NuevoObjetivo);
-			}
+			//}
 		}
        
 		// 4. Si la misión tiene objetivos en esta etapa, la agregamos a la lista final
@@ -114,6 +138,7 @@ void UQuestComponent::ActualizarQuests()
     
 	// 5. Disparamos el delegado con toda la información empaquetada
 	OnUpdateObjectiveList.Broadcast(ListaQuestsParaUI);
+	//OnRep_MisionesActualizadas();
 }
 
 
@@ -150,105 +175,73 @@ void UQuestComponent::ActualizarListasQuests()
 		}
 	}
     
-	// 4. Disparamos el delegado. La UI recibirá este arreglo.
-	//OnUpdateObjectiveList.Broadcast(ListaMisionesUI);
+}
+
+bool UQuestComponent::haveQuests()
+{
+	if (!Quests.IsEmpty())
+	{
+		return true;	
+	}
+	return false;
+}
+
+bool UQuestComponent::hasQuest(UQuestData* QuestToFind)
+{
+	return Quests.Contains(QuestToFind);
 }
 
 bool UQuestComponent::UpdateQuestProgress(FGameplayTag ObjectiveID, int32 Amount)
 {
 
-	// Si NO somos el servidor (Autoridad), no hacemos nada.
-	if (!GetOwner()->HasAuthority()) return false; 
-
-	
-	if (!ObjectiveID.IsValid()) return false;
+	if (!GetOwner()->HasAuthority() || !ObjectiveID.IsValid()) return false;
 
 	bool bHasUpdatedProgress = false;
     
-	// Usamos referencia (&) para poder modificar el struct dentro del array
-	for (FActiveQuestData& ActiveQuestData : ActiveQuests)
+	// Usamos un bucle clásico con índice para asegurar que Unreal detecte la modificación
+	for (int32 i = 0; i < ActiveQuests.Num(); i++)
 	{
-		// 1. Verificamos que tengamos un DataAsset válido para esta misión activa
-		if (!ActiveQuestData.QuestDataAsset) continue;
+		if (!ActiveQuests[i].QuestDataAsset) continue;
 
 		bool bIsObjectiveInCurrentStage = false;
 
-		// 2. BUSCAMOS EL OBJETIVO EN EL DATA ASSET
-		// Recorremos la plantilla de la misión para ver en qué Stage está configurado este ObjectiveID
-		for (const FQuestObjective& ObjectiveTemplate : ActiveQuestData.QuestDataAsset->Objectives)
+		for (const FQuestObjective& ObjectiveTemplate : ActiveQuests[i].QuestDataAsset->Objectives)
 		{
-			if (ObjectiveTemplate.TargetID == ObjectiveID)
+			if (ObjectiveTemplate.TargetID == ObjectiveID && ObjectiveTemplate.Stage == ActiveQuests[i].CurrentStage)
 			{
-				// Encontramos el objetivo. ¿Su fase corresponde a la fase actual de la misión?
-				if (ObjectiveTemplate.Stage == ActiveQuestData.CurrentStage)
-				{
-					bIsObjectiveInCurrentStage = true;
-				}
-				break; // Ya encontramos el ID, dejamos de buscar en el Data Asset
+				bIsObjectiveInCurrentStage = true;
+				break; 
 			}
 		}
 
-		// 3. VALIDACIÓN: Si no pertenece a la etapa actual, ignoramos esta misión y pasamos a la siguiente
-		if (!bIsObjectiveInCurrentStage)
+		if (!bIsObjectiveInCurrentStage) continue; 
+
+		// Buscar el objetivo en nuestro nuevo TArray de progreso
+		for (int32 j = 0; j < ActiveQuests[i].ObjectiveProgress.Num(); j++)
 		{
-			continue; 
+			if (ActiveQuests[i].ObjectiveProgress[j].TargetID == ObjectiveID)
+			{
+				// Aumentamos la cantidad
+				ActiveQuests[i].ObjectiveProgress[j].CantidadActual += Amount; 
+                
+				// Evaluamos si se completó
+				CheckObjetivoComplete(ActiveQuests[i], ObjectiveID);
+                
+				bHasUpdatedProgress = true;
+				break; // Salimos del bucle interno
+			}
 		}
+	}
 
-		// 4. ACTUALIZAMOS EL PROGRESO (como ya lo tenías)
-		int32* CurrentProgress = ActiveQuestData.ObjectiveProgress.Find(ObjectiveID);
-
-		if (CurrentProgress)
-		{
-			*CurrentProgress += Amount; 
-            
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Progreso: %d"), *CurrentProgress)); 
-          
-			// Chequear si se completó el objetivo pasándole la data actualizada
-			CheckObjetivoComplete(ActiveQuestData, ObjectiveID);
-          
-			bHasUpdatedProgress = true;
-		}   
+	if (bHasUpdatedProgress)
+	{
+		// TRUCO DE RED: Forzamos al servidor a actualizar a los clientes
+		// Si el cliente no recibe el OnRep, esta línea lo obliga a revisar el componente.
+		GetOwner()->ForceNetUpdate(); 
 	}
 
 	return bHasUpdatedProgress;
 }
-// En UpdateQuestProgress
-/*bool UQuestComponent::UpdateQuestProgress(FGameplayTag ObjectiveID, int32 Amount)
-{
-	bool progress = false;
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green,
-								FString::Printf(TEXT("Active Quests: %s"),*ObjectiveID.ToString())); 
-	//esta es la funcion que se llama en blueprints cuando interactua en el juego
-	if (!ObjectiveID.IsValid()) return progress;
-	/*GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green,
-	FString::Printf(TEXT("Se agrego el data Asset. %s"), *QuestData->Description.ToString()));
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green,
-							FString::Printf(TEXT("Active Quests: %s"),*ObjectiveID.ToString())); 
-	// Usamos referencia (&) para poder modificar el struct dentro del array
-	for (FActiveQuestData& ActiveQuestData : ActiveQuests)
-	{
-		// 1. Buscamos si esta quest tiene ese objetivo
-		// Asumo que ObjectiveProgress guarda: <TagObjetivo, CantidadActual>
-		int32* CurrentProgress = ActiveQuestData.ObjectiveProgress.Find(ObjectiveID);
-
-		if (CurrentProgress)
-		{
-			// 2. CORRECCIÓN PUNTERO: Desreferenciar con *
-			*CurrentProgress += Amount; 
-            
-			// Log para debug
-			//UE_LOG(LogTemp, Warning, TEXT("Progreso actualizado: %d"), *CurrentProgress);
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green,
-						FString::FromInt(*CurrentProgress)); 
-			// 3. Chequear si se completó (Pasamos la ActiveQuestData actual)
-			CheckObjetivoComplete(ActiveQuestData, ObjectiveID);
-			progress = true;
-		}   
-	}
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red,
-						FString("Entro a updatear"));
-	return progress;
-}*/
 
 
 void UQuestComponent::CheckObjetivoComplete(FActiveQuestData& QuestToCheck, FGameplayTag ObjectiveID)
@@ -270,18 +263,25 @@ void UQuestComponent::CheckObjetivoComplete(FActiveQuestData& QuestToCheck, FGam
 	if (!bFoundObjective) return;
 
 	// 2. Obtener cuanto tenemos actualmente
-	int32* FoundPtr = QuestToCheck.ObjectiveProgress.Find(ObjectiveID);
-	int32 CurrentAmount = FoundPtr ? *FoundPtr : 0;
+	/*int32* FoundPtr = QuestToCheck.ObjectiveProgress.Find(ObjectiveID);
+	int32 CurrentAmount = FoundPtr ? *FoundPtr : 0;*/
+	int32 CurrentAmount = 0;
+	for (const auto& Progreso : QuestToCheck.ObjectiveProgress)
+	{
+		if (Progreso.TargetID == ObjectiveID)
+		{
+			CurrentAmount = Progreso.CantidadActual;
+			break;
+		}
+	}
+	
 	// 3. Comparar
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red,
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
 		FString::Printf(TEXT("Cantidad/Necesario: %d / %d"),	CurrentAmount, RequiredAmount));
 		
 	if (CurrentAmount >= RequiredAmount)
 	{
-		// 4. CORRECCIÓN DATA ASSET: Guardar estado en la estructura local, no en el asset
-		// Asegúrate de agregar un bool bIsCompleted en tu struct FActiveQuestData
-		 //QuestToCheck.bIsDone=true;//esto esta mal porque solo debe actualizar el objetivo
-
+	
 
 		for (auto& Objective : QuestToCheck.QuestDataAsset->Objectives)
 		{
@@ -312,18 +312,38 @@ bool bFaltaObjetivo = false;
 				}
 			}
 		}
-if (!bFaltaObjetivo)
-{
-	QuestToCheck.CurrentStage++;
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue,
-FString::Printf(TEXT("¡Objetivo Completado! Nueva etapa: %d"), QuestToCheck.CurrentStage));
-}
-		
+		if (!bFaltaObjetivo)
+		{
+			QuestToCheck.CurrentStage++;
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+				FString::Printf(TEXT("¡Objetivo Completado! Nueva etapa: %d"), QuestToCheck.CurrentStage));
+
+			// Verificar si ya no hay más stages (quest completa)
+			bool bHayMasObjetivos = false;
+			for (const auto& Objective : QuestToCheck.QuestDataAsset->Objectives)
+			{
+				if (Objective.Stage == QuestToCheck.CurrentStage)
+				{
+					bHayMasObjetivos = true;
+					break;
+				}
+			}
+
+			if (!bHayMasObjetivos)
+			{
+				QuestToCheck.bIsDone = true;
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("¡Quest completada!"));
+				
+				OnQuestCompleted.Broadcast(QuestToCheck.QuestDataAsset);
+			}
+		}
 		
 		// Aquí podrías llamar a una función que verifique si TODOS los objetivos de la quest están listos
 	}
 	ActualizarQuests();
+	
 }
+
 
 //esto no se para que es pero es obligatorio a todas las variables que se repliquen
 void UQuestComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -331,11 +351,63 @@ void UQuestComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	// Registramos ActiveQuests para que se envíe a todos los clientes
-	DOREPLIFETIME(UQuestComponent, ActiveQuests);
+	DOREPLIFETIME(UQuestComponent,ActiveQuests);
 	DOREPLIFETIME(UQuestComponent,Quests);
 }
 
+bool UQuestComponent::IsObjectiveComplete(FGameplayTag ObjectiveID)
+{
+	for (const FActiveQuestData& Quest : ActiveQuests)
+	{
+		if (Quest.ObjetivosCompletados.Contains(ObjectiveID))
+			return true;
+	}
+	return false;
+}
 
+bool UQuestComponent::IsStageComplete(UQuestData* QuestData, int32 Stage)
+{
+	for (const FActiveQuestData& Quest : ActiveQuests)
+	{
+		if (Quest.QuestDataAsset != QuestData) continue;
 
+		if (Quest.bIsDone) return true;
+
+		bool bHayObjetivosEnStage = false;
+		for (const FQuestObjective& Objective : Quest.QuestDataAsset->Objectives)
+		{
+			if (Objective.Stage == Stage)
+			{
+				bHayObjetivosEnStage = true;
+				if (!Quest.ObjetivosCompletados.Contains(Objective.TargetID))
+					return false;
+			}
+		}
+		if (bHayObjetivosEnStage) return true;
+	}
+	return false; // esta quest ni siquiera está activa
+}
+
+bool UQuestComponent::IsStageComplete(int32 Stage)
+{
+	for (const FActiveQuestData& Quest : ActiveQuests)
+	{
+		// Si la quest está completa, cualquier stage se considera completa
+		if (Quest.bIsDone) return true;
+
+		bool bHayObjetivosEnStage = false;
+		for (const FQuestObjective& Objective : Quest.QuestDataAsset->Objectives)
+		{
+			if (Objective.Stage == Stage)
+			{
+				bHayObjetivosEnStage = true;
+				if (!Quest.ObjetivosCompletados.Contains(Objective.TargetID))
+					return false;
+			}
+		}
+		if (bHayObjetivosEnStage) return true;
+	}
+	return false;
+}
 
 

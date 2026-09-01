@@ -35,5 +35,5 @@ public:
 	// La interfaz gráfica (los widgets en pantalla) van a buscar la información a esta variable
 	// para saber qué texto e ícono de misión tienen que dibujar.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Misiones Cooperativas")
-	UQuestComponent* QuestManager;
+	UQuestComponent* QuestComponent;
 };

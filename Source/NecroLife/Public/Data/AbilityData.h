@@ -34,10 +34,17 @@ public:
 	// Rango máximo del cursor (opcional)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="General")
 	float Range = 1000.f;
-     /////////////////Habilidad que no sale del character
-	///
+     /////////////////Habilidad que no sale del character///////////
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "General")
 	bool bFromCharacter= true;
+	
+	// Multiplicador de daño (Ej: 1.0 es normal, 2.0 es el doble)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat Stats")
+	float DamageMultiplier = 1.0f;
+
+	// Fuerza del empuje (0 = no empuja, 1500 = empuje decente)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat Stats")
+	float KnockbackForce = 0.0f;
 	
 	// Radio del área de efecto
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Visual")
@@ -59,6 +66,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
 	FVector PreviewScale = FVector(1.f);
 	
-	
+	// EL CASILLERO PARA LA ANIMACIÓN DE QUATERNIUS
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
+	UAnimMontage* AbilityMontage;
 	
 };

@@ -7,11 +7,26 @@
 #include "GameFramework/Character.h"
 #include "Interface/NecroLifeInterface.h"
 #include "Data/NecroLifeDialogData.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 #include "NecroLifeNpcBasic.generated.h"
 
 class USphereComponent;
 class ANecroLifeCharacter;
 //struct FGameplayTag;
+
+USTRUCT(BlueprintType)
+struct FQuestTeleportEntry
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UQuestData* Mision = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	AActor* Destino = nullptr;
+};
+
 
 UCLASS()
 class NECROLIFE_API ANecroLifeNpcBasic : public ACharacter, public INecroLifeInterface
@@ -32,6 +47,40 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	
+	UPROPERTY(BlueprintReadWrite, Category = "Animation")
+	bool bIsTalking = false;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Animation")
+	bool bIsAttacking = false;
+	
+	FTimerHandle TalkingTimerHandle;
+	
+	//para mover durante las misiones
+	// La misión específica que activa el movimiento de este NPC
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest")
+	TArray<FQuestTeleportEntry> TeleportsPorMision;
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_TeleportarA(FVector Location, FRotator Rotation);
+	
+	UFUNCTION()
+	void OnQuestAgregada(UQuestData* Quest);
+
+	void TeleportarA(AActor* Destino);
+	void EjecutarTeleportDespuesDeEfecto();
+
+
+	// La referencia al Niagara, asignable desde el BP del NPC
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FX")
+	UNiagaraSystem* TeleportFX = nullptr;
+
+	// Datos pendientes del teleport (los guardamos para usarlos después del timer)
+	FVector TeleportDestino;
+	FRotator TeleportRotacion;
+
+	// Funciones
+
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	TArray<UQuestData*> Quests;
@@ -60,10 +109,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Dialogue")
 	float InteractCooldown = 0.5f;
 
-protected:
+public:
 	// Esta es la llave que traba el diálogo
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialogue")
+	UPROPERTY(Replicated)
 	bool bIsWaitingForResponse = false;
+	
 
 protected:
 	// El archivo que contiene el guion de este NPC

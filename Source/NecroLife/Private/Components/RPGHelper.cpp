@@ -44,14 +44,19 @@ bool URPGHelper::ApplyHealing(AActor* Target, float Amount)
 bool URPGHelper::TakeXP(AActor* Target, float Amount)
 {
 	if (!Target) return false;
-
-	if (UAttributeComponent* AttributeComponent = Target->FindComponentByClass<UAttributeComponent>())
+	ANecroLifeCharacter* MyNecroCharacter=Cast<ANecroLifeCharacter>(Target);
+	if (!MyNecroCharacter) return false;
+	APlayerState* PlayerState=MyNecroCharacter->GetPlayerState();	
+	
+	if (UAttributeComponent* AttributeComponent = PlayerState->FindComponentByClass<UAttributeComponent>())
 	{
+		GEngine->AddOnScreenDebugMessage(-1,5.0f,FColor::Blue,"Take XP");
 		AttributeComponent->TakeXP(Amount);
 		return true;
 	}
 	return false;
 }
+
 bool URPGHelper::TakePosion(AActor* Target)
 {
 	if (!Target) return false;

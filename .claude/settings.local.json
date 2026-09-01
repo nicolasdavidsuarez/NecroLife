@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs wc *)",
+      "Bash(xargs ls *)",
+      "Bash(git rm *)",
+      "WebFetch(domain:docs.google.com)",
+      "WebFetch(domain:doc-0c-8g-sheets.googleusercontent.com)",
+      "Bash(xargs grep -l \"Quest\\\\|quest\")",
+      "Bash(xargs grep -l \"EQuestObjectiveType\\\\|FQuestObjective\\\\|UpdateQuestProgress\")",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Guido\\\\Desktop\\\\NecroRepo\\\\NecroLife\\\\Source\\\\NecroLife\" -Recurse -File)",
+      "Bash(Select-Object -ExpandProperty Name)",
+      "Bash(Sort-Object)",
+      "Bash(Get-Unique)",
+      "WebSearch",
+      "Bash(git merge *)",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Guido\\\\Desktop\\\\NecroRepo\\\\NecroLife\\\\Source\\\\NecroLife\\\\Public\" -Recurse -Include \"*Enemy*\", \"*AI*\", \"*BT*\", \"*Patrol*\")",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "PowerShell(ls \"C:\\\\Users\\\\Guido\\\\Desktop\\\\NecroRepo\\\\NecroLife\\\\Content\\\\Characters\\\\Enemy\\\\\" | % { $_.FullName })",
+      "PowerShell(ls \"C:\\\\Users\\\\Guido\\\\Desktop\\\\NecroRepo\\\\NecroLife\\\\Content\\\\Maps\\\\PlayGround\\\\Blueprints\\\\\" | % { $_.FullName })",
+      "PowerShell(ls \"C:\\\\Users\\\\Guido\\\\Desktop\\\\NecroRepo\\\\NecroLife\\\\Content\\\\Maps\\\\PlayGround\\\\Structs\\\\\" | % { $_.FullName })",
+      "PowerShell(ls \"C:\\\\Users\\\\Guido\\\\Desktop\\\\NecroRepo\\\\NecroLife\\\\Content\\\\Variant_Combat\\\\Blueprints\\\\AI\\\\\" | % { $_.FullName })",
+      "PowerShell(ls \"C:\\\\Users\\\\Guido\\\\Desktop\\\\NecroRepo\\\\NecroLife\\\\Source\\\\NecroLife\\\\Public\\\\NPC\\\\\" | % { $_.FullName })",
+      "PowerShell(ls \"C:\\\\Users\\\\Guido\\\\Desktop\\\\NecroRepo\\\\NecroLife\\\\Content\\\\Variant_Combat\\\\Blueprints\\\\\" -Recurse | ? { $_.Name -match \"\\(AI|Combat|Enemy|Spawn\\)\" } | % { $_.FullName })",
+      "PowerShell(ls \"C:\\\\Users\\\\Guido\\\\Desktop\\\\NecroRepo\\\\NecroLife\\\\Content\\\\Arte\\\\Enemy\\\\\" -Recurse | % { $_.FullName })",
+      "Bash(git fetch *)",
+      "Bash(awk '{print $2}')",
+      "Bash(xargs -d '\\\\n' git rm --force)",
+      "Bash(xargs -d '\\\\n' git add)",
+      "Bash(git commit *)",
+      "Bash(xargs grep -l \"WaveSpawner\\\\|SpawnerEnemigos\")",
+      "Bash(xargs grep -l \"Spawner\\\\|Wave\")",
+      "WebFetch(domain:forums.unrealengine.com)"
+    ]
+  }
+}
